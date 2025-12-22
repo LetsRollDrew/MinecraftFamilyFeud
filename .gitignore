@@ -43,3 +43,6 @@ bin/
 .DS_Store
 
 /etc
+
+### Local run-paper server ###
+/run/
