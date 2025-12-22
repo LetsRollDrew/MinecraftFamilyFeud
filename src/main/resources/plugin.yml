@@ -1,0 +1,22 @@
+name: FamilyFeud
+version: "${version}"
+main: io.letsrolldrew.feud.FeudPlugin
+api-version: "1.21"
+authors:
+  - letsrolldrew
+description: Family Feud game with map wall board and host controls.
+commands:
+  feud:
+    description: Base command for Family Feud.
+    usage: "/feud"
+    permission: familyfeud.use
+permissions:
+  familyfeud.use:
+    description: Allows use of base Family Feud command.
+    default: true
+  familyfeud.host:
+    description: Allows hosting controls and UI actions.
+    default: op
+  familyfeud.admin:
+    description: Allows administrative setup commands.
+    default: op
