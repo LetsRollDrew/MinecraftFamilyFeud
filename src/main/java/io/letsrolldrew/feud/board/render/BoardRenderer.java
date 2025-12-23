@@ -14,13 +14,24 @@ public final class BoardRenderer {
 
     private final byte borderColor;
     private final byte interiorColor;
+    private final byte coverTextColor;
+    private final byte labelColor;
+    private final TextPainter textPainter;
+    private final BigDigitPainter bigDigitPainter;
+    private final SlotCoverPainter coverPainter;
 
+    @SuppressWarnings("removal")
     public BoardRenderer(TileFramebufferStore store, DirtyTracker dirty) {
         this.store = store;
         this.dirty = dirty;
         // map palette colors
         this.borderColor = org.bukkit.map.MapPalette.matchColor(new Color(40, 40, 40));
         this.interiorColor = org.bukkit.map.MapPalette.matchColor(new Color(12, 51, 89));
+        this.coverTextColor = org.bukkit.map.MapPalette.matchColor(new Color(20, 20, 20));
+        this.labelColor = org.bukkit.map.MapPalette.matchColor(new Color(250, 210, 60));
+        this.textPainter = new TextPainter();
+        this.bigDigitPainter = new BigDigitPainter();
+        this.coverPainter = new SlotCoverPainter(store, dirty, bigDigitPainter, coverTextColor, labelColor);
     }
 
     // fill tiles with base colors and mark dirty
@@ -34,6 +45,11 @@ public final class BoardRenderer {
         for (TilePos pos : interior) {
             fillTile(pos, interiorColor);
         }
+    }
+
+    // paint hidden covers + slot numbers/placeholders and mark tiles dirty
+    public void paintHiddenCovers() {
+        coverPainter.paintAllHidden();
     }
 
     private void fillTile(TilePos pos, byte color) {

@@ -185,6 +185,7 @@ public final class FeudRootCommand implements CommandExecutor {
         if (ok) {
             sender.sendMessage("Board maps initialized.");
             boardRenderer.paintBase();
+            boardRenderer.paintHiddenCovers();
             sender.sendMessage("Board base painted.");
         } else {
             sender.sendMessage("Board map init failed (binding missing or world unloaded).");
