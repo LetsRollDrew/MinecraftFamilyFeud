@@ -28,7 +28,7 @@ public final class PluginBootstrap {
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
         this.uiCommand = new UiCommand(gameController, config.hostPermission());
-        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui");
+        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository);
         registerCommands();
     }
 
