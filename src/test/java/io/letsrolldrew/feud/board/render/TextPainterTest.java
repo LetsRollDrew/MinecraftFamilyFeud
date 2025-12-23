@@ -11,7 +11,7 @@ class TextPainterTest {
     void drawsDigitsAndQuestionMark() {
         TileBuffer buf = new TileBuffer();
         TextPainter painter = new TextPainter();
-        painter.drawString(buf, 0, 0, "1?2", (byte) 7);
+        painter.drawString(buf, 0, 0, "1?2A", (byte) 7);
         int colored = 0;
         for (int y = 0; y < 10; y++) {
             for (int x = 0; x < 20; x++) {
