@@ -7,6 +7,11 @@ import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
+import io.letsrolldrew.feud.board.BoardBindingStore;
+import io.letsrolldrew.feud.board.render.MapIdStore;
+import io.letsrolldrew.feud.board.render.TileFramebufferStore;
+import io.letsrolldrew.feud.board.render.DirtyTracker;
+import io.letsrolldrew.feud.board.render.BoardRenderer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,7 +27,11 @@ public final class FeudRootCommand implements CommandExecutor {
     private final HostBookUiBuilder hostBookUiBuilder;
     private final HostRemoteService hostRemoteService;
     private final BoardWandService boardWandService;
-    private final MapWallBinder mapWallBinder;
+    private final BoardBindingStore boardBindingStore;
+    private final MapIdStore mapIdStore;
+    private final TileFramebufferStore framebufferStore;
+    private final DirtyTracker dirtyTracker;
+    private final BoardRenderer boardRenderer;
     private final UiCommand uiCommand;
 
     public FeudRootCommand(
@@ -34,7 +43,11 @@ public final class FeudRootCommand implements CommandExecutor {
         String adminPermission,
         GameController gameController,
         BoardWandService boardWandService,
-        MapWallBinder mapWallBinder
+        BoardBindingStore boardBindingStore,
+        MapIdStore mapIdStore,
+        TileFramebufferStore framebufferStore,
+        DirtyTracker dirtyTracker,
+        BoardRenderer boardRenderer
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -44,7 +57,11 @@ public final class FeudRootCommand implements CommandExecutor {
         this.adminPermission = adminPermission;
         this.gameController = gameController;
         this.boardWandService = boardWandService;
-        this.mapWallBinder = mapWallBinder;
+        this.boardBindingStore = boardBindingStore;
+        this.mapIdStore = mapIdStore;
+        this.framebufferStore = framebufferStore;
+        this.dirtyTracker = dirtyTracker;
+        this.boardRenderer = boardRenderer;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player));
     }
 
@@ -158,13 +175,17 @@ public final class FeudRootCommand implements CommandExecutor {
             sender.sendMessage("You need admin permission to set up the board.");
             return true;
         }
-        if (mapWallBinder == null) {
-            sender.sendMessage("Board binder not initialized.");
+        var bindingOpt = boardBindingStore.load();
+        if (bindingOpt.isEmpty()) {
+            sender.sendMessage("No board binding found. Use /feud board wand first.");
             return true;
         }
-        boolean ok = mapWallBinder.bind();
+        MapWallBinder binder = new MapWallBinder(bindingOpt.get(), mapIdStore, framebufferStore);
+        boolean ok = binder.bind();
         if (ok) {
             sender.sendMessage("Board maps initialized.");
+            boardRenderer.paintBase();
+            sender.sendMessage("Board base painted.");
         } else {
             sender.sendMessage("Board map init failed (binding missing or world unloaded).");
         }

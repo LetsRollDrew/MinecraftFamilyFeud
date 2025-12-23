@@ -11,6 +11,8 @@ import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
+import io.letsrolldrew.feud.board.render.BoardRenderer;
+import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import org.bukkit.NamespacedKey;
@@ -27,9 +29,10 @@ public final class PluginBootstrap {
     private HostRemoteService hostRemoteService;
     private BoardWandService boardWandService;
     private BoardBindingStore boardBindingStore;
-    private MapWallBinder mapWallBinder;
     private TileFramebufferStore framebufferStore;
     private MapIdStore mapIdStore;
+    private DirtyTracker dirtyTracker;
+    private BoardRenderer boardRenderer;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -49,11 +52,8 @@ public final class PluginBootstrap {
         this.boardWandService = new BoardWandService(plugin, wandKey, boardBindingStore);
         this.framebufferStore = new TileFramebufferStore();
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
-        this.mapWallBinder = new MapWallBinder(
-            boardBindingStore.load().orElse(null),
-            mapIdStore,
-            framebufferStore
-        );
+        this.dirtyTracker = new DirtyTracker();
+        this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.uiCommand = new UiCommand(gameController, config.hostPermission(), player -> {
             // placeholder, actual refresher supplied in FeudRootCommand
         });
@@ -91,7 +91,11 @@ public final class PluginBootstrap {
             "familyfeud.admin",
             gameController,
             boardWandService,
-            mapWallBinder
+            boardBindingStore,
+            mapIdStore,
+            framebufferStore,
+            dirtyTracker,
+            boardRenderer
         ));
     }
 }

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.*;
 
 // Assigns unique maps to each tile and attaches renderers
-// TODO: When artists are done with the map art, add a way to load them from a directory
 public final class MapWallBinder {
     private final BoardBinding binding;
     private final MapIdStore mapIdStore;
