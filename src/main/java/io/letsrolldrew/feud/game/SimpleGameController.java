@@ -56,6 +56,11 @@ public final class SimpleGameController implements GameController {
     }
 
     @Override
+    public Survey getActiveSurvey() {
+        return activeSurvey;
+    }
+
+    @Override
     public int strikeCount() {
         return strikeCount;
     }

@@ -38,24 +38,24 @@ public final class HostBookUiBuilder {
         this.hostKey = hostKey;
     }
 
-    public ItemStack createBook() {
+    public ItemStack createBook(Survey activeSurvey) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.title(titleComponent());
         meta.author(authorComponent());
         tag(meta);
-        meta.pages(buildPages(resolveHoverTexts()));
+        meta.pages(buildPages(resolveHoverTexts(), activeSurvey));
         book.setItemMeta(meta);
         return book;
     }
 
-    public ItemStack createBook(List<String> hovers) {
+    public ItemStack createBook(List<String> hovers, Survey activeSurvey) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.title(titleComponent());
         meta.author(authorComponent());
         tag(meta);
-        meta.pages(buildPages(hovers));
+        meta.pages(buildPages(hovers, activeSurvey));
         book.setItemMeta(meta);
         return book;
     }
@@ -72,16 +72,16 @@ public final class HostBookUiBuilder {
         return "Family Feud Remote";
     }
 
-    List<Component> buildPages(List<String> hoverTexts) {
+    List<Component> buildPages(List<String> hoverTexts, Survey activeSurvey) {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
         List<Component> pages = new ArrayList<>();
-        pages.add(controlPage(hovers));
-        pages.add(surveyLoadPage());
+        pages.add(controlPage(hovers, activeSurvey));
+        pages.add(surveyLoadPage(activeSurvey));
         return pages;
     }
 
     List<Component> buildPages() {
-        return buildPages(resolveHoverTexts());
+        return buildPages(resolveHoverTexts(), null);
     }
 
     private Component button(String label, String action) {
@@ -143,22 +143,32 @@ public final class HostBookUiBuilder {
         return Collections.nCopies(8, "Reveal (AnswerName: Points)");
     }
 
-    private Component controlPage(List<String> hovers) {
-        return page(
-            row(button("Reveal 1", "reveal 1", hovers.get(0)), button("Reveal 2", "reveal 2", hovers.get(1))),
-            spacerLine(),
-            row(button("Reveal 3", "reveal 3", hovers.get(2)), button("Reveal 4", "reveal 4", hovers.get(3))),
-            spacerLine(),
-            row(button("Reveal 5", "reveal 5", hovers.get(4)), button("Reveal 6", "reveal 6", hovers.get(5))),
-            spacerLine(),
-            row(button("Reveal 7", "reveal 7", hovers.get(6)), button("Reveal 8", "reveal 8", hovers.get(7))),
-            spacerLine(),
-            row(button("Strike", "strike"), button("Clear Strikes", "clearstrikes")),
-            row(button("Add +5", "add 5"), button("Add +10", "add 10"))
-        );
+    private Component controlPage(List<String> hovers, Survey activeSurvey) {
+        Component headerLabel = Component.text("Active Survey:", NamedTextColor.GOLD);
+        List<Component> header = new ArrayList<>();
+        header.add(headerLabel);
+        if (activeSurvey == null) {
+            header.add(Component.text("None", NamedTextColor.GOLD));
+        } else {
+            header.add(Component.text(abbreviate(activeSurvey.displayName(), 32), NamedTextColor.GOLD));
+        }
+        List<Component> rows = new ArrayList<>();
+        rows.addAll(header);
+        rows.add(spacerLine());
+        rows.add(row(button("Reveal 1", "reveal 1", hovers.get(0)), button("Reveal 2", "reveal 2", hovers.get(1))));
+        rows.add(spacerLine());
+        rows.add(row(button("Reveal 3", "reveal 3", hovers.get(2)), button("Reveal 4", "reveal 4", hovers.get(3))));
+        rows.add(spacerLine());
+        rows.add(row(button("Reveal 5", "reveal 5", hovers.get(4)), button("Reveal 6", "reveal 6", hovers.get(5))));
+        rows.add(spacerLine());
+        rows.add(row(button("Reveal 7", "reveal 7", hovers.get(6)), button("Reveal 8", "reveal 8", hovers.get(7))));
+        rows.add(spacerLine());
+        rows.add(row(button("Strike", "strike"), button("Clear Strikes", "clearstrikes")));
+        rows.add(row(button("Add +5", "add 5"), button("Add +10", "add 10")));
+        return page(rows.toArray(new Component[0]));
     }
 
-    private Component surveyLoadPage() {
+    private Component surveyLoadPage(Survey activeSurvey) {
         if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
             return page(
                 Component.text("Survey Selection List", NamedTextColor.GOLD),
@@ -174,19 +184,21 @@ public final class HostBookUiBuilder {
             Survey s1 = surveys.get(i);
             Survey s2 = (i + 1) < surveys.size() ? surveys.get(i + 1) : null;
             Survey s3 = (i + 2) < surveys.size() ? surveys.get(i + 2) : null;
-            Component c1 = surveyButton(s1);
-            Component c2 = s2 == null ? Component.text(" ") : surveyButton(s2);
-            Component c3 = s3 == null ? Component.text(" ") : surveyButton(s3);
+            Component c1 = surveyButton(s1, activeSurvey);
+            Component c2 = s2 == null ? Component.text(" ") : surveyButton(s2, activeSurvey);
+            Component c3 = s3 == null ? Component.text(" ") : surveyButton(s3, activeSurvey);
             rows.add(row3(c1, c2, c3));
         }
         return page(rows.toArray(new Component[0]));
     }
 
-    private Component surveyButton(Survey survey) {
+    private Component surveyButton(Survey survey, Survey activeSurvey) {
         String command = "/feud survey load " + survey.id();
         String label = abbreviate(survey.displayName(), 24);
-        return Component.text(label, NamedTextColor.BLUE)
-            .decorate(TextDecoration.UNDERLINED)
+        NamedTextColor color = activeSurvey != null && survey.id().equals(activeSurvey.id())
+            ? NamedTextColor.GREEN
+            : NamedTextColor.BLUE;
+        return Component.text(label, color)
             .hoverEvent(HoverEvent.showText(Component.text(survey.question())))
             .clickEvent(ClickEvent.runCommand(command));
     }

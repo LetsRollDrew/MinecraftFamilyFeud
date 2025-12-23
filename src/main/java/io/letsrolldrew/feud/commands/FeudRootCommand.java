@@ -129,7 +129,7 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
         gameController.setActiveSurvey(survey);
-        sender.sendMessage("Active survey set to " + survey.id() + ": " + survey.question());
+        sender.sendMessage("Active survey set to " + survey.displayName() + ": " + survey.question());
         if (sender instanceof Player player) {
             giveOrReplaceHostBook(player);
         }
@@ -151,7 +151,7 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private void giveOrReplaceHostBook(Player player) {
-        var fresh = hostBookUiBuilder.createBook(gameController.slotHoverTexts());
+        var fresh = hostBookUiBuilder.createBook(gameController.slotHoverTexts(), gameController.getActiveSurvey());
         hostRemoteService.giveOrReplace(player, fresh);
     }
 }

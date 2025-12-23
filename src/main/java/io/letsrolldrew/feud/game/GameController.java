@@ -18,6 +18,8 @@ public interface GameController {
 
     void setActiveSurvey(Survey survey);
 
+    Survey getActiveSurvey();
+
     int strikeCount();
 
     int maxStrikes();

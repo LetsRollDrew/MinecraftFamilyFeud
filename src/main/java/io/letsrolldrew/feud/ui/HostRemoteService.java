@@ -52,7 +52,7 @@ public final class HostRemoteService {
             Map<Integer, ItemStack> leftover = inv.addItem(book);
             if (!leftover.isEmpty()) {
                 leftover.values().forEach(stack -> player.getWorld().dropItemNaturally(player.getLocation(), stack));
-                log("Inventory full; dropped host remote at player location for " + player.getName());
+                log("Inventory full, dropped host remote at " + player.getName());
             } else {
                 log("Added host remote to inventory for " + player.getName());
             }
