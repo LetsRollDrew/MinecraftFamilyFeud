@@ -2,20 +2,32 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
     private final SurveyRepository surveyRepository;
     private final UiCommand uiCommand;
+    private final HostBookUiBuilder hostBookUiBuilder;
+    private final String hostPermission;
 
-    public FeudRootCommand(Plugin plugin, SurveyRepository surveyRepository, UiCommand uiCommand) {
+    public FeudRootCommand(
+        Plugin plugin,
+        SurveyRepository surveyRepository,
+        UiCommand uiCommand,
+        HostBookUiBuilder hostBookUiBuilder,
+        String hostPermission
+    ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.uiCommand = uiCommand;
+        this.hostBookUiBuilder = hostBookUiBuilder;
+        this.hostPermission = hostPermission;
     }
 
     @Override
@@ -35,6 +47,10 @@ public final class FeudRootCommand implements CommandExecutor {
                 System.arraycopy(args, 1, remaining, 0, args.length - 1);
             }
             return uiCommand.handle(sender, remaining);
+        }
+
+        if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
+            return handleHostBook(sender);
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("list")) {
@@ -57,6 +73,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud help - this help");
         sender.sendMessage("/feud version - show version");
         sender.sendMessage("/feud survey list - list loaded surveys");
+        sender.sendMessage("/feud host book - give host remote");
         sender.sendMessage("/feud ui reveal <1-8> - reveal slot");
         sender.sendMessage("/feud ui strike - add a strike");
         sender.sendMessage("/feud ui clearstrikes - clear strikes");
@@ -77,6 +94,20 @@ public final class FeudRootCommand implements CommandExecutor {
         for (Survey survey : surveyRepository.listAll()) {
             sender.sendMessage("- " + survey.id() + ": " + survey.question());
         }
+        return true;
+    }
+
+    private boolean handleHostBook(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can receive the host book.");
+            return true;
+        }
+        if (!player.hasPermission(hostPermission)) {
+            sender.sendMessage("You must be the host to use this.");
+            return true;
+        }
+        player.getInventory().addItem(hostBookUiBuilder.createBook());
+        player.sendMessage("Host remote given.");
         return true;
     }
 }
