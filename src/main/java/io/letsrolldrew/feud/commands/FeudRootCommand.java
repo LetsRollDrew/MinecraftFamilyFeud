@@ -14,16 +14,15 @@ import org.bukkit.plugin.Plugin;
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
     private final SurveyRepository surveyRepository;
-    private final UiCommand uiCommand;
     private final String hostPermission;
     private final GameController gameController;
     private final HostBookUiBuilder hostBookUiBuilder;
     private final HostRemoteService hostRemoteService;
+    private final UiCommand uiCommand;
 
     public FeudRootCommand(
         Plugin plugin,
         SurveyRepository surveyRepository,
-        UiCommand uiCommand,
         HostBookUiBuilder hostBookUiBuilder,
         HostRemoteService hostRemoteService,
         String hostPermission,
@@ -31,11 +30,11 @@ public final class FeudRootCommand implements CommandExecutor {
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
-        this.uiCommand = uiCommand;
         this.hostBookUiBuilder = hostBookUiBuilder;
         this.hostRemoteService = hostRemoteService;
         this.hostPermission = hostPermission;
         this.gameController = gameController;
+        this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player));
     }
 
     @Override
@@ -151,7 +150,14 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private void giveOrReplaceHostBook(Player player) {
-        var fresh = hostBookUiBuilder.createBook(gameController.slotHoverTexts(), gameController.getActiveSurvey());
+        var fresh = hostBookUiBuilder.createBook(
+            gameController.slotHoverTexts(),
+            gameController.getActiveSurvey(),
+            gameController.revealedSlots(),
+            gameController.strikeCount(),
+            gameController.maxStrikes(),
+            gameController.roundPoints()
+        );
         hostRemoteService.giveOrReplace(player, fresh);
     }
 }

@@ -1,17 +1,16 @@
 package io.letsrolldrew.feud.ui;
 
-import io.letsrolldrew.feud.util.Validation;
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.util.Validation;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -20,8 +19,12 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import static io.letsrolldrew.feud.ui.BookTextFormatter.*;
 
 public final class HostBookUiBuilder {
+
     private final String commandPrefix;
     private final SurveyRepository surveyRepository;
     private final List<String> fallbackHovers;
@@ -31,7 +34,12 @@ public final class HostBookUiBuilder {
         this(commandPrefix, null, null, null);
     }
 
-    public HostBookUiBuilder(String commandPrefix, SurveyRepository surveyRepository, List<String> fallbackHovers, NamespacedKey hostKey) {
+    public HostBookUiBuilder(
+        String commandPrefix,
+        SurveyRepository surveyRepository,
+        List<String> fallbackHovers,
+        NamespacedKey hostKey
+    ) {
         this.commandPrefix = Validation.requireNonBlank(commandPrefix, "commandPrefix");
         this.surveyRepository = surveyRepository;
         this.fallbackHovers = fallbackHovers;
@@ -39,25 +47,58 @@ public final class HostBookUiBuilder {
     }
 
     public ItemStack createBook(Survey activeSurvey) {
+        return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), 0, 3, 0);
+    }
+
+    public ItemStack createBook(List<String> hovers, Survey activeSurvey) {
+        return createBook(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0);
+    }
+
+    public ItemStack createBook(
+        List<String> hovers,
+        Survey activeSurvey,
+        Set<Integer> revealedSlots,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints
+    ) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.title(titleComponent());
         meta.author(authorComponent());
         tag(meta);
-        meta.pages(buildPages(resolveHoverTexts(), activeSurvey));
+        meta.pages(buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints));
         book.setItemMeta(meta);
         return book;
     }
 
-    public ItemStack createBook(List<String> hovers, Survey activeSurvey) {
-        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
-        BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.title(titleComponent());
-        meta.author(authorComponent());
-        tag(meta);
-        meta.pages(buildPages(hovers, activeSurvey));
-        book.setItemMeta(meta);
-        return book;
+    public ItemStack createBook(
+        Survey activeSurvey,
+        Set<Integer> revealedSlots,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints
+    ) {
+        return createBook(resolveHoverTexts(), activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints);
+    }
+
+    public ItemStack createBook(
+        List<String> hovers,
+        Survey activeSurvey,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints
+    ) {
+        return createBook(hovers, activeSurvey, Collections.emptySet(), strikeCount, maxStrikes, roundPoints);
+    }
+
+    public ItemStack createBook(
+        Survey activeSurvey,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints
+    ) {
+        return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), strikeCount, maxStrikes, roundPoints);
     }
 
     public Component titleComponent() {
@@ -72,39 +113,91 @@ public final class HostBookUiBuilder {
         return "Family Feud Remote";
     }
 
+    List<Component> buildPages() {
+        return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0);
+    }
+
     List<Component> buildPages(List<String> hoverTexts, Survey activeSurvey) {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
+        return buildPages(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0);
+    }
+
+    List<Component> buildPages(
+        List<String> hoverTexts,
+        Survey activeSurvey,
+        Set<Integer> revealedSlots,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints
+    ) {
+        List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
+
         List<Component> pages = new ArrayList<>();
-        pages.add(controlPage(hovers, activeSurvey));
+        pages.add(controlPage(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints));
         pages.add(surveyLoadPage(activeSurvey));
         return pages;
     }
 
-    List<Component> buildPages() {
-        return buildPages(resolveHoverTexts(), null);
-    }
-
     private Component button(String label, String action) {
-        return button(label, action, "Click to run " + commandPrefix + " " + action);
+        return button(label, action, "Click to run " + commandPrefix + " " + action, NamedTextColor.BLUE, true);
     }
 
     private Component button(String label, String action, String hoverText) {
+        return button(label, action, hoverText, NamedTextColor.BLUE, true);
+    }
+
+    private Component button(String label, String action, String hoverText, NamedTextColor color) {
+        return button(label, action, hoverText, color, true);
+    }
+
+    private Component button(String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
         String command = commandPrefix + " " + action;
+
         Component hover = action.startsWith("reveal")
             ? Component.text(hoverText)
             : Component.text("Click to run " + command);
-        return Component.text(label, NamedTextColor.BLUE)
-            .decorate(TextDecoration.UNDERLINED)
+
+        String shown = noBreak ? toNoBreak(label) : label;
+        String stableLabel = "[" + shown + "]";
+
+        return Component.text(stableLabel, color)
             .hoverEvent(HoverEvent.showText(hover))
             .clickEvent(ClickEvent.runCommand(command));
     }
 
-    private Component row(Component left, Component right) {
-        return Component.join(JoinConfiguration.separator(spacer()), left, right);
+    private Component buttonRunCommand(String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+        String shown = noBreak ? toNoBreak(label) : label;
+        String stableLabel = "[" + shown + "]";
+
+        return Component.text(stableLabel, color)
+            .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
+            .clickEvent(ClickEvent.runCommand(fullCommand));
     }
 
-    private Component spacer() {
-        return Component.text("   ");
+    private Component buttonForSlot(
+        int slot,
+        List<String> hovers,
+        Survey activeSurvey,
+        Set<Integer> revealedSlots
+    ) {
+        boolean revealed = revealedSlots.contains(slot);
+
+        if (revealed && activeSurvey != null && slot - 1 < activeSurvey.answers().size()) {
+            AnswerOption ans = activeSurvey.answers().get(slot - 1);
+
+            // compact revealed labels
+            String label = formatRevealedLabel(ans.text(), ans.points());
+
+            String hover = "Slot " + slot + ": " + ans.text() + " (" + ans.points() + ")";
+            return button(label, "reveal " + slot, hover, NamedTextColor.DARK_AQUA);
+        }
+
+        String label = unrevealedLabel(slot);
+        return button(label, "reveal " + slot, hovers.get(slot - 1), NamedTextColor.BLUE);
+    }
+
+    private Component row(Component left, Component right) {
+        return Component.join(JoinConfiguration.separator(COL_GAP), left, right);
     }
 
     private Component spacerLine() {
@@ -122,6 +215,7 @@ public final class HostBookUiBuilder {
         if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
             return defaultHovers();
         }
+
         Survey chosen = surveyRepository.listAll().stream()
             .filter(s -> s.answers().size() >= 8)
             .findFirst()
@@ -143,28 +237,37 @@ public final class HostBookUiBuilder {
         return Collections.nCopies(8, "Reveal (AnswerName: Points)");
     }
 
-    private Component controlPage(List<String> hovers, Survey activeSurvey) {
-        Component headerLabel = Component.text("Active Survey:", NamedTextColor.GOLD);
-        List<Component> header = new ArrayList<>();
-        header.add(headerLabel);
-        if (activeSurvey == null) {
-            header.add(Component.text("None", NamedTextColor.GOLD));
-        } else {
-            header.add(Component.text(abbreviate(activeSurvey.displayName(), 32), NamedTextColor.GOLD));
-        }
+    private Component controlPage(
+        List<String> hovers,
+        Survey activeSurvey,
+        Set<Integer> revealedSlots,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints
+    ) {
         List<Component> rows = new ArrayList<>();
-        rows.addAll(header);
+
+        String displayName = activeSurvey == null
+            ? "Select Survey Pg.2"
+            : abbreviate(activeSurvey.displayName(), 32);
+
+        rows.add(Component.text(displayName, NamedTextColor.GOLD));
         rows.add(spacerLine());
-        rows.add(row(button("Reveal 1", "reveal 1", hovers.get(0)), button("Reveal 2", "reveal 2", hovers.get(1))));
-        rows.add(spacerLine());
-        rows.add(row(button("Reveal 3", "reveal 3", hovers.get(2)), button("Reveal 4", "reveal 4", hovers.get(3))));
-        rows.add(spacerLine());
-        rows.add(row(button("Reveal 5", "reveal 5", hovers.get(4)), button("Reveal 6", "reveal 6", hovers.get(5))));
-        rows.add(spacerLine());
-        rows.add(row(button("Reveal 7", "reveal 7", hovers.get(6)), button("Reveal 8", "reveal 8", hovers.get(7))));
+
+        rows.add(row(
+            Component.text("Pts: " + roundPoints, NamedTextColor.GOLD),
+            Component.text("Strikes: " + strikeLine(strikeCount, maxStrikes), NamedTextColor.RED)
+        ));
+
+        rows.add(row(buttonForSlot(1, hovers, activeSurvey, revealedSlots), buttonForSlot(2, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(3, hovers, activeSurvey, revealedSlots), buttonForSlot(4, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(5, hovers, activeSurvey, revealedSlots), buttonForSlot(6, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(7, hovers, activeSurvey, revealedSlots), buttonForSlot(8, hovers, activeSurvey, revealedSlots)));
+
         rows.add(spacerLine());
         rows.add(row(button("Strike", "strike"), button("Clear Strikes", "clearstrikes")));
         rows.add(row(button("Add +5", "add 5"), button("Add +10", "add 10")));
+
         return page(rows.toArray(new Component[0]));
     }
 
@@ -176,45 +279,42 @@ public final class HostBookUiBuilder {
                 Component.text("No surveys found. Use /feud survey list.")
             );
         }
+
         List<Survey> surveys = surveyRepository.listAll();
         List<Component> rows = new ArrayList<>();
+
         rows.add(Component.text("Survey Selection List", NamedTextColor.GOLD));
         rows.add(spacerLine());
+
         for (int i = 0; i < surveys.size(); i += 3) {
             Survey s1 = surveys.get(i);
             Survey s2 = (i + 1) < surveys.size() ? surveys.get(i + 1) : null;
             Survey s3 = (i + 2) < surveys.size() ? surveys.get(i + 2) : null;
+
             Component c1 = surveyButton(s1, activeSurvey);
             Component c2 = s2 == null ? Component.text(" ") : surveyButton(s2, activeSurvey);
             Component c3 = s3 == null ? Component.text(" ") : surveyButton(s3, activeSurvey);
+
             rows.add(row3(c1, c2, c3));
         }
+
         return page(rows.toArray(new Component[0]));
     }
 
     private Component surveyButton(Survey survey, Survey activeSurvey) {
         String command = "/feud survey load " + survey.id();
-        String label = abbreviate(survey.displayName(), 24);
+
+        String label = abbreviate(survey.displayName(), 16); // normal spaces
+
         NamedTextColor color = activeSurvey != null && survey.id().equals(activeSurvey.id())
             ? NamedTextColor.GREEN
             : NamedTextColor.BLUE;
-        return Component.text(label, color)
-            .hoverEvent(HoverEvent.showText(Component.text(survey.question())))
-            .clickEvent(ClickEvent.runCommand(command));
+
+        return buttonRunCommand(label, command, survey.question(), color, false);
     }
 
     private Component row3(Component a, Component b, Component c) {
-        return Component.join(JoinConfiguration.separator(spacer()), a, b, c);
-    }
-
-    private String abbreviate(String text, int maxLen) {
-        if (text == null) {
-            return "";
-        }
-        if (text.length() <= maxLen) {
-            return text;
-        }
-        return text.substring(0, Math.max(0, maxLen - 3)) + "...";
+        return Component.join(JoinConfiguration.separator(COL_GAP), a, b, c);
     }
 
     private void tag(BookMeta meta) {

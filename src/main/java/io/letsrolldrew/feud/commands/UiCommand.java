@@ -3,14 +3,19 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.util.Validation;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import java.util.function.Consumer;
 
 public final class UiCommand {
     private final GameController controller;
     private final String hostPermission;
+    private final Consumer<Player> bookRefresher;
 
-    public UiCommand(GameController controller, String hostPermission) {
+    public UiCommand(GameController controller, String hostPermission, Consumer<Player> bookRefresher) {
         this.controller = controller;
         this.hostPermission = Validation.requireNonBlank(hostPermission, "host-permission");
+        this.bookRefresher = bookRefresher;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -52,16 +57,19 @@ public final class UiCommand {
         }
         controller.revealSlot(slot);
         sender.sendMessage("Revealed slot " + slot + ".");
+        refreshIfPlayer(sender);
     }
 
     private void handleStrike(CommandSender sender) {
         controller.strike();
         sender.sendMessage("Strike recorded (" + controller.strikeCount() + "/" + controller.maxStrikes() + ").");
+        refreshIfPlayer(sender);
     }
 
     private void handleClearStrikes(CommandSender sender) {
         controller.clearStrikes();
         sender.sendMessage("Strikes cleared.");
+        refreshIfPlayer(sender);
     }
 
     private void handleAddPoints(CommandSender sender, String[] args) {
@@ -82,9 +90,16 @@ public final class UiCommand {
         }
         controller.addPoints(points);
         sender.sendMessage("Added " + points + " points. Round total: " + controller.roundPoints());
+        refreshIfPlayer(sender);
     }
 
     private void sendUsage(CommandSender sender) {
         sender.sendMessage("Usage: /feud ui <reveal, strike, clearstrikes, add>");
+    }
+
+    private void refreshIfPlayer(CommandSender sender) {
+        if (bookRefresher != null && sender instanceof Player player) {
+            bookRefresher.accept(player);
+        }
     }
 }

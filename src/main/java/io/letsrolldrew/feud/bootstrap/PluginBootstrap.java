@@ -30,10 +30,13 @@ public final class PluginBootstrap {
         this.config = PluginConfig.from(plugin.getConfig());
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
-        this.uiCommand = new UiCommand(gameController, config.hostPermission());
+        // refresher wired later via FeudRootCommand
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
+        this.uiCommand = new UiCommand(gameController, config.hostPermission(), player -> {
+            // placeholder, actual refresher supplied in FeudRootCommand
+        });
         registerCommands();
     }
 
@@ -61,7 +64,6 @@ public final class PluginBootstrap {
         feud.setExecutor(new FeudRootCommand(
             plugin,
             surveyRepository,
-            uiCommand,
             hostBookUiBuilder,
             hostRemoteService,
             config.hostPermission(),
