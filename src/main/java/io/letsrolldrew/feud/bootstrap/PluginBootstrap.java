@@ -8,6 +8,9 @@ import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
+import io.letsrolldrew.feud.board.MapWallBinder;
+import io.letsrolldrew.feud.board.render.MapIdStore;
+import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import org.bukkit.NamespacedKey;
@@ -24,6 +27,9 @@ public final class PluginBootstrap {
     private HostRemoteService hostRemoteService;
     private BoardWandService boardWandService;
     private BoardBindingStore boardBindingStore;
+    private MapWallBinder mapWallBinder;
+    private TileFramebufferStore framebufferStore;
+    private MapIdStore mapIdStore;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -41,6 +47,13 @@ public final class PluginBootstrap {
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
         this.boardBindingStore = new BoardBindingStore(plugin);
         this.boardWandService = new BoardWandService(plugin, wandKey, boardBindingStore);
+        this.framebufferStore = new TileFramebufferStore();
+        this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
+        this.mapWallBinder = new MapWallBinder(
+            boardBindingStore.load().orElse(null),
+            mapIdStore,
+            framebufferStore
+        );
         this.uiCommand = new UiCommand(gameController, config.hostPermission(), player -> {
             // placeholder, actual refresher supplied in FeudRootCommand
         });
@@ -77,7 +90,8 @@ public final class PluginBootstrap {
             config.hostPermission(),
             "familyfeud.admin",
             gameController,
-            boardWandService
+            boardWandService,
+            mapWallBinder
         ));
     }
 }

@@ -6,6 +6,7 @@ import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.board.BoardWandService;
+import io.letsrolldrew.feud.board.MapWallBinder;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,6 +22,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final HostBookUiBuilder hostBookUiBuilder;
     private final HostRemoteService hostRemoteService;
     private final BoardWandService boardWandService;
+    private final MapWallBinder mapWallBinder;
     private final UiCommand uiCommand;
 
     public FeudRootCommand(
@@ -31,7 +33,8 @@ public final class FeudRootCommand implements CommandExecutor {
         String hostPermission,
         String adminPermission,
         GameController gameController,
-        BoardWandService boardWandService
+        BoardWandService boardWandService,
+        MapWallBinder mapWallBinder
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -41,6 +44,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.adminPermission = adminPermission;
         this.gameController = gameController;
         this.boardWandService = boardWandService;
+        this.mapWallBinder = mapWallBinder;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player));
     }
 
@@ -72,6 +76,10 @@ public final class FeudRootCommand implements CommandExecutor {
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
             return handleHostBook(sender);
+        }
+
+        if (args.length >= 2 && args[0].equalsIgnoreCase("board") && args[1].equalsIgnoreCase("initmaps")) {
+            return handleBoardInitMaps(sender);
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("list")) {
@@ -109,6 +117,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud ui clearstrikes - clear strikes");
         sender.sendMessage("/feud ui add <points> - add points to round");
         sender.sendMessage("/feud board wand - get board setup wand (admin)");
+        sender.sendMessage("/feud board initmaps - assign maps to board frames (admin)");
         return true;
     }
 
@@ -141,6 +150,24 @@ public final class FeudRootCommand implements CommandExecutor {
         }
         boardWandService.giveWand(player);
         sender.sendMessage("Board wand given. Right-click the top-left frame, then right-click the bottom-right frame.");
+        return true;
+    }
+
+    private boolean handleBoardInitMaps(CommandSender sender) {
+        if (!sender.hasPermission(adminPermission)) {
+            sender.sendMessage("You need admin permission to set up the board.");
+            return true;
+        }
+        if (mapWallBinder == null) {
+            sender.sendMessage("Board binder not initialized.");
+            return true;
+        }
+        boolean ok = mapWallBinder.bind();
+        if (ok) {
+            sender.sendMessage("Board maps initialized.");
+        } else {
+            sender.sendMessage("Board map init failed (binding missing or world unloaded).");
+        }
         return true;
     }
 
