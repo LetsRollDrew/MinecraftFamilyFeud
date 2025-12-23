@@ -5,7 +5,7 @@ import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.letsrolldrew.feud.game.GameController;
-import io.letsrolldrew.feud.arena.BoardWandService;
+import io.letsrolldrew.feud.board.BoardWandService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,12 +49,15 @@ public final class FeudRootCommand implements CommandExecutor {
         if (args.length == 0) {
             return handleVersion(sender);
         }
+
         if (args.length >= 1 && args[0].equalsIgnoreCase("help")) {
             return handleHelp(sender);
         }
+
         if (args.length >= 1 && args[0].equalsIgnoreCase("version")) {
             return handleVersion(sender);
         }
+
         if (args.length >= 1 && args[0].equalsIgnoreCase("ui")) {
             String[] remaining = new String[Math.max(0, args.length - 1)];
             if (args.length > 1) {
@@ -126,8 +129,14 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private boolean handleBoardWand(CommandSender sender) {
+
         if (!sender.hasPermission(adminPermission)) {
             sender.sendMessage("You need admin permission to set up the board.");
+            return true;
+        }
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can receive the board wand.");
             return true;
         }
         boardWandService.giveWand(player);
@@ -136,36 +145,46 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private boolean handleSurveyLoad(CommandSender sender, String surveyId) {
+
         if (!sender.hasPermission(hostPermission)) {
             sender.sendMessage("You must be the host to do that.");
             return true;
         }
+
         if (surveyRepository == null) {
             sender.sendMessage("Surveys not loaded.");
             return true;
         }
+
         Survey survey = surveyRepository.findById(surveyId).orElse(null);
+
         if (survey == null) {
             sender.sendMessage("Survey not found: " + surveyId);
             return true;
         }
+
         gameController.setActiveSurvey(survey);
         sender.sendMessage("Active survey set to " + survey.displayName() + ": " + survey.question());
+
         if (sender instanceof Player player) {
             giveOrReplaceHostBook(player);
         }
+
         return true;
     }
 
     private boolean handleHostBook(CommandSender sender) {
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can receive the host book.");
             return true;
         }
+
         if (!player.hasPermission(hostPermission)) {
             sender.sendMessage("You must be the host to use this.");
             return true;
         }
+
         giveOrReplaceHostBook(player);
         player.sendMessage("Host remote given.");
         return true;
