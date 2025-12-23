@@ -36,3 +36,63 @@ surveys:
         points: 15
       - text: "Toast"
         points: 10
+
+  block_taste:
+    question: "What block would taste the best?"
+    answers:
+      - text: "Cake"
+        points: 35
+      - text: "Honeycomb"
+        points: 20
+      - text: "Melon"
+        points: 15
+      - text: "Cookie"
+        points: 10
+      - text: "Pumpkin Pie"
+        points: 8
+      - text: "Sweet Berries"
+        points: 6
+      - text: "Apple"
+        points: 4
+      - text: "Bread"
+        points: 2
+
+  suspicious_animal:
+    question: "What animal is the most suspicious?"
+    answers:
+      - text: "Fox"
+        points: 30
+      - text: "Cat"
+        points: 20
+      - text: "Parrot"
+        points: 15
+      - text: "Creeper (not animal)"
+        points: 12
+      - text: "Goat"
+        points: 10
+      - text: "Pig"
+        points: 8
+      - text: "Panda"
+        points: 3
+      - text: "Villager"
+        points: 2
+
+  build_materials:
+    question: "Best materials to build a house?"
+    answers:
+      - text: "Oak Wood"
+        points: 25
+      - text: "Stone Bricks"
+        points: 20
+      - text: "Spruce Wood"
+        points: 15
+      - text: "Cobblestone"
+        points: 12
+      - text: "Quartz"
+        points: 10
+      - text: "Bricks"
+        points: 8
+      - text: "Dark Oak"
+        points: 6
+      - text: "Mangrove"
+        points: 4

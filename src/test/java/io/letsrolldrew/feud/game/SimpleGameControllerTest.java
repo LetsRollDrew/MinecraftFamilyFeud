@@ -2,6 +2,9 @@ package io.letsrolldrew.feud.game;
 
 import org.junit.jupiter.api.Test;
 
+import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.survey.Survey;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,5 +59,23 @@ class SimpleGameControllerTest {
         SimpleGameController controller = new SimpleGameController(3);
         assertThrows(IllegalArgumentException.class, () -> controller.addPoints(0));
         assertThrows(IllegalArgumentException.class, () -> controller.addPoints(-5));
+    }
+
+    @Test
+    void providesHoverTextsFromActiveSurvey() {
+        SimpleGameController controller = new SimpleGameController(3);
+        Survey survey = new Survey(
+            "sample",
+            "Q",
+            java.util.List.of(
+                new AnswerOption("One", 10, java.util.List.of()),
+                new AnswerOption("Two", 5, java.util.List.of())
+            )
+        );
+        controller.setActiveSurvey(survey);
+        java.util.List<String> hovers = controller.slotHoverTexts();
+        assertEquals("Reveal (One: 10)", hovers.get(0));
+        assertEquals("Reveal (Two: 5)", hovers.get(1));
+        assertEquals("Reveal (AnswerName: Points)", hovers.get(2));
     }
 }

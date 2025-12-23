@@ -1,5 +1,8 @@
 package io.letsrolldrew.feud.game;
 
+import io.letsrolldrew.feud.survey.Survey;
+
+import java.util.List;
 import java.util.Set;
 
 //Core game control surface for host actions
@@ -13,6 +16,8 @@ public interface GameController {
 
     void addPoints(int points);
 
+    void setActiveSurvey(Survey survey);
+
     int strikeCount();
 
     int maxStrikes();
@@ -20,4 +25,6 @@ public interface GameController {
     int roundPoints();
 
     Set<Integer> revealedSlots();
+
+    List<String> slotHoverTexts();
 }

@@ -28,7 +28,7 @@ public final class PluginBootstrap {
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
         this.uiCommand = new UiCommand(gameController, config.hostPermission());
-        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository);
+        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null);
         registerCommands();
     }
 
@@ -53,6 +53,6 @@ public final class PluginBootstrap {
         if (feud == null) {
             throw new IllegalStateException("Command 'feud' not defined in plugin.yml");
         }
-        feud.setExecutor(new FeudRootCommand(plugin, surveyRepository, uiCommand, hostBookUiBuilder, config.hostPermission()));
+        feud.setExecutor(new FeudRootCommand(plugin, surveyRepository, uiCommand, hostBookUiBuilder, config.hostPermission(), gameController));
     }
 }

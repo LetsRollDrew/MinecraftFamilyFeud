@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
+import io.letsrolldrew.feud.game.GameController;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,21 +14,24 @@ public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
     private final SurveyRepository surveyRepository;
     private final UiCommand uiCommand;
-    private final HostBookUiBuilder hostBookUiBuilder;
     private final String hostPermission;
+    private final GameController gameController;
+    private final HostBookUiBuilder hostBookUiBuilder;
 
     public FeudRootCommand(
         Plugin plugin,
         SurveyRepository surveyRepository,
         UiCommand uiCommand,
         HostBookUiBuilder hostBookUiBuilder,
-        String hostPermission
+        String hostPermission,
+        GameController gameController
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.uiCommand = uiCommand;
         this.hostBookUiBuilder = hostBookUiBuilder;
         this.hostPermission = hostPermission;
+        this.gameController = gameController;
     }
 
     @Override
@@ -57,6 +61,14 @@ public final class FeudRootCommand implements CommandExecutor {
             return handleSurveyList(sender);
         }
 
+        if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("load")) {
+            if (args.length < 3) {
+                sender.sendMessage("Usage: /feud survey load <id>");
+                return true;
+            }
+            return handleSurveyLoad(sender, args[2]);
+        }
+
         return handleHelp(sender);
     }
 
@@ -73,6 +85,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud help - this help");
         sender.sendMessage("/feud version - show version");
         sender.sendMessage("/feud survey list - list loaded surveys");
+        sender.sendMessage("/feud survey load <id> - set active survey");
         sender.sendMessage("/feud host book - give host remote");
         sender.sendMessage("/feud ui reveal <1-8> - reveal slot");
         sender.sendMessage("/feud ui strike - add a strike");
@@ -97,6 +110,21 @@ public final class FeudRootCommand implements CommandExecutor {
         return true;
     }
 
+    private boolean handleSurveyLoad(CommandSender sender, String surveyId) {
+        if (surveyRepository == null) {
+            sender.sendMessage("Surveys not loaded.");
+            return true;
+        }
+        Survey survey = surveyRepository.findById(surveyId).orElse(null);
+        if (survey == null) {
+            sender.sendMessage("Survey not found: " + surveyId);
+            return true;
+        }
+        gameController.setActiveSurvey(survey);
+        sender.sendMessage("Active survey set to " + survey.id() + ": " + survey.question());
+        return true;
+    }
+
     private boolean handleHostBook(CommandSender sender) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can receive the host book.");
@@ -106,7 +134,7 @@ public final class FeudRootCommand implements CommandExecutor {
             sender.sendMessage("You must be the host to use this.");
             return true;
         }
-        player.getInventory().addItem(hostBookUiBuilder.createBook());
+        player.getInventory().addItem(hostBookUiBuilder.createBook(gameController.slotHoverTexts()));
         player.sendMessage("Host remote given.");
         return true;
     }

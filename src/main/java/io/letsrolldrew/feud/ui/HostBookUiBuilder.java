@@ -21,14 +21,16 @@ import java.util.List;
 public final class HostBookUiBuilder {
     private final String commandPrefix;
     private final SurveyRepository surveyRepository;
+    private final List<String> fallbackHovers;
 
     public HostBookUiBuilder(String commandPrefix) {
-        this(commandPrefix, null);
+        this(commandPrefix, null, null);
     }
 
-    public HostBookUiBuilder(String commandPrefix, SurveyRepository surveyRepository) {
+    public HostBookUiBuilder(String commandPrefix, SurveyRepository surveyRepository, List<String> fallbackHovers) {
         this.commandPrefix = Validation.requireNonBlank(commandPrefix, "commandPrefix");
         this.surveyRepository = surveyRepository;
+        this.fallbackHovers = fallbackHovers;
     }
 
     public ItemStack createBook() {
@@ -41,21 +43,21 @@ public final class HostBookUiBuilder {
         return book;
     }
 
+    public ItemStack createBook(List<String> hovers) {
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        meta.title(Component.text("Family Feud Remote", NamedTextColor.GOLD));
+        meta.author(Component.text("Family Feud", NamedTextColor.YELLOW));
+        meta.pages(buildPages(hovers));
+        book.setItemMeta(meta);
+        return book;
+    }
+
     List<Component> buildPages(List<String> hoverTexts) {
-        List<String> hovers = hoverTexts == null ? Collections.nCopies(8, "Reveal (AnswerName: Points)") : hoverTexts;
+        List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
         List<Component> pages = new ArrayList<>();
-        pages.add(page(
-            row(button("Reveal 1", "reveal 1", hovers.get(0)), button("Reveal 2", "reveal 2", hovers.get(1))),
-            spacerLine(),
-            row(button("Reveal 3", "reveal 3", hovers.get(2)), button("Reveal 4", "reveal 4", hovers.get(3))),
-            spacerLine(),
-            row(button("Reveal 5", "reveal 5", hovers.get(4)), button("Reveal 6", "reveal 6", hovers.get(5))),
-            spacerLine(),
-            row(button("Reveal 7", "reveal 7", hovers.get(6)), button("Reveal 8", "reveal 8", hovers.get(7))),
-            spacerLine(),
-            row(button("Strike", "strike"), button("Clear Strikes", "clearstrikes")),
-            row(button("Add +5", "add 5"), button("Add +10", "add 10"))
-        ));
+        pages.add(controlPage(hovers));
+        pages.add(surveyLoadPage());
         return pages;
     }
 
@@ -95,8 +97,11 @@ public final class HostBookUiBuilder {
     }
 
     private List<String> resolveHoverTexts() {
+        if (fallbackHovers != null && fallbackHovers.size() == 8) {
+            return fallbackHovers;
+        }
         if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
-            return Collections.nCopies(8, "Reveal (AnswerName: Points)");
+            return defaultHovers();
         }
         Survey chosen = surveyRepository.listAll().stream()
             .filter(s -> s.answers().size() >= 8)
@@ -113,5 +118,48 @@ public final class HostBookUiBuilder {
             }
         }
         return hovers;
+    }
+
+    private List<String> defaultHovers() {
+        return Collections.nCopies(8, "Reveal (AnswerName: Points)");
+    }
+
+    private Component controlPage(List<String> hovers) {
+        return page(
+            row(button("Reveal 1", "reveal 1", hovers.get(0)), button("Reveal 2", "reveal 2", hovers.get(1))),
+            spacerLine(),
+            row(button("Reveal 3", "reveal 3", hovers.get(2)), button("Reveal 4", "reveal 4", hovers.get(3))),
+            spacerLine(),
+            row(button("Reveal 5", "reveal 5", hovers.get(4)), button("Reveal 6", "reveal 6", hovers.get(5))),
+            spacerLine(),
+            row(button("Reveal 7", "reveal 7", hovers.get(6)), button("Reveal 8", "reveal 8", hovers.get(7))),
+            spacerLine(),
+            row(button("Strike", "strike"), button("Clear Strikes", "clearstrikes")),
+            row(button("Add +5", "add 5"), button("Add +10", "add 10"))
+        );
+    }
+
+    private Component surveyLoadPage() {
+        if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
+            return page(Component.text("No surveys found. Use /feud survey list."));
+        }
+        List<Survey> surveys = surveyRepository.listAll();
+        List<Component> rows = new ArrayList<>();
+        for (int i = 0; i < surveys.size() && i < 6; i += 2) {
+            Survey left = surveys.get(i);
+            Survey right = (i + 1) < surveys.size() ? surveys.get(i + 1) : null;
+            Component leftButton = surveyButton(left);
+            Component rightButton = right == null ? Component.text(" ") : surveyButton(right);
+            rows.add(row(leftButton, rightButton));
+        }
+        return page(rows.toArray(new Component[0]));
+    }
+
+    private Component surveyButton(Survey survey) {
+        String command = "/feud survey load " + survey.id();
+        return Component.text("Load: " + survey.id(), NamedTextColor.BLUE)
+            .decorate(TextDecoration.UNDERLINED)
+            .hoverEvent(HoverEvent.showText(Component.text(survey.question())))
+            .clickEvent(ClickEvent.runCommand(command));
     }
 }
