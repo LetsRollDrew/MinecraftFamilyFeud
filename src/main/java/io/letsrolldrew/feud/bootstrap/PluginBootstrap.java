@@ -7,6 +7,8 @@ import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
+import io.letsrolldrew.feud.ui.HostRemoteService;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,6 +19,7 @@ public final class PluginBootstrap {
     private GameController gameController;
     private UiCommand uiCommand;
     private HostBookUiBuilder hostBookUiBuilder;
+    private HostRemoteService hostRemoteService;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -28,7 +31,9 @@ public final class PluginBootstrap {
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
         this.uiCommand = new UiCommand(gameController, config.hostPermission());
-        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null);
+        NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
+        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
+        this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         registerCommands();
     }
 
@@ -53,6 +58,14 @@ public final class PluginBootstrap {
         if (feud == null) {
             throw new IllegalStateException("Command 'feud' not defined in plugin.yml");
         }
-        feud.setExecutor(new FeudRootCommand(plugin, surveyRepository, uiCommand, hostBookUiBuilder, config.hostPermission(), gameController));
+        feud.setExecutor(new FeudRootCommand(
+            plugin,
+            surveyRepository,
+            uiCommand,
+            hostBookUiBuilder,
+            hostRemoteService,
+            config.hostPermission(),
+            gameController
+        ));
     }
 }

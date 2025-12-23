@@ -10,9 +10,12 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,22 +25,25 @@ public final class HostBookUiBuilder {
     private final String commandPrefix;
     private final SurveyRepository surveyRepository;
     private final List<String> fallbackHovers;
+    private final NamespacedKey hostKey;
 
     public HostBookUiBuilder(String commandPrefix) {
-        this(commandPrefix, null, null);
+        this(commandPrefix, null, null, null);
     }
 
-    public HostBookUiBuilder(String commandPrefix, SurveyRepository surveyRepository, List<String> fallbackHovers) {
+    public HostBookUiBuilder(String commandPrefix, SurveyRepository surveyRepository, List<String> fallbackHovers, NamespacedKey hostKey) {
         this.commandPrefix = Validation.requireNonBlank(commandPrefix, "commandPrefix");
         this.surveyRepository = surveyRepository;
         this.fallbackHovers = fallbackHovers;
+        this.hostKey = hostKey;
     }
 
     public ItemStack createBook() {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.title(Component.text("Family Feud Remote", NamedTextColor.GOLD));
-        meta.author(Component.text("Family Feud", NamedTextColor.YELLOW));
+        meta.title(titleComponent());
+        meta.author(authorComponent());
+        tag(meta);
         meta.pages(buildPages(resolveHoverTexts()));
         book.setItemMeta(meta);
         return book;
@@ -48,6 +54,7 @@ public final class HostBookUiBuilder {
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.title(titleComponent());
         meta.author(authorComponent());
+        tag(meta);
         meta.pages(buildPages(hovers));
         book.setItemMeta(meta);
         return book;
@@ -196,5 +203,13 @@ public final class HostBookUiBuilder {
             return text;
         }
         return text.substring(0, Math.max(0, maxLen - 3)) + "...";
+    }
+
+    private void tag(BookMeta meta) {
+        if (hostKey == null) {
+            return;
+        }
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        pdc.set(hostKey, PersistentDataType.INTEGER, 1);
     }
 }

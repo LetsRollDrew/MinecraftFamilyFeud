@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
+import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.letsrolldrew.feud.game.GameController;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -17,12 +18,14 @@ public final class FeudRootCommand implements CommandExecutor {
     private final String hostPermission;
     private final GameController gameController;
     private final HostBookUiBuilder hostBookUiBuilder;
+    private final HostRemoteService hostRemoteService;
 
     public FeudRootCommand(
         Plugin plugin,
         SurveyRepository surveyRepository,
         UiCommand uiCommand,
         HostBookUiBuilder hostBookUiBuilder,
+        HostRemoteService hostRemoteService,
         String hostPermission,
         GameController gameController
     ) {
@@ -30,6 +33,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.surveyRepository = surveyRepository;
         this.uiCommand = uiCommand;
         this.hostBookUiBuilder = hostBookUiBuilder;
+        this.hostRemoteService = hostRemoteService;
         this.hostPermission = hostPermission;
         this.gameController = gameController;
     }
@@ -148,22 +152,6 @@ public final class FeudRootCommand implements CommandExecutor {
 
     private void giveOrReplaceHostBook(Player player) {
         var fresh = hostBookUiBuilder.createBook(gameController.slotHoverTexts());
-        var inv = player.getInventory();
-        boolean removedAny = false;
-        for (int slot = 0; slot < inv.getSize(); slot++) {
-            var stack = inv.getItem(slot);
-            if (stack == null || !stack.hasItemMeta()) {
-                continue;
-            }
-            var meta = stack.getItemMeta();
-            if (meta instanceof org.bukkit.inventory.meta.BookMeta bookMeta) {
-                String title = bookMeta.getTitle();
-                if (title != null && title.equals(hostBookUiBuilder.titleString())) {
-                    inv.setItem(slot, null);
-                    removedAny = true;
-                }
-            }
-        }
-        inv.addItem(fresh);
+        hostRemoteService.giveOrReplace(player, fresh);
     }
 }
