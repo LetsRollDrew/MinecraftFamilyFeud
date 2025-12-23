@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.game;
 
 import io.letsrolldrew.feud.survey.Survey;
+import io.letsrolldrew.feud.game.TeamControl;
 
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,18 @@ public interface GameController {
     int maxStrikes();
 
     int roundPoints();
+
+    int redScore();
+
+    int blueScore();
+
+    TeamControl controllingTeam();
+
+    void setControllingTeam(TeamControl team);
+
+    void awardRoundPoints();
+
+    void resetRoundState();
 
     Set<Integer> revealedSlots();
 

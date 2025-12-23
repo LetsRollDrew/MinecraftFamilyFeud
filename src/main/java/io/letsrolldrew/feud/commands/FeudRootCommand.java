@@ -156,7 +156,8 @@ public final class FeudRootCommand implements CommandExecutor {
             gameController.revealedSlots(),
             gameController.strikeCount(),
             gameController.maxStrikes(),
-            gameController.roundPoints()
+            gameController.roundPoints(),
+            gameController.controllingTeam()
         );
         hostRemoteService.giveOrReplace(player, fresh);
     }

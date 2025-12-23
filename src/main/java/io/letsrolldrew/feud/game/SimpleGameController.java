@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.game;
 import io.letsrolldrew.feud.util.Validation;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.game.TeamControl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +18,9 @@ public final class SimpleGameController implements GameController {
     private final Set<Integer> revealedSlots = new LinkedHashSet<>();
     private int strikeCount;
     private int roundPoints;
+    private int redScore;
+    private int blueScore;
+    private TeamControl controllingTeam = TeamControl.NONE;
     private Survey activeSurvey;
 
     public SimpleGameController(int maxStrikes) {
@@ -26,7 +30,11 @@ public final class SimpleGameController implements GameController {
     @Override
     public void revealSlot(int slotIndex) {
         Validation.requireInRange(slotIndex, 1, 8, "slotIndex");
-        revealedSlots.add(slotIndex);
+        boolean added = revealedSlots.add(slotIndex);
+        if (added && activeSurvey != null && slotIndex - 1 < activeSurvey.answers().size()) {
+            AnswerOption option = activeSurvey.answers().get(slotIndex - 1);
+            roundPoints += option.points();
+        }
     }
 
     @Override
@@ -53,6 +61,7 @@ public final class SimpleGameController implements GameController {
         this.revealedSlots.clear();
         this.strikeCount = 0;
         this.roundPoints = 0;
+        this.controllingTeam = TeamControl.NONE;
     }
 
     @Override
@@ -73,6 +82,52 @@ public final class SimpleGameController implements GameController {
     @Override
     public int roundPoints() {
         return roundPoints;
+    }
+
+    @Override
+    public int redScore() {
+        return redScore;
+    }
+
+    @Override
+    public int blueScore() {
+        return blueScore;
+    }
+
+    @Override
+    public TeamControl controllingTeam() {
+        return controllingTeam;
+    }
+
+    @Override
+    public void setControllingTeam(TeamControl team) {
+        this.controllingTeam = team == null ? TeamControl.NONE : team;
+    }
+
+    @Override
+    public void awardRoundPoints() {
+        if (roundPoints <= 0) {
+            return;
+        }
+        switch (controllingTeam) {
+            case RED -> redScore += roundPoints;
+            case BLUE -> blueScore += roundPoints;
+            case NONE -> {
+                // no controlling team; do nothing
+                return;
+            }
+        }
+        roundPoints = 0;
+        strikeCount = 0;
+        revealedSlots.clear();
+    }
+
+    @Override
+    public void resetRoundState() {
+        roundPoints = 0;
+        strikeCount = 0;
+        revealedSlots.clear();
+        controllingTeam = TeamControl.NONE;
     }
 
     @Override

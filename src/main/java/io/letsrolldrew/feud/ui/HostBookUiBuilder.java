@@ -4,6 +4,7 @@ import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.util.Validation;
+import io.letsrolldrew.feud.game.TeamControl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -47,11 +48,11 @@ public final class HostBookUiBuilder {
     }
 
     public ItemStack createBook(Survey activeSurvey) {
-        return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), 0, 3, 0);
+        return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
     }
 
     public ItemStack createBook(List<String> hovers, Survey activeSurvey) {
-        return createBook(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0);
+        return createBook(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
     }
 
     public ItemStack createBook(
@@ -60,14 +61,15 @@ public final class HostBookUiBuilder {
         Set<Integer> revealedSlots,
         int strikeCount,
         int maxStrikes,
-        int roundPoints
+        int roundPoints,
+        TeamControl controllingTeam
     ) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.title(titleComponent());
         meta.author(authorComponent());
         tag(meta);
-        meta.pages(buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints));
+        meta.pages(buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
         book.setItemMeta(meta);
         return book;
     }
@@ -77,9 +79,10 @@ public final class HostBookUiBuilder {
         Set<Integer> revealedSlots,
         int strikeCount,
         int maxStrikes,
-        int roundPoints
+        int roundPoints,
+        TeamControl controllingTeam
     ) {
-        return createBook(resolveHoverTexts(), activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints);
+        return createBook(resolveHoverTexts(), activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
     }
 
     public ItemStack createBook(
@@ -87,18 +90,20 @@ public final class HostBookUiBuilder {
         Survey activeSurvey,
         int strikeCount,
         int maxStrikes,
-        int roundPoints
+        int roundPoints,
+        TeamControl controllingTeam
     ) {
-        return createBook(hovers, activeSurvey, Collections.emptySet(), strikeCount, maxStrikes, roundPoints);
+        return createBook(hovers, activeSurvey, Collections.emptySet(), strikeCount, maxStrikes, roundPoints, controllingTeam);
     }
 
     public ItemStack createBook(
         Survey activeSurvey,
         int strikeCount,
         int maxStrikes,
-        int roundPoints
+        int roundPoints,
+        TeamControl controllingTeam
     ) {
-        return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), strikeCount, maxStrikes, roundPoints);
+        return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), strikeCount, maxStrikes, roundPoints, controllingTeam);
     }
 
     public Component titleComponent() {
@@ -114,12 +119,12 @@ public final class HostBookUiBuilder {
     }
 
     List<Component> buildPages() {
-        return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0);
+        return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
     }
 
     List<Component> buildPages(List<String> hoverTexts, Survey activeSurvey) {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
-        return buildPages(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0);
+        return buildPages(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
     }
 
     List<Component> buildPages(
@@ -128,12 +133,13 @@ public final class HostBookUiBuilder {
         Set<Integer> revealedSlots,
         int strikeCount,
         int maxStrikes,
-        int roundPoints
+        int roundPoints,
+        TeamControl controllingTeam
     ) {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
 
         List<Component> pages = new ArrayList<>();
-        pages.add(controlPage(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints));
+        pages.add(controlPage(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
         pages.add(surveyLoadPage(activeSurvey));
         return pages;
     }
@@ -153,7 +159,7 @@ public final class HostBookUiBuilder {
     private Component button(String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
         String command = commandPrefix + " " + action;
 
-        Component hover = action.startsWith("reveal")
+        Component hover = hoverText != null
             ? Component.text(hoverText)
             : Component.text("Click to run " + command);
 
@@ -243,7 +249,8 @@ public final class HostBookUiBuilder {
         Set<Integer> revealedSlots,
         int strikeCount,
         int maxStrikes,
-        int roundPoints
+        int roundPoints,
+        TeamControl controllingTeam
     ) {
         List<Component> rows = new ArrayList<>();
 
@@ -258,15 +265,34 @@ public final class HostBookUiBuilder {
             Component.text("Pts: " + roundPoints, NamedTextColor.GOLD),
             Component.text("Strikes: " + strikeLine(strikeCount, maxStrikes), NamedTextColor.RED)
         ));
-
+        NamedTextColor controlColor = switch (controllingTeam) {
+            case RED -> NamedTextColor.RED;
+            case BLUE -> NamedTextColor.BLUE;
+            default -> NamedTextColor.GRAY;
+        };
+        rows.add(spacerLine());
+        rows.add(Component.text("In Control: " + controllingTeam.name(), controlColor));
+        rows.add(spacerLine());
         rows.add(row(buttonForSlot(1, hovers, activeSurvey, revealedSlots), buttonForSlot(2, hovers, activeSurvey, revealedSlots)));
         rows.add(row(buttonForSlot(3, hovers, activeSurvey, revealedSlots), buttonForSlot(4, hovers, activeSurvey, revealedSlots)));
         rows.add(row(buttonForSlot(5, hovers, activeSurvey, revealedSlots), buttonForSlot(6, hovers, activeSurvey, revealedSlots)));
         rows.add(row(buttonForSlot(7, hovers, activeSurvey, revealedSlots), buttonForSlot(8, hovers, activeSurvey, revealedSlots)));
 
         rows.add(spacerLine());
-        rows.add(row(button("Strike", "strike"), button("Clear Strikes", "clearstrikes")));
-        rows.add(row(button("Add +5", "add 5"), button("Add +10", "add 10")));
+         rows.add(row(
+            controlButton("Ctrl RED", "control red", controllingTeam, TeamControl.RED),
+            controlButton("Ctrl BLUE", "control blue", controllingTeam, TeamControl.BLUE)
+        ));
+        rows.add(row3(
+            button("Strike", "strike", "Add a strike", NamedTextColor.BLUE, true),
+            rowSpacer(),
+            button("Clear", "clearstrikes", "Clear all strikes", NamedTextColor.BLUE, true)
+        ));
+        rows.add(row3(
+            button("Reset", "reset", "Reset round (clear strikes, points, reveals)", NamedTextColor.GRAY, true),
+            rowSpacer(),
+            awardButton(controllingTeam, roundPoints)
+        ));
 
         return page(rows.toArray(new Component[0]));
     }
@@ -304,7 +330,7 @@ public final class HostBookUiBuilder {
     private Component surveyButton(Survey survey, Survey activeSurvey) {
         String command = "/feud survey load " + survey.id();
 
-        String label = abbreviate(survey.displayName(), 16); // normal spaces
+        String label = survey.displayName(); // normal spaces, no abbreviation
 
         NamedTextColor color = activeSurvey != null && survey.id().equals(activeSurvey.id())
             ? NamedTextColor.GREEN
@@ -315,6 +341,23 @@ public final class HostBookUiBuilder {
 
     private Component row3(Component a, Component b, Component c) {
         return Component.join(JoinConfiguration.separator(COL_GAP), a, b, c);
+    }
+
+    private Component rowSpacer() {
+        return Component.text("      ");
+    }
+
+    private Component controlButton(String label, String action, TeamControl current, TeamControl target) {
+        NamedTextColor color = target == TeamControl.RED ? NamedTextColor.RED : NamedTextColor.BLUE;
+        return button(label, action, "Give control to " + target.name(), color, true);
+    }
+
+    private Component awardButton(TeamControl controllingTeam, int roundPoints) {
+        String hover = controllingTeam == TeamControl.NONE
+            ? "Set control before awarding"
+            : "Award points to " + controllingTeam.name() + " (" + roundPoints + " pts)";
+        NamedTextColor color = controllingTeam == TeamControl.NONE ? NamedTextColor.GRAY : NamedTextColor.GOLD;
+        return button("Award", "award", hover, color, true);
     }
 
     private void tag(BookMeta meta) {

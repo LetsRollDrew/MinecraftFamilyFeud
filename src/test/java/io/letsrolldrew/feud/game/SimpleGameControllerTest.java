@@ -1,9 +1,9 @@
 package io.letsrolldrew.feud.game;
 
-import org.junit.jupiter.api.Test;
-
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
+import io.letsrolldrew.feud.game.TeamControl;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -59,6 +59,49 @@ class SimpleGameControllerTest {
         SimpleGameController controller = new SimpleGameController(3);
         assertThrows(IllegalArgumentException.class, () -> controller.addPoints(0));
         assertThrows(IllegalArgumentException.class, () -> controller.addPoints(-5));
+    }
+
+    @Test
+    void revealAddsAnswerPointsOnce() {
+        SimpleGameController controller = new SimpleGameController(3);
+        Survey survey = new Survey(
+            "sample",
+            "Sample Survey",
+            "Q",
+            java.util.List.of(
+                new AnswerOption("One", 10, java.util.List.of()),
+                new AnswerOption("Two", 5, java.util.List.of())
+            )
+        );
+        controller.setActiveSurvey(survey);
+        controller.revealSlot(1);
+        controller.revealSlot(1); // no double-count
+        controller.revealSlot(2);
+        assertEquals(15, controller.roundPoints());
+    }
+
+    @Test
+    void controlAndAwardMovesPoints() {
+        SimpleGameController controller = new SimpleGameController(3);
+        controller.setControllingTeam(TeamControl.RED);
+        controller.addPoints(20);
+        controller.awardRoundPoints();
+        assertEquals(20, controller.redScore());
+        assertEquals(0, controller.roundPoints());
+    }
+
+    @Test
+    void resetRoundClearsStateButKeepsSurvey() {
+        SimpleGameController controller = new SimpleGameController(3);
+        controller.addPoints(10);
+        controller.strike();
+        controller.revealSlot(1);
+        controller.setControllingTeam(TeamControl.BLUE);
+        controller.resetRoundState();
+        assertEquals(0, controller.roundPoints());
+        assertEquals(0, controller.strikeCount());
+        assertEquals(0, controller.revealedSlots().size());
+        assertEquals(TeamControl.NONE, controller.controllingTeam());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.game.GameController;
+import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.util.Validation;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -34,6 +35,9 @@ public final class UiCommand {
             case "strike" -> handleStrike(sender);
             case "clearstrikes" -> handleClearStrikes(sender);
             case "add" -> handleAddPoints(sender, args);
+            case "control" -> handleControl(sender, args);
+            case "award" -> handleAward(sender);
+            case "reset" -> handleReset(sender);
             default -> sendUsage(sender);
         }
         return true;
@@ -93,8 +97,40 @@ public final class UiCommand {
         refreshIfPlayer(sender);
     }
 
+    private void handleControl(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("Usage: /feud ui control <red|blue>");
+            return;
+        }
+        TeamControl team = TeamControl.fromString(args[1]);
+        if (team == TeamControl.NONE) {
+            sender.sendMessage("Team must be red or blue.");
+            return;
+        }
+        controller.setControllingTeam(team);
+        sender.sendMessage("Control set to " + team.name());
+        refreshIfPlayer(sender);
+    }
+
+    private void handleAward(CommandSender sender) {
+        if (controller.controllingTeam() == TeamControl.NONE) {
+            sender.sendMessage("Set a team in control before awarding points.");
+            return;
+        }
+        int before = controller.roundPoints();
+        controller.awardRoundPoints();
+        sender.sendMessage("Awarded " + before + " points to " + controller.controllingTeam().name() + ".");
+        refreshIfPlayer(sender);
+    }
+
+    private void handleReset(CommandSender sender) {
+        controller.resetRoundState();
+        sender.sendMessage("Round state reset.");
+        refreshIfPlayer(sender);
+    }
+
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud ui <reveal, strike, clearstrikes, add>");
+        sender.sendMessage("Usage: /feud ui <reveal, strike, clearstrikes, add, control, award, reset>");
     }
 
     private void refreshIfPlayer(CommandSender sender) {

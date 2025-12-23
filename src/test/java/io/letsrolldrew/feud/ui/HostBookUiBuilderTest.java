@@ -24,15 +24,18 @@ class HostBookUiBuilderTest {
             Set.of(),           // revealedSlots
             0,                  // strikeCount
             3,                  // maxStrikes
-            0                   // roundPoints
+            0,                  // roundPoints
+            io.letsrolldrew.feud.game.TeamControl.NONE
         );
 
         List<String> commands = collectCommands(pages.get(0));
         assertTrue(commands.contains("/feud ui reveal 1"));
         assertTrue(commands.contains("/feud ui strike"));
         assertTrue(commands.contains("/feud ui clearstrikes"));
-        assertTrue(commands.contains("/feud ui add 5"));
-        assertTrue(commands.contains("/feud ui add 10"));
+        assertTrue(commands.contains("/feud ui control red"));
+        assertTrue(commands.contains("/feud ui control blue"));
+        assertTrue(commands.contains("/feud ui award"));
+        assertTrue(commands.contains("/feud ui reset"));
     }
 
     private List<String> collectCommands(Component component) {
