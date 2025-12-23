@@ -46,11 +46,23 @@ public final class HostBookUiBuilder {
     public ItemStack createBook(List<String> hovers) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.title(Component.text("Family Feud Remote", NamedTextColor.GOLD));
-        meta.author(Component.text("Family Feud", NamedTextColor.YELLOW));
+        meta.title(titleComponent());
+        meta.author(authorComponent());
         meta.pages(buildPages(hovers));
         book.setItemMeta(meta);
         return book;
+    }
+
+    public Component titleComponent() {
+        return Component.text("Family Feud Remote", NamedTextColor.GOLD);
+    }
+
+    public Component authorComponent() {
+        return Component.text("Family Feud", NamedTextColor.YELLOW);
+    }
+
+    public String titleString() {
+        return "Family Feud Remote";
     }
 
     List<Component> buildPages(List<String> hoverTexts) {
@@ -141,25 +153,48 @@ public final class HostBookUiBuilder {
 
     private Component surveyLoadPage() {
         if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
-            return page(Component.text("No surveys found. Use /feud survey list."));
+            return page(
+                Component.text("Survey Selection List", NamedTextColor.GOLD),
+                spacerLine(),
+                Component.text("No surveys found. Use /feud survey list.")
+            );
         }
         List<Survey> surveys = surveyRepository.listAll();
         List<Component> rows = new ArrayList<>();
-        for (int i = 0; i < surveys.size() && i < 6; i += 2) {
-            Survey left = surveys.get(i);
-            Survey right = (i + 1) < surveys.size() ? surveys.get(i + 1) : null;
-            Component leftButton = surveyButton(left);
-            Component rightButton = right == null ? Component.text(" ") : surveyButton(right);
-            rows.add(row(leftButton, rightButton));
+        rows.add(Component.text("Survey Selection List", NamedTextColor.GOLD));
+        rows.add(spacerLine());
+        for (int i = 0; i < surveys.size(); i += 3) {
+            Survey s1 = surveys.get(i);
+            Survey s2 = (i + 1) < surveys.size() ? surveys.get(i + 1) : null;
+            Survey s3 = (i + 2) < surveys.size() ? surveys.get(i + 2) : null;
+            Component c1 = surveyButton(s1);
+            Component c2 = s2 == null ? Component.text(" ") : surveyButton(s2);
+            Component c3 = s3 == null ? Component.text(" ") : surveyButton(s3);
+            rows.add(row3(c1, c2, c3));
         }
         return page(rows.toArray(new Component[0]));
     }
 
     private Component surveyButton(Survey survey) {
         String command = "/feud survey load " + survey.id();
-        return Component.text("Load: " + survey.id(), NamedTextColor.BLUE)
+        String label = abbreviate(survey.displayName(), 24);
+        return Component.text(label, NamedTextColor.BLUE)
             .decorate(TextDecoration.UNDERLINED)
             .hoverEvent(HoverEvent.showText(Component.text(survey.question())))
             .clickEvent(ClickEvent.runCommand(command));
+    }
+
+    private Component row3(Component a, Component b, Component c) {
+        return Component.join(JoinConfiguration.separator(spacer()), a, b, c);
+    }
+
+    private String abbreviate(String text, int maxLen) {
+        if (text == null) {
+            return "";
+        }
+        if (text.length() <= maxLen) {
+            return text;
+        }
+        return text.substring(0, Math.max(0, maxLen - 3)) + "...";
     }
 }

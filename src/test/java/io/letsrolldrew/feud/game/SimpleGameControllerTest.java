@@ -66,6 +66,7 @@ class SimpleGameControllerTest {
         SimpleGameController controller = new SimpleGameController(3);
         Survey survey = new Survey(
             "sample",
+            "Sample Survey",
             "Q",
             java.util.List.of(
                 new AnswerOption("One", 10, java.util.List.of()),

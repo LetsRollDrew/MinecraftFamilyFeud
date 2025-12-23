@@ -8,6 +8,7 @@ max-strikes: 3
 
 surveys:
   example_animals:
+    display: "Farm Animal"
     question: "Name a farm animal"
     answers:
       - text: "Cow"
@@ -24,6 +25,7 @@ surveys:
       - text: "Goat"
         points: 6
   example_breakfast:
+    display: "Breakfast Foods"
     question: "Name a popular breakfast food"
     answers:
       - text: "Eggs"
@@ -38,6 +40,7 @@ surveys:
         points: 10
 
   block_taste:
+    display: "Tasty Blocks"
     question: "What block would taste the best?"
     answers:
       - text: "Cake"
@@ -58,6 +61,7 @@ surveys:
         points: 2
 
   suspicious_animal:
+    display: "Suspicious Animal"
     question: "What animal is the most suspicious?"
     answers:
       - text: "Fox"
@@ -78,6 +82,7 @@ surveys:
         points: 2
 
   build_materials:
+    display: "House Materials"
     question: "Best materials to build a house?"
     answers:
       - text: "Oak Wood"

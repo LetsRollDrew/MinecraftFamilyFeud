@@ -6,7 +6,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ public final class SurveyRepository {
             return new SurveyRepository(Collections.emptyMap());
         }
 
-        Map<String, Survey> loaded = new HashMap<>();
+        Map<String, Survey> loaded = new LinkedHashMap<>();
         for (String id : surveysSection.getKeys(false)) {
             Survey survey = parseSurvey(id, surveysSection.getConfigurationSection(id));
             if (loaded.containsKey(survey.id())) {
@@ -43,6 +43,7 @@ public final class SurveyRepository {
         }
         String surveyId = Validation.requireNonBlank(id, "survey.id");
         String question = Validation.requireNonBlank(section.getString("question"), "survey.question");
+        String displayName = section.getString("display");
 
         List<Map<?, ?>> answersRaw = section.getMapList("answers");
         if (answersRaw == null || answersRaw.isEmpty()) {
@@ -77,7 +78,7 @@ public final class SurveyRepository {
             answers.add(new AnswerOption(text, points, aliases));
         }
 
-        return new Survey(surveyId, question, answers);
+        return new Survey(surveyId, displayName, question, answers);
     }
 
     private static String asString(Object obj) {

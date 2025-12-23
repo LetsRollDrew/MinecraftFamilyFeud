@@ -17,6 +17,7 @@ class SurveyRepositoryTest {
         config.loadFromString("""
             surveys:
               sample:
+                display: "Sample Survey"
                 question: "Name a fruit"
                 answers:
                   - text: "Apple"

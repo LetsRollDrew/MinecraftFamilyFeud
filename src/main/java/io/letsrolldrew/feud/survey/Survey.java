@@ -8,11 +8,16 @@ import java.util.Objects;
 
 public final class Survey {
     private final String id;
+    private final String displayName;
     private final String question;
     private final List<AnswerOption> answers;
 
-    public Survey(String id, String question, List<AnswerOption> answers) {
+    public Survey(String id, String displayName, String question, List<AnswerOption> answers) {
         this.id = Validation.requireNonBlank(id, "survey.id");
+        this.displayName = Validation.requireNonBlank(
+            displayName != null ? displayName : question,
+            "survey.displayName"
+        );
         this.question = Validation.requireNonBlank(question, "survey.question");
         if (answers == null || answers.isEmpty()) {
             throw new IllegalArgumentException("survey.answers must not be empty");
@@ -29,6 +34,10 @@ public final class Survey {
 
     public String question() {
         return question;
+    }
+
+    public String displayName() {
+        return displayName;
     }
 
     public List<AnswerOption> answers() {

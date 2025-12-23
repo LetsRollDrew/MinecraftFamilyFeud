@@ -111,6 +111,10 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private boolean handleSurveyLoad(CommandSender sender, String surveyId) {
+        if (!sender.hasPermission(hostPermission)) {
+            sender.sendMessage("You must be the host to do that.");
+            return true;
+        }
         if (surveyRepository == null) {
             sender.sendMessage("Surveys not loaded.");
             return true;
@@ -122,6 +126,9 @@ public final class FeudRootCommand implements CommandExecutor {
         }
         gameController.setActiveSurvey(survey);
         sender.sendMessage("Active survey set to " + survey.id() + ": " + survey.question());
+        if (sender instanceof Player player) {
+            giveOrReplaceHostBook(player);
+        }
         return true;
     }
 
@@ -134,8 +141,29 @@ public final class FeudRootCommand implements CommandExecutor {
             sender.sendMessage("You must be the host to use this.");
             return true;
         }
-        player.getInventory().addItem(hostBookUiBuilder.createBook(gameController.slotHoverTexts()));
+        giveOrReplaceHostBook(player);
         player.sendMessage("Host remote given.");
         return true;
+    }
+
+    private void giveOrReplaceHostBook(Player player) {
+        var fresh = hostBookUiBuilder.createBook(gameController.slotHoverTexts());
+        var inv = player.getInventory();
+        boolean removedAny = false;
+        for (int slot = 0; slot < inv.getSize(); slot++) {
+            var stack = inv.getItem(slot);
+            if (stack == null || !stack.hasItemMeta()) {
+                continue;
+            }
+            var meta = stack.getItemMeta();
+            if (meta instanceof org.bukkit.inventory.meta.BookMeta bookMeta) {
+                String title = bookMeta.getTitle();
+                if (title != null && title.equals(hostBookUiBuilder.titleString())) {
+                    inv.setItem(slot, null);
+                    removedAny = true;
+                }
+            }
+        }
+        inv.addItem(fresh);
     }
 }
