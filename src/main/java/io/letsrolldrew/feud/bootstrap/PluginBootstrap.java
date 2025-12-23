@@ -6,6 +6,8 @@ import io.letsrolldrew.feud.config.PluginConfig;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.arena.BoardBindingStore;
+import io.letsrolldrew.feud.arena.BoardWandService;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import org.bukkit.NamespacedKey;
@@ -20,6 +22,8 @@ public final class PluginBootstrap {
     private UiCommand uiCommand;
     private HostBookUiBuilder hostBookUiBuilder;
     private HostRemoteService hostRemoteService;
+    private BoardWandService boardWandService;
+    private BoardBindingStore boardBindingStore;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -34,9 +38,13 @@ public final class PluginBootstrap {
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
+        NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
+        this.boardBindingStore = new BoardBindingStore(plugin);
+        this.boardWandService = new BoardWandService(plugin, wandKey, boardBindingStore);
         this.uiCommand = new UiCommand(gameController, config.hostPermission(), player -> {
             // placeholder, actual refresher supplied in FeudRootCommand
         });
+        plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }
 
@@ -67,7 +75,9 @@ public final class PluginBootstrap {
             hostBookUiBuilder,
             hostRemoteService,
             config.hostPermission(),
-            gameController
+            "familyfeud.admin",
+            gameController,
+            boardWandService
         ));
     }
 }

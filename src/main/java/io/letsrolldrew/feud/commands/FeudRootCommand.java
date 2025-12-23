@@ -5,6 +5,7 @@ import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.letsrolldrew.feud.game.GameController;
+import io.letsrolldrew.feud.arena.BoardWandService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,9 +16,11 @@ public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
     private final SurveyRepository surveyRepository;
     private final String hostPermission;
+    private final String adminPermission;
     private final GameController gameController;
     private final HostBookUiBuilder hostBookUiBuilder;
     private final HostRemoteService hostRemoteService;
+    private final BoardWandService boardWandService;
     private final UiCommand uiCommand;
 
     public FeudRootCommand(
@@ -26,14 +29,18 @@ public final class FeudRootCommand implements CommandExecutor {
         HostBookUiBuilder hostBookUiBuilder,
         HostRemoteService hostRemoteService,
         String hostPermission,
-        GameController gameController
+        String adminPermission,
+        GameController gameController,
+        BoardWandService boardWandService
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.hostBookUiBuilder = hostBookUiBuilder;
         this.hostRemoteService = hostRemoteService;
         this.hostPermission = hostPermission;
+        this.adminPermission = adminPermission;
         this.gameController = gameController;
+        this.boardWandService = boardWandService;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player));
     }
 
@@ -54,6 +61,10 @@ public final class FeudRootCommand implements CommandExecutor {
                 System.arraycopy(args, 1, remaining, 0, args.length - 1);
             }
             return uiCommand.handle(sender, remaining);
+        }
+
+        if (args.length >= 2 && args[0].equalsIgnoreCase("board") && args[1].equalsIgnoreCase("wand")) {
+            return handleBoardWand(sender);
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
@@ -94,6 +105,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud ui strike - add a strike");
         sender.sendMessage("/feud ui clearstrikes - clear strikes");
         sender.sendMessage("/feud ui add <points> - add points to round");
+        sender.sendMessage("/feud board wand - get board setup wand (admin)");
         return true;
     }
 
@@ -110,6 +122,16 @@ public final class FeudRootCommand implements CommandExecutor {
         for (Survey survey : surveyRepository.listAll()) {
             sender.sendMessage("- " + survey.id() + ": " + survey.question());
         }
+        return true;
+    }
+
+    private boolean handleBoardWand(CommandSender sender) {
+        if (!sender.hasPermission(adminPermission)) {
+            sender.sendMessage("You need admin permission to set up the board.");
+            return true;
+        }
+        boardWandService.giveWand(player);
+        sender.sendMessage("Board wand given. Right-click the top-left frame, then right-click the bottom-right frame.");
         return true;
     }
 
