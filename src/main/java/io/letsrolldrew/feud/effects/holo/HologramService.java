@@ -16,6 +16,9 @@ import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +38,7 @@ public final class HologramService {
         }
         Location loc = player.getLocation().clone().add(0, 1.8, 0);
         TextDisplay display = loc.getWorld().spawn(loc, TextDisplay.class, entity -> {
-            entity.text(text);
+            entity.text(withFont(text));
             entity.setBillboard(Display.Billboard.VERTICAL);
             try {
                 entity.setBackgroundColor(Color.fromARGB(0));
@@ -71,7 +74,7 @@ public final class HologramService {
         if (id == null || id.isBlank() || text == null) {
             return;
         }
-        resolveText(id).ifPresent(display -> display.text(text));
+        resolveText(id).ifPresent(display -> display.text(withFont(text)));
     }
 
     public void moveToPlayer(String id, Player player) {
@@ -196,5 +199,12 @@ public final class HologramService {
             return Optional.empty();
         }
         return Optional.of(entry);
+    }
+
+    private Component withFont(Component component) {
+        if (component == null) {
+            return Component.empty();
+        }
+        return component.font(Key.key("feud", "feud"));
     }
 }
