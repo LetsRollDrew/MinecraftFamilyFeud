@@ -22,8 +22,10 @@ public final class HologramCommands {
         String action = args[0].toLowerCase();
         if ("spawn".equals(action)) {
             handleSpawn(sender, args);
+        } else if ("set".equals(action)) {
+            handleSet(sender, args);
         } else {
-            sender.sendMessage("Only spawn is implemented in this step.");
+            sender.sendMessage("Only spawn and set are implemented in this step.");
         }
         return true;
     }
@@ -52,8 +54,27 @@ public final class HologramCommands {
         sender.sendMessage("Spawned hologram '" + id + "'.");
     }
 
+    private void handleSet(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage("Usage: /feud holo set <id> <text>");
+            return;
+        }
+        String id = args[1];
+        if (!isValidId(id)) {
+            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            return;
+        }
+        if (!service.exists(id)) {
+            sender.sendMessage("Hologram not found: " + id);
+            return;
+        }
+        String textRaw = joinArgs(args, 2);
+        service.setText(id, colored(textRaw));
+        sender.sendMessage("Updated hologram '" + id + "'.");
+    }
+
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo spawn <id> <text> (other subcommands coming in later steps)");
+        sender.sendMessage("Usage: /feud holo spawn <id> <text> | /feud holo set <id> <text>");
     }
 
     private boolean isValidId(String id) {
