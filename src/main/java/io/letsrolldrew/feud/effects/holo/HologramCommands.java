@@ -15,23 +15,38 @@ public final class HologramCommands {
 
     // return true if handled, false to signal help to caller.
     public boolean handle(CommandSender sender, String[] args) {
-        if (args.length == 0) {
+        if (args.length < 1) {
             sendUsage(sender);
             return true;
         }
-        String action = args[0].toLowerCase();
-        if ("spawn".equals(action)) {
-            handleSpawn(sender, args);
-        } else if ("set".equals(action)) {
-            handleSet(sender, args);
-        } else if ("move".equals(action)) {
-            handleMove(sender, args);
-        } else if ("remove".equals(action)) {
-            handleRemove(sender, args);
+        String category = args[0].toLowerCase();
+        if ("text".equals(category)) {
+            handleText(sender, sliceArgs(args));
+        } else if ("item".equals(category)) {
+            handleItem(sender, sliceArgs(args));
         } else {
-            sender.sendMessage("Only spawn, set, move, and remove are implemented in this step.");
+            sendUsage(sender);
         }
         return true;
+    }
+
+    private void handleText(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            sendTextUsage(sender);
+            return;
+        }
+        String action = args[0].toLowerCase();
+        switch (action) {
+            case "spawn" -> handleSpawn(sender, args);
+            case "set" -> handleSet(sender, args);
+            case "move" -> handleMove(sender, args);
+            case "remove" -> handleRemove(sender, args);
+            default -> sendTextUsage(sender);
+        }
+    }
+
+    private void handleItem(CommandSender sender, String[] args) {
+        sender.sendMessage("Item holograms will be added next.");
     }
 
     private void handleSpawn(CommandSender sender, String[] args) {
@@ -40,7 +55,7 @@ public final class HologramCommands {
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud holo spawn <id> <text>");
+            sender.sendMessage("Usage: /feud holo text spawn <id> <text>");
             return;
         }
         String id = args[1];
@@ -60,7 +75,7 @@ public final class HologramCommands {
 
     private void handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud holo set <id> <text>");
+            sender.sendMessage("Usage: /feud holo text set <id> <text>");
             return;
         }
         String id = args[1];
@@ -83,7 +98,7 @@ public final class HologramCommands {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud holo move <id>");
+            sender.sendMessage("Usage: /feud holo text move <id>");
             return;
         }
         String id = args[1];
@@ -101,7 +116,7 @@ public final class HologramCommands {
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud holo remove <id>");
+            sender.sendMessage("Usage: /feud holo text remove <id>");
             return;
         }
         String id = args[1];
@@ -118,7 +133,21 @@ public final class HologramCommands {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo spawn|set <id> <text> | /feud holo move|remove <id>");
+        sender.sendMessage("Usage: /feud holo text <spawn|set|move|remove> ...");
+        sender.sendMessage("       /feud holo item <spawn|move|remove> ...");
+    }
+
+    private void sendTextUsage(CommandSender sender) {
+        sender.sendMessage("Usage: /feud holo text spawn <id> <text> | set <id> <text> | move <id> | remove <id>");
+    }
+
+    private String[] sliceArgs(String[] args) {
+        if (args.length <= 1) {
+            return new String[0];
+        }
+        String[] out = new String[args.length - 1];
+        System.arraycopy(args, 1, out, 0, args.length - 1);
+        return out;
     }
 
     private boolean isValidId(String id) {

@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.util.Transformation;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 //hologram registry prototype
 public final class HologramService {
-    private final Map<String, UUID> hologramsById = new HashMap<>();
+    private final Map<String, HologramEntry> hologramsById = new HashMap<>();
 
     public boolean exists(String id) {
         return hologramsById.containsKey(id);
@@ -59,21 +60,21 @@ public final class HologramService {
             }
         });
         // replace existing entry if present
-        hologramsById.put(id, display.getUniqueId());
+        hologramsById.put(id, new HologramEntry(display.getUniqueId(), HologramType.TEXT_DISPLAY));
     }
 
     public void setText(String id, Component text) {
         if (id == null || id.isBlank() || text == null) {
             return;
         }
-        resolve(id).ifPresent(display -> display.text(text));
+        resolveText(id).ifPresent(display -> display.text(text));
     }
 
     public void moveToPlayer(String id, Player player) {
         if (id == null || id.isBlank() || player == null) {
             return;
         }
-        resolve(id).ifPresent(display -> {
+        resolveText(id).ifPresent(display -> {
             Location loc = player.getLocation().clone().add(0, 1.8, 0);
             display.teleport(loc);
             display.setBillboard(Display.Billboard.VERTICAL);
@@ -84,13 +85,45 @@ public final class HologramService {
         if (id == null || id.isBlank()) {
             return;
         }
-        UUID uuid = hologramsById.get(id);
-        if (uuid == null) {
+        HologramEntry entry = hologramsById.get(id);
+        if (entry == null) {
             return;
         }
-        var entity = Bukkit.getEntity(uuid);
-        if (entity instanceof TextDisplay display) {
-            display.remove();
+        UUID uuid = entry.uuid();
+        if (uuid != null) {
+            var entity = Bukkit.getEntity(uuid);
+            if (entity instanceof TextDisplay display) {
+                display.remove();
+            } else if (entity instanceof ItemDisplay display) {
+                display.remove();
+            }
+        }
+        hologramsById.remove(id);
+    }
+
+    // ItemDisplay skeletons for later
+    public void spawnItem(String id, Player player, org.bukkit.Material material, int customModelData) {
+
+    }
+
+    public void moveItemToPlayer(String id, Player player) {
+
+    }
+
+    public void removeItem(String id) {
+        if (id == null || id.isBlank()) {
+            return;
+        }
+        HologramEntry entry = hologramsById.get(id);
+        if (entry == null || entry.type() != HologramType.ITEM_DISPLAY) {
+            return;
+        }
+        UUID uuid = entry.uuid();
+        if (uuid != null) {
+            var entity = Bukkit.getEntity(uuid);
+            if (entity instanceof ItemDisplay display) {
+                display.remove();
+            }
         }
         hologramsById.remove(id);
     }
@@ -99,16 +132,37 @@ public final class HologramService {
         return hologramsById.size();
     }
 
-    private Optional<TextDisplay> resolve(String id) {
-        UUID uuid = hologramsById.get(id);
-        if (uuid == null) {
+    private Optional<TextDisplay> resolveText(String id) {
+        return resolveEntry(id, HologramType.TEXT_DISPLAY)
+            .map(entry -> Bukkit.getEntity(entry.uuid()))
+            .filter(e -> e instanceof TextDisplay)
+            .map(e -> (TextDisplay) e);
+    }
+
+    private Optional<ItemDisplay> resolveItem(String id) {
+        return resolveEntry(id, HologramType.ITEM_DISPLAY)
+            .map(entry -> Bukkit.getEntity(entry.uuid()))
+            .filter(e -> e instanceof ItemDisplay)
+            .map(e -> (ItemDisplay) e);
+    }
+
+    private Optional<HologramEntry> resolveEntry(String id, HologramType expectedType) {
+        HologramEntry entry = hologramsById.get(id);
+        if (entry == null || entry.type() != expectedType) {
+            if (entry != null && entry.type() != expectedType) {
+                hologramsById.remove(id);
+            }
             return Optional.empty();
         }
-        var entity = Bukkit.getEntity(uuid);
-        if (entity instanceof TextDisplay display) {
-            return Optional.of(display);
+        UUID uuid = entry.uuid();
+        if (uuid == null) {
+            hologramsById.remove(id);
+            return Optional.empty();
         }
-        hologramsById.remove(id);
-        return Optional.empty();
+        if (Bukkit.getEntity(uuid) == null) {
+            hologramsById.remove(id);
+            return Optional.empty();
+        }
+        return Optional.of(entry);
     }
 }
