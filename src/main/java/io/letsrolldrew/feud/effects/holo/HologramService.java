@@ -4,10 +4,14 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
@@ -101,30 +105,47 @@ public final class HologramService {
         hologramsById.remove(id);
     }
 
-    // ItemDisplay skeletons for later
-    public void spawnItem(String id, Player player, org.bukkit.Material material, int customModelData) {
+    public void spawnItem(String id, Player player, Material material, int customModelData) {
+        if (id == null || id.isBlank() || player == null) {
+            throw new IllegalArgumentException("id/player required");
+        }
+        if (hologramsById.containsKey(id)) {
+            throw new IllegalArgumentException("Hologram id already exists: " + id);
+        }
+        Material mat = material == null ? Material.ECHO_SHARD : material;
+        ItemStack stack = new ItemStack(mat);
+        ItemMeta meta = stack.getItemMeta();
+        CustomModelDataComponent cmdComponent = meta.getCustomModelDataComponent();
+        cmdComponent.setFloats(java.util.List.of((float) customModelData));
+        meta.setCustomModelDataComponent(cmdComponent);
+        stack.setItemMeta(meta);
 
+        Location loc = player.getLocation().clone().add(0, 1.8, 0);
+        ItemDisplay display = loc.getWorld().spawn(loc, ItemDisplay.class, entity -> {
+            entity.setItemStack(stack);
+            entity.setBillboard(Display.Billboard.VERTICAL);
+            try {
+                entity.setTransformation(new Transformation(
+                    new Vector3f(0, 0, 0),
+                    new AxisAngle4f(0, 0, 0, 0),
+                    new Vector3f(2.0f, 2.0f, 2.0f),
+                    new AxisAngle4f(0, 0, 0, 0)
+                ));
+            } catch (Throwable ignored) {
+            }
+        });
+        hologramsById.put(id, new HologramEntry(display.getUniqueId(), HologramType.ITEM_DISPLAY));
     }
 
     public void moveItemToPlayer(String id, Player player) {
-
+        // move wiring comes next; stub left intentionally simple
     }
 
     public void removeItem(String id) {
         if (id == null || id.isBlank()) {
             return;
         }
-        HologramEntry entry = hologramsById.get(id);
-        if (entry == null || entry.type() != HologramType.ITEM_DISPLAY) {
-            return;
-        }
-        UUID uuid = entry.uuid();
-        if (uuid != null) {
-            var entity = Bukkit.getEntity(uuid);
-            if (entity instanceof ItemDisplay display) {
-                display.remove();
-            }
-        }
+        resolveItem(id).ifPresent(ItemDisplay::remove);
         hologramsById.remove(id);
     }
 

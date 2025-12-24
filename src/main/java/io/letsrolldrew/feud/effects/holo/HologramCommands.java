@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.effects.holo;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -46,7 +47,17 @@ public final class HologramCommands {
     }
 
     private void handleItem(CommandSender sender, String[] args) {
-        sender.sendMessage("Item holograms will be added next.");
+        if (args.length == 0) {
+            sendItemUsage(sender);
+            return;
+        }
+        String action = args[0].toLowerCase();
+        switch (action) {
+            case "spawn" -> handleItemSpawn(sender, args);
+            case "move" -> handleItemMove(sender, args);
+            case "remove" -> handleItemRemove(sender, args);
+            default -> sendItemUsage(sender);
+        }
     }
 
     private void handleSpawn(CommandSender sender, String[] args) {
@@ -141,6 +152,10 @@ public final class HologramCommands {
         sender.sendMessage("Usage: /feud holo text spawn <id> <text> | set <id> <text> | move <id> | remove <id>");
     }
 
+    private void sendItemUsage(CommandSender sender) {
+        sender.sendMessage("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>");
+    }
+
     private String[] sliceArgs(String[] args) {
         if (args.length <= 1) {
             return new String[0];
@@ -167,5 +182,66 @@ public final class HologramCommands {
 
     private Component colored(String raw) {
         return LegacyComponentSerializer.legacyAmpersand().deserialize(raw);
+    }
+
+    private void handleItemSpawn(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can spawn item holograms.");
+            return;
+        }
+        if (args.length < 3) {
+            sendItemUsage(sender);
+            return;
+        }
+        String id = args[1];
+        if (!isValidId(id)) {
+            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            return;
+        }
+        Material material = Material.ECHO_SHARD; // default material justincase for testing
+        // args: spawn <id> <material> <cmd>
+        try {
+            int cmd = Integer.parseInt(args[2]);
+            service.spawnItem(id, player, material, cmd);
+            sender.sendMessage("Spawned item hologram '" + id + "' with CMD " + cmd + ".");
+            return;
+        } catch (NumberFormatException ignore) {
+            // treat args[2] as material
+        }
+        if (args.length < 4) {
+            sendItemUsage(sender);
+            return;
+        }
+        try {
+            material = Material.valueOf(args[2].toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            sender.sendMessage("Unknown material: " + args[2]);
+            return;
+        }
+        try {
+            int cmd = Integer.parseInt(args[3]);
+            service.spawnItem(id, player, material, cmd);
+            sender.sendMessage("Spawned item hologram '" + id + "' (" + material + ", CMD " + cmd + ").");
+        } catch (NumberFormatException ex) {
+            sender.sendMessage("CustomModelData must be a number.");
+        }
+    }
+
+    private void handleItemMove(CommandSender sender, String[] args) {
+        sender.sendMessage("Item move is not available yet.");
+    }
+
+    private void handleItemRemove(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sendItemUsage(sender);
+            return;
+        }
+        String id = args[1];
+        if (!isValidId(id)) {
+            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            return;
+        }
+        service.removeItem(id);
+        sender.sendMessage("Removed item hologram '" + id + "'.");
     }
 }
