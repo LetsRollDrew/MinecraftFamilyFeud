@@ -138,7 +138,14 @@ public final class HologramService {
     }
 
     public void moveItemToPlayer(String id, Player player) {
-        // move wiring comes next; stub left intentionally simple
+        if (id == null || id.isBlank() || player == null) {
+            return;
+        }
+        resolveItem(id).ifPresent(display -> {
+            Location loc = player.getLocation().clone().add(0, 1.8, 0);
+            display.teleport(loc);
+            display.setBillboard(Display.Billboard.VERTICAL);
+        });
     }
 
     public void removeItem(String id) {
@@ -151,6 +158,10 @@ public final class HologramService {
 
     public int size() {
         return hologramsById.size();
+    }
+
+    public Map<String, HologramEntry> entriesSnapshot() {
+        return new HashMap<>(hologramsById);
     }
 
     private Optional<TextDisplay> resolveText(String id) {

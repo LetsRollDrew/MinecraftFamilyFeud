@@ -6,9 +6,12 @@ import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Map;
+
 //Handles /feud holo subcommands
 public final class HologramCommands {
     private final HologramService service;
+    private final String adminPermission = "familyfeud.admin";
 
     public HologramCommands(HologramService service) {
         this.service = service;
@@ -18,6 +21,14 @@ public final class HologramCommands {
     public boolean handle(CommandSender sender, String[] args) {
         if (args.length < 1) {
             sendUsage(sender);
+            return true;
+        }
+        if (!sender.hasPermission(adminPermission)) {
+            sender.sendMessage("You need " + adminPermission + " to use hologram commands.");
+            return true;
+        }
+        if ("list".equalsIgnoreCase(args[0])) {
+            handleList(sender);
             return true;
         }
         String category = args[0].toLowerCase();
@@ -146,6 +157,7 @@ public final class HologramCommands {
     private void sendUsage(CommandSender sender) {
         sender.sendMessage("Usage: /feud holo text <spawn|set|move|remove> ...");
         sender.sendMessage("       /feud holo item <spawn|move|remove> ...");
+        sender.sendMessage("       /feud holo list");
     }
 
     private void sendTextUsage(CommandSender sender) {
@@ -228,7 +240,25 @@ public final class HologramCommands {
     }
 
     private void handleItemMove(CommandSender sender, String[] args) {
-        sender.sendMessage("Item move is not available yet.");
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can move item holograms.");
+            return;
+        }
+        if (args.length < 2) {
+            sendItemUsage(sender);
+            return;
+        }
+        String id = args[1];
+        if (!isValidId(id)) {
+            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            return;
+        }
+        if (!service.exists(id)) {
+            sender.sendMessage("Hologram not found: " + id);
+            return;
+        }
+        service.moveItemToPlayer(id, player);
+        sender.sendMessage("Moved item hologram '" + id + "' to your location.");
     }
 
     private void handleItemRemove(CommandSender sender, String[] args) {
@@ -243,5 +273,27 @@ public final class HologramCommands {
         }
         service.removeItem(id);
         sender.sendMessage("Removed item hologram '" + id + "'.");
+    }
+
+    private void handleList(CommandSender sender) {
+        var entries = service.entriesSnapshot();
+        if (entries.isEmpty()) {
+            sender.sendMessage("No holograms are active.");
+            return;
+        }
+        int textCount = 0;
+        int itemCount = 0;
+        sender.sendMessage("Holograms:");
+        for (Map.Entry<String, HologramEntry> e : entries.entrySet()) {
+            String id = e.getKey();
+            HologramType type = e.getValue().type();
+            if (type == HologramType.TEXT_DISPLAY) {
+                textCount++;
+            } else if (type == HologramType.ITEM_DISPLAY) {
+                itemCount++;
+            }
+            sender.sendMessage("- " + id + " (" + type.name().toLowerCase() + ")");
+        }
+        sender.sendMessage("Totals: text=" + textCount + " item=" + itemCount);
     }
 }
