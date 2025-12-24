@@ -24,8 +24,10 @@ public final class HologramCommands {
             handleSpawn(sender, args);
         } else if ("set".equals(action)) {
             handleSet(sender, args);
+        } else if ("move".equals(action)) {
+            handleMove(sender, args);
         } else {
-            sender.sendMessage("Only spawn and set are implemented in this step.");
+            sender.sendMessage("Only spawn, set, and move are implemented in this step.");
         }
         return true;
     }
@@ -73,8 +75,30 @@ public final class HologramCommands {
         sender.sendMessage("Updated hologram '" + id + "'.");
     }
 
+    private void handleMove(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can move holograms.");
+            return;
+        }
+        if (args.length < 2) {
+            sender.sendMessage("Usage: /feud holo move <id>");
+            return;
+        }
+        String id = args[1];
+        if (!isValidId(id)) {
+            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            return;
+        }
+        if (!service.exists(id)) {
+            sender.sendMessage("Hologram not found: " + id);
+            return;
+        }
+        service.moveToPlayer(id, player);
+        sender.sendMessage("Moved hologram '" + id + "' to your location.");
+    }
+
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo spawn <id> <text> | /feud holo set <id> <text>");
+        sender.sendMessage("Usage: /feud holo spawn|set <id> <text> | /feud holo move <id>");
     }
 
     private boolean isValidId(String id) {
