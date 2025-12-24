@@ -16,7 +16,6 @@ public final class BoardRenderer {
     private final byte interiorColor;
     private final byte coverTextColor;
     private final byte labelColor;
-    private final TextPainter textPainter;
     private final BigDigitPainter bigDigitPainter;
     private final SlotCoverPainter coverPainter;
 
@@ -28,8 +27,7 @@ public final class BoardRenderer {
         this.borderColor = org.bukkit.map.MapPalette.matchColor(new Color(40, 40, 40));
         this.interiorColor = org.bukkit.map.MapPalette.matchColor(new Color(12, 51, 89));
         this.coverTextColor = org.bukkit.map.MapPalette.matchColor(new Color(20, 20, 20));
-        this.labelColor = org.bukkit.map.MapPalette.matchColor(new Color(250, 210, 60));
-        this.textPainter = new TextPainter();
+        this.labelColor = org.bukkit.map.MapPalette.matchColor(Color.WHITE);
         this.bigDigitPainter = new BigDigitPainter();
         this.coverPainter = new SlotCoverPainter(store, dirty, bigDigitPainter, coverTextColor, labelColor);
     }
@@ -60,5 +58,13 @@ public final class BoardRenderer {
             }
         }
         dirty.markDirty(pos);
+    }
+
+    public byte getLabelColor() {
+        return labelColor;
+    }
+
+    public byte getCoverTextColor() {
+        return coverTextColor;
     }
 }

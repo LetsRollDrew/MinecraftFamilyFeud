@@ -60,7 +60,6 @@ public final class SurveyRepository {
         for (Map<?, ?> raw : answersRaw) {
             String text = Validation.requireNonBlank(asString(raw.get("text")), "answer.text");
             int points = Validation.requirePositive(asInt(raw.get("points")), "answer.points");
-            @SuppressWarnings("unchecked")
             List<String> aliases = raw.get("aliases") instanceof List<?> list
                 ? list.stream().map(Object::toString).toList()
                 : List.of();

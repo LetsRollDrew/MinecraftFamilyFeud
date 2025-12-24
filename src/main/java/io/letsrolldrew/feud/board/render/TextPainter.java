@@ -32,6 +32,22 @@ public final class TextPainter {
         }
     }
 
+    public boolean[][] glyphFor(char ch) {
+        return glyphs.get(Character.toUpperCase(ch));
+    }
+
+    public int glyphWidth() {
+        return GLYPH_WIDTH;
+    }
+
+    public int glyphHeight() {
+        return GLYPH_HEIGHT;
+    }
+
+    public int glyphSpacing() {
+        return GLYPH_SPACING;
+    }
+
     private void drawGlyph(TileBuffer buffer, int startX, int startY, boolean[][] glyph, byte color) {
         for (int y = 0; y < glyph.length; y++) {
             for (int x = 0; x < glyph[y].length; x++) {

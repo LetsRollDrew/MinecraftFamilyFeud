@@ -1,14 +1,12 @@
 package io.letsrolldrew.feud.bootstrap;
 
 import io.letsrolldrew.feud.commands.FeudRootCommand;
-import io.letsrolldrew.feud.commands.UiCommand;
 import io.letsrolldrew.feud.config.PluginConfig;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
-import io.letsrolldrew.feud.board.MapWallBinder;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
@@ -24,7 +22,6 @@ public final class PluginBootstrap {
     private PluginConfig config;
     private SurveyRepository surveyRepository;
     private GameController gameController;
-    private UiCommand uiCommand;
     private HostBookUiBuilder hostBookUiBuilder;
     private HostRemoteService hostRemoteService;
     private BoardWandService boardWandService;
@@ -33,6 +30,7 @@ public final class PluginBootstrap {
     private MapIdStore mapIdStore;
     private DirtyTracker dirtyTracker;
     private BoardRenderer boardRenderer;
+    private io.letsrolldrew.feud.board.render.SlotRevealPainter slotRevealPainter;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -54,9 +52,7 @@ public final class PluginBootstrap {
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
         this.dirtyTracker = new DirtyTracker();
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
-        this.uiCommand = new UiCommand(gameController, config.hostPermission(), player -> {
-            // placeholder, actual refresher supplied in FeudRootCommand
-        });
+        this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }
@@ -94,8 +90,8 @@ public final class PluginBootstrap {
             boardBindingStore,
             mapIdStore,
             framebufferStore,
-            dirtyTracker,
-            boardRenderer
+            boardRenderer,
+            slotRevealPainter
         ));
     }
 }

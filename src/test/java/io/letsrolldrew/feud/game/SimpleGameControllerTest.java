@@ -2,7 +2,6 @@ package io.letsrolldrew.feud.game;
 
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
-import io.letsrolldrew.feud.game.TeamControl;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

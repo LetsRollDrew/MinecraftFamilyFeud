@@ -7,6 +7,7 @@ import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 
 //MapRenderer that copies the TileBuffer for a specific tile
+@SuppressWarnings("deprecation") // MapCanvas#setPixel is deprecated, fix later
 public final class TileMapRenderer extends MapRenderer {
     private final TilePos tile;
     private final TileFramebufferStore store;

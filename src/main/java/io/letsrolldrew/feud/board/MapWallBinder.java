@@ -1,6 +1,5 @@
 package io.letsrolldrew.feud.board;
 
-import io.letsrolldrew.feud.board.BoardBinding;
 import io.letsrolldrew.feud.board.layout.BoardLayout10x6;
 import io.letsrolldrew.feud.board.layout.TilePos;
 import io.letsrolldrew.feud.board.render.MapIdStore;
@@ -9,7 +8,6 @@ import io.letsrolldrew.feud.board.render.TileMapRenderer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
@@ -17,7 +15,6 @@ import org.bukkit.map.MapView;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 

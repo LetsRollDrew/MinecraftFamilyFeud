@@ -1,8 +1,6 @@
 package io.letsrolldrew.feud.game;
 
 import io.letsrolldrew.feud.survey.Survey;
-import io.letsrolldrew.feud.game.TeamControl;
-
 import java.util.List;
 import java.util.Set;
 

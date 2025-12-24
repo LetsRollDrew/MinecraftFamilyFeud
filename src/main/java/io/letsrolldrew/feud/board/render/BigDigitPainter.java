@@ -1,7 +1,5 @@
 package io.letsrolldrew.feud.board.render;
 
-import io.letsrolldrew.feud.board.layout.TilePos;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -1,15 +1,14 @@
 package io.letsrolldrew.feud.game;
 
-import io.letsrolldrew.feud.util.Validation;
-import io.letsrolldrew.feud.survey.Survey;
-import io.letsrolldrew.feud.survey.AnswerOption;
-import io.letsrolldrew.feud.game.TeamControl;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.survey.Survey;
+import io.letsrolldrew.feud.util.Validation;
 
 //Minimal controller to support host actions for now
 

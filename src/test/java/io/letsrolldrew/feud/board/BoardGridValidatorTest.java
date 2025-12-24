@@ -1,7 +1,5 @@
 package io.letsrolldrew.feud.board;
 
-import io.letsrolldrew.feud.board.BoardBinding;
-import io.letsrolldrew.feud.board.HorizontalAxis;
 import io.letsrolldrew.feud.board.layout.TilePos;
 import org.bukkit.block.BlockFace;
 import org.junit.jupiter.api.Test;

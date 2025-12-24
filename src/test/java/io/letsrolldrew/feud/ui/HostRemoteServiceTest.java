@@ -13,7 +13,6 @@ import be.seeseemelk.mockbukkit.ServerMock;
 import be.seeseemelk.mockbukkit.entity.PlayerMock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Disabled("MockBukkit registry setup currently broken under test harness; enable once registry data is resolved")
 class HostRemoteServiceTest {

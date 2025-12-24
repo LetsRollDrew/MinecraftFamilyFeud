@@ -10,8 +10,8 @@ import io.letsrolldrew.feud.board.MapWallBinder;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
-import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
+import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -30,8 +30,8 @@ public final class FeudRootCommand implements CommandExecutor {
     private final BoardBindingStore boardBindingStore;
     private final MapIdStore mapIdStore;
     private final TileFramebufferStore framebufferStore;
-    private final DirtyTracker dirtyTracker;
     private final BoardRenderer boardRenderer;
+    private final SlotRevealPainter slotRevealPainter;
     private final UiCommand uiCommand;
 
     public FeudRootCommand(
@@ -46,8 +46,8 @@ public final class FeudRootCommand implements CommandExecutor {
         BoardBindingStore boardBindingStore,
         MapIdStore mapIdStore,
         TileFramebufferStore framebufferStore,
-        DirtyTracker dirtyTracker,
-        BoardRenderer boardRenderer
+        BoardRenderer boardRenderer,
+        SlotRevealPainter slotRevealPainter
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -60,9 +60,9 @@ public final class FeudRootCommand implements CommandExecutor {
         this.boardBindingStore = boardBindingStore;
         this.mapIdStore = mapIdStore;
         this.framebufferStore = framebufferStore;
-        this.dirtyTracker = dirtyTracker;
         this.boardRenderer = boardRenderer;
-        this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player));
+        this.slotRevealPainter = slotRevealPainter;
+        this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
     }
 
     @Override
@@ -114,6 +114,19 @@ public final class FeudRootCommand implements CommandExecutor {
         return handleHelp(sender);
     }
 
+    private void renderReveal(int slot) {
+        var survey = gameController.getActiveSurvey();
+        if (survey == null) {
+            return;
+        }
+        if (slot < 1 || slot > survey.answers().size()) {
+            return;
+        }
+        var answer = survey.answers().get(slot - 1);
+        slotRevealPainter.reveal(slot, answer.text(), answer.points());
+    }
+
+    @SuppressWarnings("deprecation") // Plugin#getDescription is deprecated, fix later
     private boolean handleVersion(CommandSender sender) {
         String version = plugin.getDescription().getVersion();
         sender.sendMessage("FamilyFeud v" + version + " - game state: not started");

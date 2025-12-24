@@ -12,11 +12,13 @@ public final class UiCommand {
     private final GameController controller;
     private final String hostPermission;
     private final Consumer<Player> bookRefresher;
+    private final Consumer<Integer> revealCallback;
 
-    public UiCommand(GameController controller, String hostPermission, Consumer<Player> bookRefresher) {
+    public UiCommand(GameController controller, String hostPermission, Consumer<Player> bookRefresher, Consumer<Integer> revealCallback) {
         this.controller = controller;
         this.hostPermission = Validation.requireNonBlank(hostPermission, "host-permission");
         this.bookRefresher = bookRefresher;
+        this.revealCallback = revealCallback;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -61,6 +63,9 @@ public final class UiCommand {
         }
         controller.revealSlot(slot);
         sender.sendMessage("Revealed slot " + slot + ".");
+        if (revealCallback != null) {
+            revealCallback.accept(slot);
+        }
         refreshIfPlayer(sender);
     }
 

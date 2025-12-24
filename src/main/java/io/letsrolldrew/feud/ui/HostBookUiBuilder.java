@@ -1,15 +1,17 @@
 package io.letsrolldrew.feud.ui;
 
-import io.letsrolldrew.feud.survey.AnswerOption;
-import io.letsrolldrew.feud.survey.Survey;
-import io.letsrolldrew.feud.survey.SurveyRepository;
-import io.letsrolldrew.feud.util.Validation;
-import io.letsrolldrew.feud.game.TeamControl;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
+import static io.letsrolldrew.feud.ui.BookTextFormatter.COL_GAP;
+import static io.letsrolldrew.feud.ui.BookTextFormatter.abbreviate;
+import static io.letsrolldrew.feud.ui.BookTextFormatter.formatRevealedLabel;
+import static io.letsrolldrew.feud.ui.BookTextFormatter.strikeLine;
+import static io.letsrolldrew.feud.ui.BookTextFormatter.toNoBreak;
+import static io.letsrolldrew.feud.ui.BookTextFormatter.unrevealedLabel;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -17,12 +19,16 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static io.letsrolldrew.feud.ui.BookTextFormatter.*;
+import io.letsrolldrew.feud.game.TeamControl;
+import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.survey.Survey;
+import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.util.Validation;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 public final class HostBookUiBuilder {
 
@@ -144,10 +150,12 @@ public final class HostBookUiBuilder {
         return pages;
     }
 
+    @SuppressWarnings("unused")
     private Component button(String label, String action) {
         return button(label, action, "Click to run " + commandPrefix + " " + action, NamedTextColor.BLUE, true);
     }
 
+    @SuppressWarnings("unused")
     private Component button(String label, String action, String hoverText) {
         return button(label, action, hoverText, NamedTextColor.BLUE, true);
     }
@@ -273,10 +281,10 @@ public final class HostBookUiBuilder {
         rows.add(spacerLine());
         rows.add(Component.text("In Control: " + controllingTeam.name(), controlColor));
         rows.add(spacerLine());
-        rows.add(row(buttonForSlot(1, hovers, activeSurvey, revealedSlots), buttonForSlot(2, hovers, activeSurvey, revealedSlots)));
-        rows.add(row(buttonForSlot(3, hovers, activeSurvey, revealedSlots), buttonForSlot(4, hovers, activeSurvey, revealedSlots)));
-        rows.add(row(buttonForSlot(5, hovers, activeSurvey, revealedSlots), buttonForSlot(6, hovers, activeSurvey, revealedSlots)));
-        rows.add(row(buttonForSlot(7, hovers, activeSurvey, revealedSlots), buttonForSlot(8, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(1, hovers, activeSurvey, revealedSlots), buttonForSlot(5, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(2, hovers, activeSurvey, revealedSlots), buttonForSlot(6, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(3, hovers, activeSurvey, revealedSlots), buttonForSlot(7, hovers, activeSurvey, revealedSlots)));
+        rows.add(row(buttonForSlot(4, hovers, activeSurvey, revealedSlots), buttonForSlot(8, hovers, activeSurvey, revealedSlots)));
 
         rows.add(spacerLine());
          rows.add(row(

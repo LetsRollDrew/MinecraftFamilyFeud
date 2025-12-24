@@ -7,6 +7,7 @@ public final class FeudPlugin extends JavaPlugin {
     private PluginBootstrap bootstrap;
 
     @Override
+    @SuppressWarnings("deprecation") // getDescription is deprecated in API, fix later
     public void onEnable() {
         getLogger().info(() -> "Enabling FamilyFeud v" + getDescription().getVersion());
         bootstrap = new PluginBootstrap(this);

@@ -11,6 +11,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("deprecation") // ClickEvent#value is deprecated in adventure API, fix later
 class HostBookUiBuilderTest {
 
     @Test
