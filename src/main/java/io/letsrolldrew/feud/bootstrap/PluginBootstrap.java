@@ -13,6 +13,8 @@ import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.effects.holo.HologramService;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,6 +33,8 @@ public final class PluginBootstrap {
     private DirtyTracker dirtyTracker;
     private BoardRenderer boardRenderer;
     private io.letsrolldrew.feud.board.render.SlotRevealPainter slotRevealPainter;
+    private HologramService hologramService;
+    private HologramCommands hologramCommands;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -53,6 +57,8 @@ public final class PluginBootstrap {
         this.dirtyTracker = new DirtyTracker();
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
+        this.hologramService = new HologramService();
+        this.hologramCommands = new HologramCommands(hologramService);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }
@@ -91,7 +97,8 @@ public final class PluginBootstrap {
             mapIdStore,
             framebufferStore,
             boardRenderer,
-            slotRevealPainter
+            slotRevealPainter,
+            hologramCommands
         ));
     }
 }

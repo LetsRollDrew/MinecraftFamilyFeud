@@ -12,6 +12,7 @@ import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
+import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -33,6 +34,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final BoardRenderer boardRenderer;
     private final SlotRevealPainter slotRevealPainter;
     private final UiCommand uiCommand;
+    private final HologramCommands hologramCommands;
 
     public FeudRootCommand(
         Plugin plugin,
@@ -47,7 +49,8 @@ public final class FeudRootCommand implements CommandExecutor {
         MapIdStore mapIdStore,
         TileFramebufferStore framebufferStore,
         BoardRenderer boardRenderer,
-        SlotRevealPainter slotRevealPainter
+        SlotRevealPainter slotRevealPainter,
+        HologramCommands hologramCommands
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -62,6 +65,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.framebufferStore = framebufferStore;
         this.boardRenderer = boardRenderer;
         this.slotRevealPainter = slotRevealPainter;
+        this.hologramCommands = hologramCommands;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
     }
 
@@ -77,6 +81,18 @@ public final class FeudRootCommand implements CommandExecutor {
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("version")) {
             return handleVersion(sender);
+        }
+
+        if (args.length >= 1 && args[0].equalsIgnoreCase("holo")) {
+            String[] remaining = new String[Math.max(0, args.length - 1)];
+            if (args.length > 1) {
+                System.arraycopy(args, 1, remaining, 0, args.length - 1);
+            }
+            if (!sender.hasPermission(adminPermission)) {
+                sender.sendMessage("You need admin permission to manage holograms.");
+                return true;
+            }
+            return hologramCommands.handle(sender, remaining);
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("ui")) {
@@ -148,6 +164,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud ui add <points> - add points to round");
         sender.sendMessage("/feud board wand - get board setup wand (admin)");
         sender.sendMessage("/feud board initmaps - assign maps to board frames (admin)");
+        sender.sendMessage("/feud holo spawn <id> <text> - hologram prototype (admin)");
         return true;
     }
 
