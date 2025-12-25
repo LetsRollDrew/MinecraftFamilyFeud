@@ -136,18 +136,25 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
-            // Handles old board commands first, TODO: integrate better later to other board setup
-            if (args.length >= 2 && args[1].equalsIgnoreCase("wand")) {
-                return handleBoardWand(sender);
+            if (args.length >= 2 && args[1].equalsIgnoreCase("map")) {
+                if (args.length >= 3 && args[2].equalsIgnoreCase("wand")) {
+                    return handleBoardWand(sender);
+                }
+                if (args.length >= 3 && args[2].equalsIgnoreCase("initmaps")) {
+                    return handleBoardInitMaps(sender);
+                }
+                sender.sendMessage("Board map commands: /feud board map wand | /feud board map initmaps");
+                return true;
             }
-            if (args.length >= 2 && args[1].equalsIgnoreCase("initmaps")) {
-                return handleBoardInitMaps(sender);
+            if (args.length >= 2 && args[1].equalsIgnoreCase("display")) {
+                String[] remaining = new String[Math.max(0, args.length - 2)];
+                if (args.length > 2) {
+                    System.arraycopy(args, 2, remaining, 0, args.length - 2);
+                }
+                return boardCommands.handle(sender, remaining);
             }
-            String[] remaining = new String[Math.max(0, args.length - 1)];
-            if (args.length > 1) {
-                System.arraycopy(args, 1, remaining, 0, args.length - 1);
-            }
-            return boardCommands.handle(sender, remaining);
+            sender.sendMessage("Board commands: /feud board map ... | /feud board display ...");
+            return true;
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("list")) {
