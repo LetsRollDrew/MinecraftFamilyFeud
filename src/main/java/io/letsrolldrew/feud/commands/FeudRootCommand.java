@@ -13,9 +13,7 @@ import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
-import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
-import io.letsrolldrew.feud.board.display.DefaultDisplayBoardPresenter;
-import io.letsrolldrew.feud.commands.BoardCommands;
+import io.letsrolldrew.feud.commands.DisplayBoardCommands;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,7 +22,13 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
@@ -42,7 +46,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final SlotRevealPainter slotRevealPainter;
     private final UiCommand uiCommand;
     private final HologramCommands hologramCommands;
-    private final BoardCommands boardCommands;
+    private final DisplayBoardCommands boardCommands;
 
     public FeudRootCommand(
         Plugin plugin,
@@ -59,7 +63,7 @@ public final class FeudRootCommand implements CommandExecutor {
         BoardRenderer boardRenderer,
         SlotRevealPainter slotRevealPainter,
         HologramCommands hologramCommands,
-        BoardCommands boardCommands
+        DisplayBoardCommands boardCommands
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -119,6 +123,10 @@ public final class FeudRootCommand implements CommandExecutor {
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
             return handleHostBook(sender);
+        }
+
+        if (args.length >= 2 && args[0].equalsIgnoreCase("entity") && args[1].equalsIgnoreCase("book")) {
+            return handleEntityBook(sender);
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
@@ -189,6 +197,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud holo item spawn|move|remove ...");
         sender.sendMessage("/feud holo list");
         sender.sendMessage("/feud clear all - remove all display entities");
+        sender.sendMessage("/feud entity book - dev book with entity commands");
         return true;
     }
 
@@ -304,6 +313,47 @@ public final class FeudRootCommand implements CommandExecutor {
             gameController.controllingTeam()
         );
         hostRemoteService.giveOrReplace(player, fresh);
+    }
+
+    private boolean handleEntityBook(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can receive the entity book.");
+            return true;
+        }
+        if (!player.hasPermission(adminPermission)) {
+            sender.sendMessage("You need admin permission to use this.");
+            return true;
+        }
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        meta.setTitle("Entity Remote");
+        meta.setAuthor("FamilyFeud");
+        var page1 = Component.text()
+            .append(button("Board Create (demo)", "/feud board create demo"))
+            .append(Component.newline())
+            .append(button("Board Destroy (demo)", "/feud board destroy demo"))
+            .append(Component.newline())
+            .append(button("Board Wand", "/feud board wand"))
+            .append(Component.newline())
+            .append(button("Board InitMaps", "/feud board initmaps"))
+            .build();
+        var page2 = Component.text()
+            .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHello"))
+            .append(Component.newline())
+            .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
+            .append(Component.newline())
+            .append(button("Clear Displays", "/feud clear all"))
+            .build();
+        meta.pages(page1, page2);
+        book.setItemMeta(meta);
+        player.getInventory().addItem(book);
+        player.sendMessage("Entity book given.");
+        return true;
+    }
+
+    private Component button(String label, String command) {
+        return Component.text(label, NamedTextColor.GOLD)
+            .clickEvent(ClickEvent.runCommand(command));
     }
 
     private boolean handleClearAll(CommandSender sender) {

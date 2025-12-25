@@ -15,9 +15,9 @@ import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
-import io.letsrolldrew.feud.board.display.DefaultDisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
-import io.letsrolldrew.feud.commands.BoardCommands;
+import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.commands.DisplayBoardCommands;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -39,7 +39,7 @@ public final class PluginBootstrap {
     private HologramService hologramService;
     private HologramCommands hologramCommands;
     private DisplayBoardPresenter displayBoardPresenter;
-    private BoardCommands boardCommands;
+    private DisplayBoardCommands boardCommands;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -64,8 +64,8 @@ public final class PluginBootstrap {
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
         this.hologramService = new HologramService();
         this.hologramCommands = new HologramCommands(hologramService);
-        this.displayBoardPresenter = new DefaultDisplayBoardPresenter();
-        this.boardCommands = new BoardCommands(displayBoardPresenter, "familyfeud.admin");
+        this.displayBoardPresenter = new DisplayBoardService();
+        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }

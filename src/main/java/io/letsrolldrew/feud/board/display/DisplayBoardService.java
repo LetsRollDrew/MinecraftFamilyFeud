@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public final class DefaultDisplayBoardPresenter implements DisplayBoardPresenter {
+public final class DisplayBoardService implements DisplayBoardPresenter {
     // board is 10 wide by 6 tall counting from the top row.
     private static final int BOARD_WIDTH = 10;
     private static final int BOARD_HEIGHT = 6;

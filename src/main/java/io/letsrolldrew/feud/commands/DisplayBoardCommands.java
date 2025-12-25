@@ -4,11 +4,11 @@ import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public final class BoardCommands {
+public final class DisplayBoardCommands {
     private final DisplayBoardPresenter presenter;
     private final String adminPermission;
 
-    public BoardCommands(DisplayBoardPresenter presenter, String adminPermission) {
+    public DisplayBoardCommands(DisplayBoardPresenter presenter, String adminPermission) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
     }
