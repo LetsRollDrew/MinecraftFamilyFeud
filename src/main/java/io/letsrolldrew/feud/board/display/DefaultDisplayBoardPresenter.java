@@ -1,12 +1,13 @@
 package io.letsrolldrew.feud.board.display;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Color;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
@@ -18,9 +19,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class DefaultDisplayBoardPresenter implements DisplayBoardPresenter {
-    private static final int SLOT_COUNT = 8;
-    private static final double SLOT_SPACING_Y = 0.45;
-    private static final float TILE_SCALE = 2.2f;
+    // board is 10 wide by 6 tall counting from the top row.
+    private static final int BOARD_WIDTH = 10;
+    private static final int BOARD_HEIGHT = 6;
+    private static final double TILE_SPACING_X = 0.35;
+    private static final double TILE_SPACING_Y = 0.35;
+    private static final float TILE_SCALE = 0.55f;
 
     private final Map<String, BoardInstance> boards = new HashMap<>();
 
@@ -37,14 +41,18 @@ public final class DefaultDisplayBoardPresenter implements DisplayBoardPresenter
             return;
         }
 
-        float yaw = computeYaw(anchor, facingReference.getLocation());
-        List<UUID> backgrounds = new ArrayList<>(SLOT_COUNT);
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            Location slotLoc = anchor.clone().add(0, -slot * SLOT_SPACING_Y, 0);
-            slotLoc.setYaw(yaw);
-            UUID id = spawnBackground(world, slotLoc);
-            if (id != null) {
-                backgrounds.add(id);
+        float yaw = facingReference.getLocation().getYaw();
+        List<UUID> backgrounds = new ArrayList<>(BOARD_WIDTH * BOARD_HEIGHT);
+
+        for (int y = 0; y < BOARD_HEIGHT; y++) {
+            for (int x = 0; x < BOARD_WIDTH; x++) {
+                Location slotLoc = anchor.clone().add(x * TILE_SPACING_X, -y * TILE_SPACING_Y, 0);
+                slotLoc.setYaw(yaw);
+                slotLoc.setPitch(0f); // keep panels upright
+                UUID id = spawnBackground(world, slotLoc);
+                if (id != null) {
+                    backgrounds.add(id);
+                }
             }
         }
         boards.put(boardId, new BoardInstance(backgrounds));
@@ -67,9 +75,15 @@ public final class DefaultDisplayBoardPresenter implements DisplayBoardPresenter
     }
 
     private UUID spawnBackground(World world, Location loc) {
-        ItemDisplay display = world.spawn(loc, ItemDisplay.class, entity -> {
-            entity.setItemStack(new ItemStack(Material.ECHO_SHARD));
-            entity.setBillboard(Display.Billboard.VERTICAL);
+        TextDisplay display = world.spawn(loc, TextDisplay.class, entity -> {
+            entity.setBillboard(Display.Billboard.FIXED);
+            entity.setShadowed(false);
+            entity.setSeeThrough(true);
+            try {
+                entity.setBackgroundColor(Color.fromARGB(0));
+            } catch (Throwable ignored) {
+            }
+            entity.text(Component.text("\uE000").font(Key.key("feud", "feud")));
             try {
                 entity.setTransformation(new Transformation(
                     new Vector3f(0, 0, 0),
@@ -83,6 +97,7 @@ public final class DefaultDisplayBoardPresenter implements DisplayBoardPresenter
         return display == null ? null : display.getUniqueId();
     }
 
+    // yaw = rotation around the vertical axis, 0 = south, 90 = west, 180 = north, 270 = east
     private float computeYaw(Location from, Location to) {
         double dx = to.getX() - from.getX();
         double dz = to.getZ() - from.getZ();

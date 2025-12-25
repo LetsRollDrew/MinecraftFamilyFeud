@@ -105,14 +105,6 @@ public final class FeudRootCommand implements CommandExecutor {
             return hologramCommands.handle(sender, remaining);
         }
 
-        if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
-            String[] remaining = new String[Math.max(0, args.length - 1)];
-            if (args.length > 1) {
-                System.arraycopy(args, 1, remaining, 0, args.length - 1);
-            }
-            return boardCommands.handle(sender, remaining);
-        }
-
         if (args.length >= 2 && args[0].equalsIgnoreCase("clear") && args[1].equalsIgnoreCase("all")) {
             return handleClearAll(sender);
         }
@@ -125,16 +117,23 @@ public final class FeudRootCommand implements CommandExecutor {
             return uiCommand.handle(sender, remaining);
         }
 
-        if (args.length >= 2 && args[0].equalsIgnoreCase("board") && args[1].equalsIgnoreCase("wand")) {
-            return handleBoardWand(sender);
-        }
-
         if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
             return handleHostBook(sender);
         }
 
-        if (args.length >= 2 && args[0].equalsIgnoreCase("board") && args[1].equalsIgnoreCase("initmaps")) {
-            return handleBoardInitMaps(sender);
+        if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
+            // Handles old board commands first, TODO: integrate better later to other board setup
+            if (args.length >= 2 && args[1].equalsIgnoreCase("wand")) {
+                return handleBoardWand(sender);
+            }
+            if (args.length >= 2 && args[1].equalsIgnoreCase("initmaps")) {
+                return handleBoardInitMaps(sender);
+            }
+            String[] remaining = new String[Math.max(0, args.length - 1)];
+            if (args.length > 1) {
+                System.arraycopy(args, 1, remaining, 0, args.length - 1);
+            }
+            return boardCommands.handle(sender, remaining);
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("list")) {
