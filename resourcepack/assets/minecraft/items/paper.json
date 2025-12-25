@@ -1,0 +1,18 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "entries": [
+      { "threshold": 9001.0, "model": { "type": "minecraft:model", "model": "feud:item/slot_hidden" } },
+      { "threshold": 9002.0, "model": { "type": "minecraft:model", "model": "feud:item/slot_revealed" } },
+      { "threshold": 9003.0, "model": { "type": "minecraft:model", "model": "feud:item/slot_flash" } },
+      { "threshold": 9004.0, "model": { "type": "minecraft:model", "model": "feud:item/slot_number_badge" } },
+      { "threshold": 9005.0, "model": { "type": "minecraft:model", "model": "feud:item/score_panel" } },
+      { "threshold": 9006.0, "model": { "type": "minecraft:model", "model": "feud:item/strike_x" } },
+      { "threshold": 9007.0, "model": { "type": "minecraft:model", "model": "feud:item/team_red_nameplate" } },
+      { "threshold": 9008.0, "model": { "type": "minecraft:model", "model": "feud:item/team_blue_nameplate" } }
+    ],
+    "fallback": { "type": "minecraft:model", "model": "minecraft:item/paper" }
+  }
+}
