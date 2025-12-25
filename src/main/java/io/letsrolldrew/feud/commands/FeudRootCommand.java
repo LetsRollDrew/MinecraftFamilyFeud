@@ -13,6 +13,9 @@ import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
+import io.letsrolldrew.feud.board.display.DefaultDisplayBoardPresenter;
+import io.letsrolldrew.feud.commands.BoardCommands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,6 +38,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final SlotRevealPainter slotRevealPainter;
     private final UiCommand uiCommand;
     private final HologramCommands hologramCommands;
+    private final BoardCommands boardCommands;
 
     public FeudRootCommand(
         Plugin plugin,
@@ -50,7 +54,8 @@ public final class FeudRootCommand implements CommandExecutor {
         TileFramebufferStore framebufferStore,
         BoardRenderer boardRenderer,
         SlotRevealPainter slotRevealPainter,
-        HologramCommands hologramCommands
+        HologramCommands hologramCommands,
+        BoardCommands boardCommands
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -66,6 +71,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.boardRenderer = boardRenderer;
         this.slotRevealPainter = slotRevealPainter;
         this.hologramCommands = hologramCommands;
+        this.boardCommands = boardCommands;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
     }
 
@@ -93,6 +99,14 @@ public final class FeudRootCommand implements CommandExecutor {
                 return true;
             }
             return hologramCommands.handle(sender, remaining);
+        }
+
+        if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
+            String[] remaining = new String[Math.max(0, args.length - 1)];
+            if (args.length > 1) {
+                System.arraycopy(args, 1, remaining, 0, args.length - 1);
+            }
+            return boardCommands.handle(sender, remaining);
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("ui")) {
