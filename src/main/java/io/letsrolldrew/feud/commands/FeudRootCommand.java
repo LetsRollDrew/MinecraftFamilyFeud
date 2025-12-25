@@ -16,10 +16,14 @@ import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DefaultDisplayBoardPresenter;
 import io.letsrolldrew.feud.commands.BoardCommands;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.plugin.Plugin;
 
 public final class FeudRootCommand implements CommandExecutor {
@@ -109,6 +113,10 @@ public final class FeudRootCommand implements CommandExecutor {
             return boardCommands.handle(sender, remaining);
         }
 
+        if (args.length >= 2 && args[0].equalsIgnoreCase("clear") && args[1].equalsIgnoreCase("all")) {
+            return handleClearAll(sender);
+        }
+
         if (args.length >= 1 && args[0].equalsIgnoreCase("ui")) {
             String[] remaining = new String[Math.max(0, args.length - 1)];
             if (args.length > 1) {
@@ -181,6 +189,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud holo text spawn|set|move|remove ...");
         sender.sendMessage("/feud holo item spawn|move|remove ...");
         sender.sendMessage("/feud holo list");
+        sender.sendMessage("/feud clear all - remove all display entities");
         return true;
     }
 
@@ -296,5 +305,23 @@ public final class FeudRootCommand implements CommandExecutor {
             gameController.controllingTeam()
         );
         hostRemoteService.giveOrReplace(player, fresh);
+    }
+
+    private boolean handleClearAll(CommandSender sender) {
+        if (!sender.hasPermission(adminPermission)) {
+            sender.sendMessage("You need admin permission to clear display entities.");
+            return true;
+        }
+        int removed = 0;
+        for (var world : Bukkit.getWorlds()) {
+            for (var entity : world.getEntities()) {
+                if (entity instanceof ItemDisplay || entity instanceof TextDisplay) {
+                    entity.remove();
+                    removed++;
+                }
+            }
+        }
+        sender.sendMessage("Cleared " + removed + " display entities.");
+        return true;
     }
 }
