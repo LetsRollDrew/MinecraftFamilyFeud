@@ -167,6 +167,19 @@ public final class HologramService {
         return new HashMap<>(hologramsById);
     }
 
+    public void clearAll() {
+        for (HologramEntry entry : hologramsById.values()) {
+            UUID uuid = entry.uuid();
+            if (uuid != null) {
+                var entity = Bukkit.getEntity(uuid);
+                if (entity != null) {
+                    entity.remove();
+                }
+            }
+        }
+        hologramsById.clear();
+    }
+
     private Optional<TextDisplay> resolveText(String id) {
         return resolveEntry(id, HologramType.TEXT_DISPLAY)
             .map(entry -> Bukkit.getEntity(entry.uuid()))

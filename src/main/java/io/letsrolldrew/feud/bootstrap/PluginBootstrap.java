@@ -106,7 +106,9 @@ public final class PluginBootstrap {
             boardRenderer,
             slotRevealPainter,
             hologramCommands,
-            boardCommands
+            boardCommands,
+            hologramService,
+            displayBoardPresenter
         ));
     }
 }

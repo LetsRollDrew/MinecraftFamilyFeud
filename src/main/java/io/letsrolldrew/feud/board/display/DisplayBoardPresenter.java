@@ -13,4 +13,6 @@ public interface DisplayBoardPresenter {
     void revealSlot(String boardId, int slotIndex, String answer, int points);
 
     void hideSlot(String boardId, int slotIndex);
+
+    void clearAll();
 }

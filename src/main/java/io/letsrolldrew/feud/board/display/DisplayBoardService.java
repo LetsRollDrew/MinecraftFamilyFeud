@@ -74,6 +74,19 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     public void hideSlot(String boardId, int slotIndex) {
     }
 
+    @Override
+    public void clearAll() {
+        for (BoardInstance instance : boards.values()) {
+            for (UUID id : instance.backgrounds()) {
+                var entity = org.bukkit.Bukkit.getEntity(id);
+                if (entity != null) {
+                    entity.remove();
+                }
+            }
+        }
+        boards.clear();
+    }
+
     private UUID spawnBackground(World world, Location loc) {
         TextDisplay display = world.spawn(loc, TextDisplay.class, entity -> {
             entity.setBillboard(Display.Billboard.FIXED);

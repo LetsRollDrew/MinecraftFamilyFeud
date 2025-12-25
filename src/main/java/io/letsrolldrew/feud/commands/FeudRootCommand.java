@@ -47,6 +47,8 @@ public final class FeudRootCommand implements CommandExecutor {
     private final UiCommand uiCommand;
     private final HologramCommands hologramCommands;
     private final DisplayBoardCommands boardCommands;
+    private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
+    private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
 
     public FeudRootCommand(
         Plugin plugin,
@@ -63,7 +65,9 @@ public final class FeudRootCommand implements CommandExecutor {
         BoardRenderer boardRenderer,
         SlotRevealPainter slotRevealPainter,
         HologramCommands hologramCommands,
-        DisplayBoardCommands boardCommands
+        DisplayBoardCommands boardCommands,
+        io.letsrolldrew.feud.effects.holo.HologramService hologramService,
+        io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -80,6 +84,8 @@ public final class FeudRootCommand implements CommandExecutor {
         this.slotRevealPainter = slotRevealPainter;
         this.hologramCommands = hologramCommands;
         this.boardCommands = boardCommands;
+        this.hologramService = hologramService;
+        this.displayBoardPresenter = displayBoardPresenter;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
     }
 
@@ -338,7 +344,7 @@ public final class FeudRootCommand implements CommandExecutor {
             .append(button("Board InitMaps", "/feud board initmaps"))
             .build();
         var page2 = Component.text()
-            .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHello"))
+            .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
             .append(Component.newline())
             .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
             .append(Component.newline())
@@ -370,6 +376,8 @@ public final class FeudRootCommand implements CommandExecutor {
                 }
             }
         }
+        displayBoardPresenter.clearAll();
+        hologramService.clearAll();
         sender.sendMessage("Cleared " + removed + " display entities.");
         return true;
     }
