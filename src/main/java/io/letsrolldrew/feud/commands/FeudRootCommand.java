@@ -13,12 +13,10 @@ import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
-import io.letsrolldrew.feud.commands.DisplayBoardCommands;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
@@ -37,6 +35,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final String adminPermission;
     private final GameController gameController;
     private final HostBookUiBuilder hostBookUiBuilder;
+    private final HostBookUiBuilder displayHostBookUiBuilder;
     private final HostRemoteService hostRemoteService;
     private final BoardWandService boardWandService;
     private final BoardBindingStore boardBindingStore;
@@ -54,6 +53,7 @@ public final class FeudRootCommand implements CommandExecutor {
         Plugin plugin,
         SurveyRepository surveyRepository,
         HostBookUiBuilder hostBookUiBuilder,
+        HostBookUiBuilder displayHostBookUiBuilder,
         HostRemoteService hostRemoteService,
         String hostPermission,
         String adminPermission,
@@ -72,6 +72,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.hostBookUiBuilder = hostBookUiBuilder;
+        this.displayHostBookUiBuilder = displayHostBookUiBuilder;
         this.hostRemoteService = hostRemoteService;
         this.hostPermission = hostPermission;
         this.adminPermission = adminPermission;
@@ -128,7 +129,8 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
-            return handleHostBook(sender);
+            String flavor = args.length >= 3 ? args[2].toLowerCase() : "";
+            return handleHostBook(sender, flavor);
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("entity") && args[1].equalsIgnoreCase("book")) {
@@ -298,20 +300,20 @@ public final class FeudRootCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean handleHostBook(CommandSender sender) {
-
+    private boolean handleHostBook(CommandSender sender, String flavor) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can receive the host book.");
             return true;
         }
-
         if (!player.hasPermission(hostPermission)) {
             sender.sendMessage("You must be the host to use this.");
             return true;
         }
-
-        giveOrReplaceHostBook(player);
-        player.sendMessage("Host remote given.");
+        switch (flavor) {
+            case "map" -> giveMapBook(player);
+            case "display" -> giveDisplayBook(player);
+            default -> giveSelectorBook(player);
+        }
         return true;
     }
 
@@ -369,6 +371,12 @@ public final class FeudRootCommand implements CommandExecutor {
             .clickEvent(ClickEvent.runCommand(command));
     }
 
+    private Component buttonUnderlined(String label, String command) {
+        return Component.text(label, NamedTextColor.GOLD)
+            .decorate(net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+            .clickEvent(ClickEvent.runCommand(command));
+    }
+
     private boolean handleClearAll(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
             sender.sendMessage("You need admin permission to clear display entities.");
@@ -387,5 +395,59 @@ public final class FeudRootCommand implements CommandExecutor {
         hologramService.clearAll();
         sender.sendMessage("Cleared " + removed + " display entities.");
         return true;
+    }
+
+    private void giveSelectorBook(Player player) {
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        meta.setTitle("Host Remote");
+        meta.setAuthor("FamilyFeud");
+        var page = Component.text()
+            .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
+            .build();
+        meta.pages(page);
+        book.setItemMeta(meta);
+        player.getInventory().addItem(book);
+        player.sendMessage("Host remote selector given.");
+    }
+
+    private void giveMapBook(Player player) {
+        var fresh = hostBookUiBuilder.createBook(
+            gameController.slotHoverTexts(),
+            gameController.getActiveSurvey(),
+            gameController.revealedSlots(),
+            gameController.strikeCount(),
+            gameController.maxStrikes(),
+            gameController.roundPoints(),
+            gameController.controllingTeam()
+        );
+        if (fresh.getItemMeta() instanceof BookMeta meta) {
+            meta.lore(java.util.List.of(Component.text("Map Based", NamedTextColor.GRAY)));
+            fresh.setItemMeta(meta);
+        }
+        hostRemoteService.giveOrReplace(player, fresh);
+        player.sendMessage("Map board remote given.");
+    }
+
+    private void giveDisplayBook(Player player) {
+        var fresh = displayHostBookUiBuilder.createBook(
+            gameController.slotHoverTexts(),
+            gameController.getActiveSurvey(),
+            gameController.revealedSlots(),
+            gameController.strikeCount(),
+            gameController.maxStrikes(),
+            gameController.roundPoints(),
+            gameController.controllingTeam()
+        );
+        if (fresh.getItemMeta() instanceof BookMeta meta) {
+            meta.lore(java.util.List.of(Component.text("Display Based", NamedTextColor.GRAY)));
+            fresh.setItemMeta(meta);
+        }
+        hostRemoteService.giveOrReplace(player, fresh);
+        player.sendMessage("Display board remote given.");
     }
 }

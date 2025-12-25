@@ -28,6 +28,7 @@ public final class PluginBootstrap {
     private SurveyRepository surveyRepository;
     private GameController gameController;
     private HostBookUiBuilder hostBookUiBuilder;
+    private HostBookUiBuilder displayHostBookUiBuilder;
     private HostRemoteService hostRemoteService;
     private BoardWandService boardWandService;
     private BoardBindingStore boardBindingStore;
@@ -53,6 +54,7 @@ public final class PluginBootstrap {
         // refresher wired later via FeudRootCommand
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
+        this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
         this.boardBindingStore = new BoardBindingStore(plugin);
@@ -95,6 +97,7 @@ public final class PluginBootstrap {
             plugin,
             surveyRepository,
             hostBookUiBuilder,
+            displayHostBookUiBuilder,
             hostRemoteService,
             config.hostPermission(),
             "familyfeud.admin",
