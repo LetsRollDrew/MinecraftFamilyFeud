@@ -13,6 +13,12 @@ import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.effects.holo.HologramService;
+import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
+import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.commands.DisplayBoardCommands;
+import io.letsrolldrew.feud.commands.SurveyCommands;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,6 +29,7 @@ public final class PluginBootstrap {
     private SurveyRepository surveyRepository;
     private GameController gameController;
     private HostBookUiBuilder hostBookUiBuilder;
+    private HostBookUiBuilder displayHostBookUiBuilder;
     private HostRemoteService hostRemoteService;
     private BoardWandService boardWandService;
     private BoardBindingStore boardBindingStore;
@@ -31,6 +38,11 @@ public final class PluginBootstrap {
     private DirtyTracker dirtyTracker;
     private BoardRenderer boardRenderer;
     private io.letsrolldrew.feud.board.render.SlotRevealPainter slotRevealPainter;
+    private HologramService hologramService;
+    private HologramCommands hologramCommands;
+    private SurveyCommands surveyCommands;
+    private DisplayBoardPresenter displayBoardPresenter;
+    private DisplayBoardCommands boardCommands;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -44,6 +56,7 @@ public final class PluginBootstrap {
         // refresher wired later via FeudRootCommand
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
+        this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
         this.boardBindingStore = new BoardBindingStore(plugin);
@@ -53,6 +66,11 @@ public final class PluginBootstrap {
         this.dirtyTracker = new DirtyTracker();
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
+        this.hologramService = new HologramService();
+        this.hologramCommands = new HologramCommands(hologramService);
+        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
+        this.displayBoardPresenter = new DisplayBoardService();
+        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }
@@ -82,6 +100,7 @@ public final class PluginBootstrap {
             plugin,
             surveyRepository,
             hostBookUiBuilder,
+            displayHostBookUiBuilder,
             hostRemoteService,
             config.hostPermission(),
             "familyfeud.admin",
@@ -91,7 +110,12 @@ public final class PluginBootstrap {
             mapIdStore,
             framebufferStore,
             boardRenderer,
-            slotRevealPainter
+            slotRevealPainter,
+            hologramCommands,
+            boardCommands,
+            hologramService,
+            displayBoardPresenter,
+            surveyCommands
         ));
     }
 }

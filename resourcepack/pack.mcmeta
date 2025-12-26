@@ -1,0 +1,10 @@
+{
+  "pack": {
+    "pack_format": 64,
+    "description": "Feud prototype font",
+    "supported_formats": {
+      "min_inclusive": 64,
+      "max_inclusive": 64
+    }
+  }
+}
