@@ -40,6 +40,12 @@ public final class CommandTree {
             }
             current = next;
             index++;
+
+            // stop walking if we hit a leaf with a handler so it can consume remaining args
+            // b/c otherwise extra args would bypass the handler and trigger help instead
+            if (current.handler() != null && current.children().isEmpty()) {
+                break;
+            }
         }
 
         String[] remaining = Arrays.copyOfRange(args, index, args.length);
