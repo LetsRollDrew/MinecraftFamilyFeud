@@ -46,7 +46,8 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             return;
         }
 
-        float yaw = snapYawToCardinal(facingReference.getLocation().getYaw());
+        BoardFacing facing = BoardFacing.fromYaw(facingReference.getLocation().getYaw());
+        BoardSpace space = new BoardSpace(anchor.clone(), facing);
         ItemStack hiddenStack = stackWithCmd(CMD_HIDDEN);
 
         List<SlotInstance> slots = new ArrayList<>(layout.slotRows() * layout.slotCols());
@@ -56,25 +57,19 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             for (int row = 0; row < layout.slotRows(); row++) {
                 double yOffset = -(row * (layout.slotHeight() + layout.rowGap()));
 
-                Location slotLoc = offsetRelativeToYaw(anchor, yaw, colX, yOffset, 0);
-                slotLoc.setYaw(yaw);
-                slotLoc.setPitch(0f);
+                Location slotLoc = space.at(colX, yOffset, 0);
 
                 SlotInstance slot = buildSlot(boardId, slotIndex);
 
-                UUID bg = spawnBackground(world, slotLoc, hiddenStack, yaw);
+                UUID bg = spawnBackground(world, slotLoc, hiddenStack, facing.yaw());
                 slot.setBackgroundId(bg);
 
-                Location ansLoc = offsetRelativeToYaw(slotLoc, yaw, -1.3, 0, layout.textZOffset());
-                ansLoc.setYaw(yaw);
-                ansLoc.setPitch(0f);
-                UUID ans = spawnText(world, ansLoc, layout.textScale(), yaw);
+                Location ansLoc = space.at(colX - 1.3, yOffset, layout.textZOffset());
+                UUID ans = spawnText(world, ansLoc, layout.textScale(), facing.yaw());
                 slot.setAnswerId(ans);
 
-                Location ptsLoc = offsetRelativeToYaw(slotLoc, yaw, 1.4, 0, layout.textZOffset());
-                ptsLoc.setYaw(yaw);
-                ptsLoc.setPitch(0f);
-                UUID pts = spawnText(world, ptsLoc, layout.textScale(), yaw);
+                Location ptsLoc = space.at(colX + 1.4, yOffset, layout.textZOffset());
+                UUID pts = spawnText(world, ptsLoc, layout.textScale(), facing.yaw());
                 slot.setPointsId(pts);
 
                 slots.add(slot);
@@ -82,7 +77,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             }
         }
 
-        boards.put(boardId, new BoardInstance(boardId, anchor.clone(), yaw, slots));
+        boards.put(boardId, new BoardInstance(boardId, anchor.clone(), facing.yaw(), slots));
     }
 
     @Override
@@ -212,36 +207,5 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         if (entity != null) {
             entity.remove();
         }
-    }
-
-    private static float snapYawToCardinal(float yaw) {
-        float y = yaw % 360f;
-        if (y < 0) {
-            y += 360f;
-        }
-        float snapped = Math.round(y / 90f) * 90f;
-        return snapped % 360f;
-    }
-
-    /***********************************************************************
-    * Apply an offset in board space relative to yaw (user camera angle)
-    * - x is "to the right of the board"
-    * - z is "forward out of the board"
-    * This keeps board aligned to world axis, idea of 0/90/180/270 degrees only
-    * to prevent awkward diagonal orientations.
-    * TODO: Potentially enable 45/135/225/315 angles later
-    ************************************************************************/
-    private static Location offsetRelativeToYaw(Location base, float yawDeg, double x, double y, double z) {
-        Location out = base.clone();
-
-        double rad = Math.toRadians(yawDeg);
-        double cos = Math.cos(rad);
-        double sin = Math.sin(rad);
-
-        double rx = (x * cos) - (z * sin);
-        double rz = (x * sin) + (z * cos);
-
-        out.add(rx, y, rz);
-        return out;
     }
 }
