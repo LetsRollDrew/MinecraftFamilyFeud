@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": { "layer0": "feud:item/tempfont" },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 0.01],
+      "faces": {
+        "north": { "uv": [15, 0, 16, 2], "texture": "#layer0" },
+        "south": { "uv": [15, 0, 16, 2], "texture": "#layer0" }
+      }
+    }
+  ]
+}

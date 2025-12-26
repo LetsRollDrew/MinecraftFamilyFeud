@@ -3,4 +3,110 @@
   "textures": {
     "layer0": "minecraft:item/paper"
   },
+  "overrides": [
+    {
+      "predicate": { "custom_model_data": 9001 },
+      "model": "feud:item/tempfont_quad"
+    },
+    {
+      "predicate": { "custom_model_data": 9002 },
+      "model": "feud:item/tempfont_a"
+    },
+    {
+      "predicate": { "custom_model_data": 9003 },
+      "model": "feud:item/tempfont_b"
+    },
+    {
+      "predicate": { "custom_model_data": 9004 },
+      "model": "feud:item/tempfont_c"
+    },
+    {
+      "predicate": { "custom_model_data": 9005 },
+      "model": "feud:item/tempfont_d"
+    },
+    {
+      "predicate": { "custom_model_data": 9006 },
+      "model": "feud:item/tempfont_e"
+    },
+    {
+      "predicate": { "custom_model_data": 9007 },
+      "model": "feud:item/tempfont_f"
+    },
+    {
+      "predicate": { "custom_model_data": 9008 },
+      "model": "feud:item/tempfont_h"
+    },
+    {
+      "predicate": { "custom_model_data": 9009 },
+      "model": "feud:item/tempfont_i"
+    },
+    {
+      "predicate": { "custom_model_data": 9010 },
+      "model": "feud:item/tempfont_j"
+    },
+    {
+      "predicate": { "custom_model_data": 9011 },
+      "model": "feud:item/tempfont_k"
+    },
+    {
+      "predicate": { "custom_model_data": 9012 },
+      "model": "feud:item/tempfont_l"
+    },
+    {
+      "predicate": { "custom_model_data": 9013 },
+      "model": "feud:item/tempfont_m"
+    },
+    {
+      "predicate": { "custom_model_data": 9014 },
+      "model": "feud:item/tempfont_n"
+    },
+    {
+      "predicate": { "custom_model_data": 9015 },
+      "model": "feud:item/tempfont_o"
+    },
+    {
+      "predicate": { "custom_model_data": 9016 },
+      "model": "feud:item/tempfont_p"
+    },
+    {
+      "predicate": { "custom_model_data": 9017 },
+      "model": "feud:item/tempfont_q"
+    },
+    {
+      "predicate": { "custom_model_data": 9018 },
+      "model": "feud:item/tempfont_r"
+    },
+    {
+      "predicate": { "custom_model_data": 9019 },
+      "model": "feud:item/tempfont_s"
+    },
+    {
+      "predicate": { "custom_model_data": 9020 },
+      "model": "feud:item/tempfont_t"
+    },
+    {
+      "predicate": { "custom_model_data": 9021 },
+      "model": "feud:item/tempfont_u"
+    },
+    {
+      "predicate": { "custom_model_data": 9022 },
+      "model": "feud:item/tempfont_v"
+    },
+    {
+      "predicate": { "custom_model_data": 9023 },
+      "model": "feud:item/tempfont_w"
+    },
+    {
+      "predicate": { "custom_model_data": 9024 },
+      "model": "feud:item/tempfont_x"
+    },
+    {
+      "predicate": { "custom_model_data": 9025 },
+      "model": "feud:item/tempfont_y"
+    },
+    {
+      "predicate": { "custom_model_data": 9026 },
+      "model": "feud:item/tempfont_z"
+    }
+  ]
 }
