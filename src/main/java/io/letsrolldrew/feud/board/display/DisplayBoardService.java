@@ -1,5 +1,6 @@
 package io.letsrolldrew.feud.board.display;
 
+import io.letsrolldrew.feud.display.DisplayKey;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -25,23 +26,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class DisplayBoardService implements DisplayBoardPresenter {
-    private static final int SLOT_ROWS = 4;
-    private static final int SLOT_COLS = 2;
-    private static final double SLOT_WIDTH = 3.8;
-    private static final double SLOT_HEIGHT = 0.85;
-    private static final double COLUMN_GAP = 0.45;
-    private static final double ROW_GAP = 0.25;
-    private static final float BACKGROUND_SCALE_X = 3.2f;
-    private static final float BACKGROUND_SCALE_Y = 1.0f;
-    private static final float BACKGROUND_SCALE_Z = 1.0f;
-    private static final float TEXT_SCALE = 0.7f;
-    private static final double TEXT_Z_OFFSET = 0.02;
-
     private static final float CMD_HIDDEN = 9001.0f;
     private static final float CMD_REVEALED = 9002.0f;
     private static final float CMD_FLASH = 9003.0f;
 
     private final Map<String, BoardInstance> boards = new HashMap<>();
+    private final BoardLayout layout = BoardLayout.defaultLayout();
 
     @Override
     public void createBoard(String boardId, Location anchor, Player facingReference) {
@@ -57,50 +47,42 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
 
         float yaw = snapYawToCardinal(facingReference.getLocation().getYaw());
-
-        int slotCount = SLOT_ROWS * SLOT_COLS;
-        List<UUID> backgrounds = new ArrayList<>(slotCount);
-        List<UUID> answers = new ArrayList<>(slotCount);
-        List<UUID> points = new ArrayList<>(slotCount);
-
         ItemStack hiddenStack = stackWithCmd(CMD_HIDDEN);
 
-        for (int col = 0; col < SLOT_COLS; col++) {
-            double colX = col == 0 ? 0 : SLOT_WIDTH + COLUMN_GAP;
-
-            for (int row = 0; row < SLOT_ROWS; row++) {
-                double yOffset = -(row * (SLOT_HEIGHT + ROW_GAP));
+        List<SlotInstance> slots = new ArrayList<>(layout.slotRows() * layout.slotCols());
+        int slotIndex = 0;
+        for (int col = 0; col < layout.slotCols(); col++) {
+            double colX = col == 0 ? 0 : layout.slotWidth() + layout.columnGap();
+            for (int row = 0; row < layout.slotRows(); row++) {
+                double yOffset = -(row * (layout.slotHeight() + layout.rowGap()));
 
                 Location slotLoc = offsetRelativeToYaw(anchor, yaw, colX, yOffset, 0);
                 slotLoc.setYaw(yaw);
-                slotLoc.setPitch(0f); // keep panels upright
+                slotLoc.setPitch(0f);
+
+                SlotInstance slot = buildSlot(boardId, slotIndex);
 
                 UUID bg = spawnBackground(world, slotLoc, hiddenStack, yaw);
-                if (bg != null) {
-                    backgrounds.add(bg);
-                }
+                slot.setBackgroundId(bg);
 
-                Location ansLoc = offsetRelativeToYaw(slotLoc, yaw, -1.3, 0, TEXT_Z_OFFSET);
+                Location ansLoc = offsetRelativeToYaw(slotLoc, yaw, -1.3, 0, layout.textZOffset());
                 ansLoc.setYaw(yaw);
                 ansLoc.setPitch(0f);
+                UUID ans = spawnText(world, ansLoc, layout.textScale(), yaw);
+                slot.setAnswerId(ans);
 
-                UUID ans = spawnText(world, ansLoc, TEXT_SCALE, yaw);
-                if (ans != null) {
-                    answers.add(ans);
-                }
-
-                Location ptsLoc = offsetRelativeToYaw(slotLoc, yaw, 1.4, 0, TEXT_Z_OFFSET);
+                Location ptsLoc = offsetRelativeToYaw(slotLoc, yaw, 1.4, 0, layout.textZOffset());
                 ptsLoc.setYaw(yaw);
                 ptsLoc.setPitch(0f);
+                UUID pts = spawnText(world, ptsLoc, layout.textScale(), yaw);
+                slot.setPointsId(pts);
 
-                UUID pts = spawnText(world, ptsLoc, TEXT_SCALE, yaw);
-                if (pts != null) {
-                    points.add(pts);
-                }
+                slots.add(slot);
+                slotIndex++;
             }
         }
 
-        boards.put(boardId, new BoardInstance(backgrounds, answers, points));
+        boards.put(boardId, new BoardInstance(boardId, anchor.clone(), yaw, slots));
     }
 
     @Override
@@ -109,34 +91,35 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         if (instance == null) {
             return;
         }
-        removeAll(instance.backgrounds());
-        removeAll(instance.answers());
-        removeAll(instance.points());
+        removeSlotEntities(instance.slots());
     }
 
     @Override
     public void setSlot(String boardId, int slotIndex, String answer, Integer points, boolean revealed) {
-
     }
 
     @Override
     public void revealSlot(String boardId, int slotIndex, String answer, int points) {
-
     }
 
     @Override
     public void hideSlot(String boardId, int slotIndex) {
-
     }
 
     @Override
     public void clearAll() {
         for (BoardInstance instance : boards.values()) {
-            removeAll(instance.backgrounds());
-            removeAll(instance.answers());
-            removeAll(instance.points());
+            removeSlotEntities(instance.slots());
         }
         boards.clear();
+    }
+
+    private SlotInstance buildSlot(String boardId, int slotIndex) {
+        String slotId = "slot" + (slotIndex + 1);
+        DisplayKey bgKey = new DisplayKey("board", boardId, slotId, "bg");
+        DisplayKey ansKey = new DisplayKey("board", boardId, slotId, "answer");
+        DisplayKey ptsKey = new DisplayKey("board", boardId, slotId, "points");
+        return new SlotInstance(bgKey, ansKey, ptsKey);
     }
 
     private UUID spawnBackground(World world, Location loc, ItemStack stack, float yaw) {
@@ -149,7 +132,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
                 entity.setTransformation(new Transformation(
                         new Vector3f(0, 0, 0),
                         new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f(BACKGROUND_SCALE_X, BACKGROUND_SCALE_Y, BACKGROUND_SCALE_Z),
+                        new Vector3f(layout.backgroundScaleX(), layout.backgroundScaleY(), layout.backgroundScaleZ()),
                         new AxisAngle4f(0, 0, 0, 0)));
             } catch (Throwable ignored) {
             }
@@ -169,7 +152,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
     private UUID spawnText(World world, Location loc, float scale, float yaw) {
         TextDisplay display = world.spawn(loc, TextDisplay.class, entity -> {
-            // important: FIXED means it won't camera-face
             entity.setBillboard(Display.Billboard.FIXED);
             entity.setRotation(yaw, 0f);
 
@@ -214,12 +196,21 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         return stack;
     }
 
-    private void removeAll(List<UUID> ids) {
-        for (UUID id : ids) {
-            var entity = Bukkit.getEntity(id);
-            if (entity != null) {
-                entity.remove();
-            }
+    private void removeSlotEntities(List<SlotInstance> slots) {
+        for (SlotInstance slot : slots) {
+            removeById(slot.backgroundId());
+            removeById(slot.answerId());
+            removeById(slot.pointsId());
+        }
+    }
+
+    private void removeById(UUID id) {
+        if (id == null) {
+            return;
+        }
+        var entity = Bukkit.getEntity(id);
+        if (entity != null) {
+            entity.remove();
         }
     }
 
@@ -252,11 +243,5 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         out.add(rx, y, rz);
         return out;
-    }
-
-    private record BoardInstance(
-            List<UUID> backgrounds,
-            List<UUID> answers,
-            List<UUID> points) {
     }
 }
