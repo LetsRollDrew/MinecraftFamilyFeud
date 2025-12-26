@@ -66,14 +66,14 @@ public final class PluginBootstrap {
         this.framebufferStore = new TileFramebufferStore();
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
         this.dirtyTracker = new DirtyTracker();
+        this.displayRegistry = new DisplayRegistry();
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
         this.hologramService = new HologramService();
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
-        this.displayBoardPresenter = new DisplayBoardService();
+        this.displayBoardPresenter = new DisplayBoardService(displayRegistry);
         this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
-        this.displayRegistry = new DisplayRegistry();
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }

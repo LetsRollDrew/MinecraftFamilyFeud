@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.board.display;
 
 import io.letsrolldrew.feud.display.DisplayKey;
+import io.letsrolldrew.feud.display.DisplayRegistry;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -23,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public final class DisplayBoardService implements DisplayBoardPresenter {
     private static final float CMD_HIDDEN = 9001.0f;
@@ -32,7 +32,11 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
     private final Map<String, BoardInstance> boards = new HashMap<>();
     private final BoardLayout layout = BoardLayout.defaultLayout();
+    private final DisplayRegistry displayRegistry;
 
+    public DisplayBoardService(DisplayRegistry displayRegistry) {
+        this.displayRegistry = displayRegistry;
+    }
     @Override
     public void createBoard(String boardId, Location anchor, Player facingReference) {
         if (boardId == null || boardId.isBlank() || anchor == null || facingReference == null) {
@@ -61,16 +65,13 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
                 SlotInstance slot = buildSlot(boardId, slotIndex);
 
-                UUID bg = spawnBackground(world, slotLoc, hiddenStack, facing.yaw());
-                slot.setBackgroundId(bg);
+                spawnBackground(slot.backgroundKey(), world, slotLoc, hiddenStack, facing.yaw());
 
                 Location ansLoc = space.at(colX - 1.3, yOffset, layout.textZOffset());
-                UUID ans = spawnText(world, ansLoc, layout.textScale(), facing.yaw());
-                slot.setAnswerId(ans);
+                spawnText(slot.answerKey(), world, ansLoc, layout.textScale(), facing.yaw());
 
                 Location ptsLoc = space.at(colX + 1.4, yOffset, layout.textZOffset());
-                UUID pts = spawnText(world, ptsLoc, layout.textScale(), facing.yaw());
-                slot.setPointsId(pts);
+                spawnText(slot.pointsKey(), world, ptsLoc, layout.textScale(), facing.yaw());
 
                 slots.add(slot);
                 slotIndex++;
@@ -117,7 +118,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         return new SlotInstance(bgKey, ansKey, ptsKey);
     }
 
-    private UUID spawnBackground(World world, Location loc, ItemStack stack, float yaw) {
+    private void spawnBackground(DisplayKey key, World world, Location loc, ItemStack stack, float yaw) {
         ItemDisplay display = world.spawn(loc, ItemDisplay.class, entity -> {
             entity.setItemStack(stack);
             entity.setBillboard(Display.Billboard.FIXED);
@@ -134,7 +135,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         });
 
         if (display == null) {
-            return null;
+            return;
         }
 
         try {
@@ -142,10 +143,10 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         } catch (Throwable ignored) {
         }
 
-        return display.getUniqueId();
+        displayRegistry.register(key, display);
     }
 
-    private UUID spawnText(World world, Location loc, float scale, float yaw) {
+    private void spawnText(DisplayKey key, World world, Location loc, float scale, float yaw) {
         TextDisplay display = world.spawn(loc, TextDisplay.class, entity -> {
             entity.setBillboard(Display.Billboard.FIXED);
             entity.setRotation(yaw, 0f);
@@ -170,7 +171,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         });
 
         if (display == null) {
-            return null;
+            return;
         }
 
         try {
@@ -178,7 +179,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         } catch (Throwable ignored) {
         }
 
-        return display.getUniqueId();
+        displayRegistry.register(key, display);
     }
 
     private ItemStack stackWithCmd(float cmd) {
@@ -193,19 +194,9 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
     private void removeSlotEntities(List<SlotInstance> slots) {
         for (SlotInstance slot : slots) {
-            removeById(slot.backgroundId());
-            removeById(slot.answerId());
-            removeById(slot.pointsId());
-        }
-    }
-
-    private void removeById(UUID id) {
-        if (id == null) {
-            return;
-        }
-        var entity = Bukkit.getEntity(id);
-        if (entity != null) {
-            entity.remove();
+            displayRegistry.remove(slot.backgroundKey());
+            displayRegistry.remove(slot.answerKey());
+            displayRegistry.remove(slot.pointsKey());
         }
     }
 }
