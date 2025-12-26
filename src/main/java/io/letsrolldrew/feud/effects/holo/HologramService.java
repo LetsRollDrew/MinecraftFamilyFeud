@@ -1,7 +1,9 @@
 package io.letsrolldrew.feud.effects.holo;
 
+import io.letsrolldrew.feud.display.DisplayKey;
+import io.letsrolldrew.feud.display.DisplayRegistry;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,17 +18,18 @@ import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
-//hologram registry prototype
 public final class HologramService {
+    private static final String NAMESPACE = "holo";
     private final Map<String, HologramEntry> hologramsById = new HashMap<>();
+    private final DisplayRegistry displayRegistry;
+
+    public HologramService(DisplayRegistry displayRegistry) {
+        this.displayRegistry = displayRegistry;
+    }
 
     public boolean exists(String id) {
         return hologramsById.containsKey(id);
@@ -37,6 +40,7 @@ public final class HologramService {
             throw new IllegalArgumentException("id/player/text required");
         }
         Location loc = player.getLocation().clone().add(0, 1.8, 0);
+        DisplayKey key = textKey(id);
         TextDisplay display = loc.getWorld().spawn(loc, TextDisplay.class, entity -> {
             entity.text(withFont(text));
             entity.setBillboard(Display.Billboard.VERTICAL);
@@ -66,8 +70,8 @@ public final class HologramService {
             } catch (Throwable ignored) {
             }
         });
-        // replace existing entry if present
-        hologramsById.put(id, new HologramEntry(display.getUniqueId(), HologramType.TEXT_DISPLAY));
+        displayRegistry.register(key, display);
+        hologramsById.put(id, new HologramEntry(key, HologramType.TEXT_DISPLAY));
     }
 
     public void setText(String id, Component text) {
@@ -92,20 +96,11 @@ public final class HologramService {
         if (id == null || id.isBlank()) {
             return;
         }
-        HologramEntry entry = hologramsById.get(id);
+        HologramEntry entry = hologramsById.remove(id);
         if (entry == null) {
             return;
         }
-        UUID uuid = entry.uuid();
-        if (uuid != null) {
-            var entity = Bukkit.getEntity(uuid);
-            if (entity instanceof TextDisplay display) {
-                display.remove();
-            } else if (entity instanceof ItemDisplay display) {
-                display.remove();
-            }
-        }
-        hologramsById.remove(id);
+        displayRegistry.remove(entry.key());
     }
 
     public void spawnItem(String id, Player player, Material material, int customModelData) {
@@ -124,6 +119,7 @@ public final class HologramService {
         stack.setItemMeta(meta);
 
         Location loc = player.getLocation().clone().add(0, 1.8, 0);
+        DisplayKey key = itemKey(id);
         ItemDisplay display = loc.getWorld().spawn(loc, ItemDisplay.class, entity -> {
             entity.setItemStack(stack);
             entity.setBillboard(Display.Billboard.VERTICAL);
@@ -137,7 +133,8 @@ public final class HologramService {
             } catch (Throwable ignored) {
             }
         });
-        hologramsById.put(id, new HologramEntry(display.getUniqueId(), HologramType.ITEM_DISPLAY));
+        displayRegistry.register(key, display);
+        hologramsById.put(id, new HologramEntry(key, HologramType.ITEM_DISPLAY));
     }
 
     public void moveItemToPlayer(String id, Player player) {
@@ -152,11 +149,7 @@ public final class HologramService {
     }
 
     public void removeItem(String id) {
-        if (id == null || id.isBlank()) {
-            return;
-        }
-        resolveItem(id).ifPresent(ItemDisplay::remove);
-        hologramsById.remove(id);
+        remove(id);
     }
 
     public int size() {
@@ -168,30 +161,18 @@ public final class HologramService {
     }
 
     public void clearAll() {
-        for (HologramEntry entry : hologramsById.values()) {
-            UUID uuid = entry.uuid();
-            if (uuid != null) {
-                var entity = Bukkit.getEntity(uuid);
-                if (entity != null) {
-                    entity.remove();
-                }
-            }
-        }
+        displayRegistry.removeByNamespace(NAMESPACE);
         hologramsById.clear();
     }
 
     private Optional<TextDisplay> resolveText(String id) {
         return resolveEntry(id, HologramType.TEXT_DISPLAY)
-            .map(entry -> Bukkit.getEntity(entry.uuid()))
-            .filter(e -> e instanceof TextDisplay)
-            .map(e -> (TextDisplay) e);
+            .flatMap(entry -> displayRegistry.resolveText(entry.key()));
     }
 
     private Optional<ItemDisplay> resolveItem(String id) {
         return resolveEntry(id, HologramType.ITEM_DISPLAY)
-            .map(entry -> Bukkit.getEntity(entry.uuid()))
-            .filter(e -> e instanceof ItemDisplay)
-            .map(e -> (ItemDisplay) e);
+            .flatMap(entry -> displayRegistry.resolveItem(entry.key()));
     }
 
     private Optional<HologramEntry> resolveEntry(String id, HologramType expectedType) {
@@ -202,16 +183,20 @@ public final class HologramService {
             }
             return Optional.empty();
         }
-        UUID uuid = entry.uuid();
-        if (uuid == null) {
-            hologramsById.remove(id);
-            return Optional.empty();
-        }
-        if (Bukkit.getEntity(uuid) == null) {
+        var entity = displayRegistry.resolve(entry.key());
+        if (entity.isEmpty()) {
             hologramsById.remove(id);
             return Optional.empty();
         }
         return Optional.of(entry);
+    }
+
+    private DisplayKey textKey(String id) {
+        return new DisplayKey(NAMESPACE, "holo", id, "text");
+    }
+
+    private DisplayKey itemKey(String id) {
+        return new DisplayKey(NAMESPACE, "holo", id, "item");
     }
 
     private Component withFont(Component component) {
@@ -219,5 +204,8 @@ public final class HologramService {
             return Component.empty();
         }
         return component.font(Key.key("feud", "feud"));
+    }
+
+    public static record HologramEntry(DisplayKey key, HologramType type) {
     }
 }

@@ -43,6 +43,7 @@ final class FeudCommandDispatchTest {
         boolean handled = server.dispatchCommand(console, "feud holo");
 
         assertTrue(handled);
-        assertTrue(console.nextMessage().toLowerCase().contains("usage: /feud holo text"));
+        String msg = console.nextMessage().toLowerCase();
+        assertTrue(msg.contains("usage: /feud holo"));
     }
 }

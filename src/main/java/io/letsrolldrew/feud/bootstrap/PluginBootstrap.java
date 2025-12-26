@@ -71,7 +71,7 @@ public final class PluginBootstrap {
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
-        this.hologramService = new HologramService();
+        this.hologramService = new HologramService(displayRegistry);
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
         this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService);
