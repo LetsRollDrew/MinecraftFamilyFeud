@@ -360,6 +360,15 @@ public final class FeudRootCommand implements CommandExecutor {
         player.sendMessage("Display board remote given.");
     }
 
+    private static String[] tail(String[] args, int start) {
+        if (start >= args.length) {
+            return new String[0];
+        }
+        String[] out = new String[args.length - start];
+        System.arraycopy(args, start, out, 0, args.length - start);
+        return out;
+    }
+
     private CommandTree buildCommandTree() {
         var helpHandler = new HelpHandler(ctx -> handleHelp(ctx.sender()));
         var versionHandler = new VersionHandler(ctx -> handleVersion(ctx.sender()));

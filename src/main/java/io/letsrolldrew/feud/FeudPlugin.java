@@ -3,7 +3,7 @@ package io.letsrolldrew.feud;
 import io.letsrolldrew.feud.bootstrap.PluginBootstrap;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class FeudPlugin extends JavaPlugin {
+public class FeudPlugin extends JavaPlugin {
     private PluginBootstrap bootstrap;
 
     @Override
