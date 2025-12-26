@@ -2,6 +2,8 @@ package io.letsrolldrew.feud.board.display;
 
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.effects.anim.AnimationService;
+import io.letsrolldrew.feud.effects.anim.AnimationStep;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -33,9 +35,11 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private final Map<String, BoardInstance> boards = new HashMap<>();
     private final BoardLayout layout = BoardLayout.defaultLayout();
     private final DisplayRegistry displayRegistry;
+    private final AnimationService animationService;
 
-    public DisplayBoardService(DisplayRegistry displayRegistry) {
+    public DisplayBoardService(DisplayRegistry displayRegistry, AnimationService animationService) {
         this.displayRegistry = displayRegistry;
+        this.animationService = animationService;
     }
     @Override
     public void createBoard(String boardId, Location anchor, Player facingReference) {
@@ -92,14 +96,49 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
     @Override
     public void setSlot(String boardId, int slotIndex, String answer, Integer points, boolean revealed) {
+        if (boardId == null) {
+            return;
+        }
+        if (revealed) {
+            if (points == null) {
+                return;
+            }
+            revealSlot(boardId, slotIndex, answer == null ? "" : answer, points);
+        } else {
+            hideSlot(boardId, slotIndex);
+        }
     }
 
     @Override
     public void revealSlot(String boardId, int slotIndex, String answer, int points) {
+        SlotInstance slot = slotFor(boardId, slotIndex);
+        if (slot == null) {
+            return;
+        }
+        animationService.cancel(slot.backgroundKey());
+        List<AnimationStep> steps = List.of(
+            new AnimationStep(0, () -> setBackgroundCmd(slot.backgroundKey(), CMD_FLASH)),
+            new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_HIDDEN)),
+            new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_FLASH)),
+            new AnimationStep(2, () -> {
+                setBackgroundCmd(slot.backgroundKey(), CMD_REVEALED);
+                setAnswerText(slot.answerKey(), answer);
+                setPointsText(slot.pointsKey(), points);
+            })
+        );
+        animationService.schedule(slot.backgroundKey(), steps);
     }
 
     @Override
     public void hideSlot(String boardId, int slotIndex) {
+        SlotInstance slot = slotFor(boardId, slotIndex);
+        if (slot == null) {
+            return;
+        }
+        animationService.cancel(slot.backgroundKey());
+        setBackgroundCmd(slot.backgroundKey(), CMD_HIDDEN);
+        clearText(slot.answerKey());
+        clearText(slot.pointsKey());
     }
 
     @Override
@@ -116,6 +155,18 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         DisplayKey ansKey = new DisplayKey("board", boardId, slotId, "answer");
         DisplayKey ptsKey = new DisplayKey("board", boardId, slotId, "points");
         return new SlotInstance(bgKey, ansKey, ptsKey);
+    }
+
+    private SlotInstance slotFor(String boardId, int slotIndex) {
+        BoardInstance board = boards.get(boardId);
+        if (board == null) {
+            return null;
+        }
+        int idx = slotIndex - 1;
+        if (idx < 0 || idx >= board.slots().size()) {
+            return null;
+        }
+        return board.slots().get(idx);
     }
 
     private void spawnBackground(DisplayKey key, World world, Location loc, ItemStack stack, float yaw) {
@@ -197,6 +248,42 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             displayRegistry.remove(slot.backgroundKey());
             displayRegistry.remove(slot.answerKey());
             displayRegistry.remove(slot.pointsKey());
+            animationService.cancel(slot.backgroundKey());
         }
+    }
+
+    private void setBackgroundCmd(DisplayKey key, float cmd) {
+        displayRegistry.resolveItem(key).ifPresent(display -> {
+            ItemStack stack = display.getItemStack();
+            if (stack == null) {
+                stack = new ItemStack(Material.PAPER);
+            } else {
+                stack = stack.clone();
+            }
+            ItemMeta meta = stack.getItemMeta();
+            CustomModelDataComponent cmdComponent = meta.getCustomModelDataComponent();
+            cmdComponent.setFloats(java.util.List.of(cmd));
+            meta.setCustomModelDataComponent(cmdComponent);
+            stack.setItemMeta(meta);
+            display.setItemStack(stack);
+        });
+    }
+
+    private void setAnswerText(DisplayKey key, String text) {
+        Component value = text == null ? Component.empty() : Component.text(text);
+        setText(key, value);
+    }
+
+    private void setPointsText(DisplayKey key, Integer points) {
+        String value = points == null ? "" : Integer.toString(points);
+        setText(key, Component.text(value));
+    }
+
+    private void clearText(DisplayKey key) {
+        setText(key, Component.empty());
+    }
+
+    private void setText(DisplayKey key, Component component) {
+        displayRegistry.resolveText(key).ifPresent(display -> display.text(component.font(Key.key("feud", "feud"))));
     }
 }
