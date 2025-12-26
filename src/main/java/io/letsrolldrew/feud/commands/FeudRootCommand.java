@@ -13,6 +13,7 @@ import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
+import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.commands.handlers.BoardHandler;
 import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
 import io.letsrolldrew.feud.commands.handlers.EntityBookHandler;
@@ -60,6 +61,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
     private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
     private final SurveyCommands surveyCommands;
+    private final DisplayRegistry displayRegistry;
     private final CommandTree commandTree;
 
     public FeudRootCommand(
@@ -81,7 +83,8 @@ public final class FeudRootCommand implements CommandExecutor {
         DisplayBoardCommands boardCommands,
         io.letsrolldrew.feud.effects.holo.HologramService hologramService,
         io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
-        SurveyCommands surveyCommands
+        SurveyCommands surveyCommands,
+        DisplayRegistry displayRegistry
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -102,6 +105,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.hologramService = hologramService;
         this.displayBoardPresenter = displayBoardPresenter;
         this.surveyCommands = surveyCommands;
+        this.displayRegistry = displayRegistry;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
         this.commandTree = buildCommandTree();
     }
@@ -288,21 +292,13 @@ public final class FeudRootCommand implements CommandExecutor {
 
     private boolean handleClearAll(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to clear display entities.");
+            sender.sendMessage("Admin only");
             return true;
         }
-        int removed = 0;
-        for (var world : Bukkit.getWorlds()) {
-            for (var entity : world.getEntities()) {
-                if (entity instanceof ItemDisplay || entity instanceof TextDisplay) {
-                    entity.remove();
-                    removed++;
-                }
-            }
-        }
+        int removed = displayRegistry.removeAll();
         displayBoardPresenter.clearAll();
         hologramService.clearAll();
-        sender.sendMessage("Cleared " + removed + " display entities.");
+        sender.sendMessage("Cleared " + removed + " displays");
         return true;
     }
 

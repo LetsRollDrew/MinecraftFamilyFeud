@@ -19,6 +19,7 @@ import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.commands.DisplayBoardCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
+import io.letsrolldrew.feud.display.DisplayRegistry;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -43,6 +44,7 @@ public final class PluginBootstrap {
     private SurveyCommands surveyCommands;
     private DisplayBoardPresenter displayBoardPresenter;
     private DisplayBoardCommands boardCommands;
+    private DisplayRegistry displayRegistry;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -71,6 +73,7 @@ public final class PluginBootstrap {
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
         this.displayBoardPresenter = new DisplayBoardService();
         this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
+        this.displayRegistry = new DisplayRegistry();
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         registerCommands();
     }
@@ -115,7 +118,8 @@ public final class PluginBootstrap {
             boardCommands,
             hologramService,
             displayBoardPresenter,
-            surveyCommands
+            surveyCommands,
+            displayRegistry
         ));
     }
 }
