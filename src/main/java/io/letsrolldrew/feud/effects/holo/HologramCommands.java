@@ -284,7 +284,7 @@ public final class HologramCommands {
         int textCount = 0;
         int itemCount = 0;
         sender.sendMessage("Holograms:");
-        for (Map.Entry<String, HologramEntry> e : entries.entrySet()) {
+        for (Map.Entry<String, HologramService.HologramEntry> e : entries.entrySet()) {
             String id = e.getKey();
             HologramType type = e.getValue().type();
             if (type == HologramType.TEXT_DISPLAY) {

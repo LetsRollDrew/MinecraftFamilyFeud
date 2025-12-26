@@ -1,6 +1,5 @@
 package io.letsrolldrew.feud.commands;
 
-import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
@@ -14,6 +13,19 @@ import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
+import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.commands.handlers.BoardHandler;
+import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
+import io.letsrolldrew.feud.commands.handlers.EntityBookHandler;
+import io.letsrolldrew.feud.commands.handlers.HelpHandler;
+import io.letsrolldrew.feud.commands.handlers.HoloHandler;
+import io.letsrolldrew.feud.commands.handlers.HostHandler;
+import io.letsrolldrew.feud.commands.handlers.SurveyHandler;
+import io.letsrolldrew.feud.commands.handlers.UiHandler;
+import io.letsrolldrew.feud.commands.handlers.VersionHandler;
+import io.letsrolldrew.feud.commands.tree.CommandNode;
+import io.letsrolldrew.feud.commands.tree.CommandTree;
+import io.letsrolldrew.feud.ui.BookFactory;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -25,6 +37,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
+import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -50,6 +63,8 @@ public final class FeudRootCommand implements CommandExecutor {
     private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
     private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
     private final SurveyCommands surveyCommands;
+    private final DisplayRegistry displayRegistry;
+    private final CommandTree commandTree;
 
     public FeudRootCommand(
         Plugin plugin,
@@ -70,7 +85,8 @@ public final class FeudRootCommand implements CommandExecutor {
         DisplayBoardCommands boardCommands,
         io.letsrolldrew.feud.effects.holo.HologramService hologramService,
         io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
-        SurveyCommands surveyCommands
+        SurveyCommands surveyCommands,
+        DisplayRegistry displayRegistry
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -91,58 +107,14 @@ public final class FeudRootCommand implements CommandExecutor {
         this.hologramService = hologramService;
         this.displayBoardPresenter = displayBoardPresenter;
         this.surveyCommands = surveyCommands;
+        this.displayRegistry = displayRegistry;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
+        this.commandTree = buildCommandTree();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0) {
-            return handleVersion(sender);
-        }
-
-        if (args.length >= 1 && args[0].equalsIgnoreCase("help")) {
-            return handleHelp(sender);
-        }
-
-        if (args.length >= 1 && args[0].equalsIgnoreCase("version")) {
-            return handleVersion(sender);
-        }
-
-        if (args.length >= 1 && args[0].equalsIgnoreCase("holo")) {
-            String[] remaining = tail(args, 1);
-            if (!sender.hasPermission(adminPermission)) {
-                sender.sendMessage("You need admin permission to manage holograms.");
-                return true;
-            }
-            return hologramCommands.handle(sender, remaining);
-        }
-
-        if (args.length >= 2 && args[0].equalsIgnoreCase("clear") && args[1].equalsIgnoreCase("all")) {
-            return handleClearAll(sender);
-        }
-
-        if (args.length >= 1 && args[0].equalsIgnoreCase("ui")) {
-            return uiCommand.handle(sender, tail(args, 1));
-        }
-
-        if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
-            String flavor = args.length >= 3 ? args[2].toLowerCase() : "";
-            return handleHostBook(sender, flavor);
-        }
-
-        if (args.length >= 2 && args[0].equalsIgnoreCase("entity") && args[1].equalsIgnoreCase("book")) {
-            return handleEntityBook(sender);
-        }
-
-        if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
-            return handleBoard(sender, args);
-        }
-
-        if (args.length >= 1 && args[0].equalsIgnoreCase("survey")) {
-            return surveyCommands.handle(sender, tail(args, 1));
-        }
-
-        return handleHelp(sender);
+        return commandTree.dispatch(sender, label, args);
     }
 
     private void renderReveal(int slot) {
@@ -173,15 +145,6 @@ public final class FeudRootCommand implements CommandExecutor {
         }
         sender.sendMessage("Board commands: /feud board map ... | /feud board display ...");
         return true;
-    }
-
-    private static String[] tail(String[] args, int start) {
-        if (start >= args.length) {
-            return new String[0];
-        }
-        String[] out = new String[args.length - start];
-        System.arraycopy(args, start, out, 0, args.length - start);
-        return out;
     }
 
     @SuppressWarnings("deprecation") // Plugin#getDescription is deprecated, fix later
@@ -295,7 +258,7 @@ public final class FeudRootCommand implements CommandExecutor {
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.setTitle("Entity Remote");
         meta.setAuthor("FamilyFeud");
-        var page1 = Component.text()
+        Component page1 = Component.text()
             .append(button("Board Create (demo)", "/feud board create demo"))
             .append(Component.newline())
             .append(button("Board Destroy (demo)", "/feud board destroy demo"))
@@ -304,14 +267,23 @@ public final class FeudRootCommand implements CommandExecutor {
             .append(Component.newline())
             .append(button("Board InitMaps", "/feud board initmaps"))
             .build();
-        var page2 = Component.text()
+        Component page2 = Component.text()
             .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
             .append(Component.newline())
             .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
             .append(Component.newline())
             .append(button("Clear Displays", "/feud clear all"))
             .build();
-        meta.pages(page1, page2);
+        Book adventureBook = BookFactory.create(
+            Component.text("Entity Remote"),
+            Component.text("FamilyFeud"),
+            java.util.List.of(page1, page2)
+        );
+        meta.pages(adventureBook.pages());
+        if (hostBookUiBuilder != null) {
+            // reuse host tag helper to keep consistency on dev books if desired
+            io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
+        }
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
         player.sendMessage("Entity book given.");
@@ -331,21 +303,13 @@ public final class FeudRootCommand implements CommandExecutor {
 
     private boolean handleClearAll(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to clear display entities.");
+            sender.sendMessage("Admin only");
             return true;
         }
-        int removed = 0;
-        for (var world : Bukkit.getWorlds()) {
-            for (var entity : world.getEntities()) {
-                if (entity instanceof ItemDisplay || entity instanceof TextDisplay) {
-                    entity.remove();
-                    removed++;
-                }
-            }
-        }
+        int removed = displayRegistry.removeAll();
         displayBoardPresenter.clearAll();
         hologramService.clearAll();
-        sender.sendMessage("Cleared " + removed + " display entities.");
+        sender.sendMessage("Cleared " + removed + " displays");
         return true;
     }
 
@@ -354,14 +318,22 @@ public final class FeudRootCommand implements CommandExecutor {
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.setTitle("Host Remote");
         meta.setAuthor("FamilyFeud");
-        var page = Component.text()
+        Component page = Component.text()
             .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
             .append(Component.newline()).append(Component.newline())
             .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
             .append(Component.newline()).append(Component.newline())
             .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
             .build();
-        meta.pages(page);
+        Book adventureBook = BookFactory.create(
+            Component.text("Host Remote"),
+            Component.text("FamilyFeud"),
+            java.util.List.of(page)
+        );
+        meta.pages(adventureBook.pages());
+        if (hostBookUiBuilder != null) {
+            io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
+        }
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
         player.sendMessage("Host remote selector given.");
@@ -401,5 +373,63 @@ public final class FeudRootCommand implements CommandExecutor {
         }
         hostRemoteService.giveOrReplace(player, fresh);
         player.sendMessage("Display board remote given.");
+    }
+
+    private static String[] tail(String[] args, int start) {
+        if (start >= args.length) {
+            return new String[0];
+        }
+        String[] out = new String[args.length - start];
+        System.arraycopy(args, start, out, 0, args.length - start);
+        return out;
+    }
+
+    private CommandTree buildCommandTree() {
+        var helpHandler = new HelpHandler(ctx -> handleHelp(ctx.sender()));
+        var versionHandler = new VersionHandler(ctx -> handleVersion(ctx.sender()));
+        var clearAllHandler = new ClearAllHandler(ctx -> handleClearAll(ctx.sender()));
+        var uiHandler = new UiHandler((ctx, remaining) -> uiCommand.handle(ctx.sender(), remaining));
+        var holoHandler = new HoloHandler((ctx, remaining) -> {
+            if (!ctx.sender().hasPermission(adminPermission)) {
+                ctx.sender().sendMessage("Admin only");
+                return true;
+            }
+            return hologramCommands.handle(ctx.sender(), remaining);
+        });
+        var boardHandler = new BoardHandler((ctx, remaining) -> handleBoard(ctx.sender(), prepend("board", remaining)));
+        var surveyHandler = new SurveyHandler((ctx, remaining) -> surveyCommands.handle(ctx.sender(), remaining));
+        var hostHandler = new HostHandler((ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
+        var entityBookHandler = new EntityBookHandler(ctx -> handleEntityBook(ctx.sender()));
+
+        CommandNode root = new CommandNode("root", null, false, versionHandler);
+
+        root.addChild(new CommandNode("help", null, false, helpHandler));
+        root.addChild(new CommandNode("version", null, false, versionHandler));
+        root.addChild(new CommandNode("ui", null, false, uiHandler));
+        root.addChild(new CommandNode("holo", null, false, holoHandler));
+
+        CommandNode clear = new CommandNode("clear");
+        clear.addChild(new CommandNode("all", null, false, clearAllHandler));
+        root.addChild(clear);
+
+        root.addChild(new CommandNode("board", null, false, boardHandler));
+        root.addChild(new CommandNode("survey", null, false, surveyHandler));
+
+        CommandNode host = new CommandNode("host");
+        host.addChild(new CommandNode("book", null, false, hostHandler));
+        root.addChild(host);
+
+        CommandNode entity = new CommandNode("entity");
+        entity.addChild(new CommandNode("book", null, false, entityBookHandler));
+        root.addChild(entity);
+
+        return new CommandTree(root, helpHandler);
+    }
+
+    private String[] prepend(String head, String[] tail) {
+        String[] out = new String[tail.length + 1];
+        out[0] = head;
+        System.arraycopy(tail, 0, out, 1, tail.length);
+        return out;
     }
 }

@@ -24,6 +24,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("com.github.seeseemelk:MockBukkit-v1.21:3.124.0")
     testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+    testImplementation("org.mockito:mockito-core:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

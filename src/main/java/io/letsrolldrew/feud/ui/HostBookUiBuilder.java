@@ -12,23 +12,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import io.letsrolldrew.feud.ui.BookFactory;
+import net.kyori.adventure.inventory.Book;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
-
+import org.bukkit.entity.Player;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.util.Validation;
+import io.letsrolldrew.feud.ui.BookTagger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 
 public final class HostBookUiBuilder {
 
@@ -36,6 +37,7 @@ public final class HostBookUiBuilder {
     private final SurveyRepository surveyRepository;
     private final List<String> fallbackHovers;
     private final NamespacedKey hostKey;
+    private boolean openBookEnabled;
 
     public HostBookUiBuilder(String commandPrefix) {
         this(commandPrefix, null, null, null);
@@ -70,12 +72,12 @@ public final class HostBookUiBuilder {
         int roundPoints,
         TeamControl controllingTeam
     ) {
+        List<Component> pages = buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
+        Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.title(titleComponent());
-        meta.author(authorComponent());
-        tag(meta);
-        meta.pages(buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
+        BookTagger.tagHostRemote(meta, hostKey);
+        meta.pages(adventureBook.pages());
         book.setItemMeta(meta);
         return book;
     }
@@ -122,6 +124,34 @@ public final class HostBookUiBuilder {
 
     public String titleString() {
         return "Family Feud Remote";
+    }
+
+    public NamespacedKey getHostKey() {
+        return hostKey;
+    }
+
+    public Book asAdventureBook(
+        List<String> hovers,
+        Survey activeSurvey,
+        Set<Integer> revealedSlots,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints,
+        TeamControl controllingTeam
+    ) {
+        List<Component> pages = buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
+        return BookFactory.create(titleComponent(), authorComponent(), pages);
+    }
+
+    public void openBookIfEnabled(Player player, Book book) {
+        if (!openBookEnabled || player == null || book == null) {
+            return;
+        }
+        player.openBook(book);
+    }
+
+    public void setOpenBookEnabled(boolean openBookEnabled) {
+        this.openBookEnabled = openBookEnabled;
     }
 
     List<Component> buildPages() {
@@ -368,11 +398,4 @@ public final class HostBookUiBuilder {
         return button("Award", "award", hover, color, true);
     }
 
-    private void tag(BookMeta meta) {
-        if (hostKey == null) {
-            return;
-        }
-        PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(hostKey, PersistentDataType.INTEGER, 1);
-    }
 }
