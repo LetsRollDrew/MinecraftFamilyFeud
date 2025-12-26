@@ -256,23 +256,23 @@ public final class FeudRootCommand implements CommandExecutor {
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.setTitle("Entity Remote");
         meta.setAuthor("FamilyFeud");
-        var page1 = Component.text()
-            .append(button("Board Create (demo)", "/feud board create demo"))
-            .append(Component.newline())
-            .append(button("Board Destroy (demo)", "/feud board destroy demo"))
-            .append(Component.newline())
-            .append(button("Board Wand", "/feud board wand"))
-            .append(Component.newline())
-            .append(button("Board InitMaps", "/feud board initmaps"))
-            .build();
-        var page2 = Component.text()
-            .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
-            .append(Component.newline())
-            .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
-            .append(Component.newline())
-            .append(button("Clear Displays", "/feud clear all"))
-            .build();
-        meta.pages(page1, page2);
+        Component page1 = Component.text()
+                .append(button("Board Create (demo)", "/feud board create demo"))
+                .append(Component.newline())
+                .append(button("Board Destroy (demo)", "/feud board destroy demo"))
+                .append(Component.newline())
+                .append(button("Board Wand", "/feud board wand"))
+                .append(Component.newline())
+                .append(button("Board InitMaps", "/feud board initmaps"))
+                .build();
+        Component page2 = Component.text()
+                .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
+                .append(Component.newline())
+                .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
+                .append(Component.newline())
+                .append(button("Clear Displays", "/feud clear all"))
+                .build();
+        meta.pages(java.util.List.of(page1, page2));
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
         player.sendMessage("Entity book given.");
@@ -307,14 +307,14 @@ public final class FeudRootCommand implements CommandExecutor {
         BookMeta meta = (BookMeta) book.getItemMeta();
         meta.setTitle("Host Remote");
         meta.setAuthor("FamilyFeud");
-        var page = Component.text()
-            .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
-            .append(Component.newline()).append(Component.newline())
-            .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
-            .append(Component.newline()).append(Component.newline())
-            .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
-            .build();
-        meta.pages(page);
+        Component page = Component.text()
+                .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
+                .append(Component.newline()).append(Component.newline())
+                .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
+                .append(Component.newline()).append(Component.newline())
+                .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
+                .build();
+        meta.pages(java.util.List.of(page));
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
         player.sendMessage("Host remote selector given.");

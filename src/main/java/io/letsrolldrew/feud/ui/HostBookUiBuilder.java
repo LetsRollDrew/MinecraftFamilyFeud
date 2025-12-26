@@ -12,8 +12,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import io.letsrolldrew.feud.ui.BookFactory;
+import net.kyori.adventure.inventory.Book;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -36,6 +39,7 @@ public final class HostBookUiBuilder {
     private final SurveyRepository surveyRepository;
     private final List<String> fallbackHovers;
     private final NamespacedKey hostKey;
+    private boolean openBookEnabled;
 
     public HostBookUiBuilder(String commandPrefix) {
         this(commandPrefix, null, null, null);
@@ -75,7 +79,8 @@ public final class HostBookUiBuilder {
         meta.title(titleComponent());
         meta.author(authorComponent());
         tag(meta);
-        meta.pages(buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
+        List<Component> pages = buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
+        meta.pages(pages);
         book.setItemMeta(meta);
         return book;
     }
@@ -122,6 +127,30 @@ public final class HostBookUiBuilder {
 
     public String titleString() {
         return "Family Feud Remote";
+    }
+
+    public Book asAdventureBook(
+        List<String> hovers,
+        Survey activeSurvey,
+        Set<Integer> revealedSlots,
+        int strikeCount,
+        int maxStrikes,
+        int roundPoints,
+        TeamControl controllingTeam
+    ) {
+        List<Component> pages = buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
+        return BookFactory.create(titleComponent(), authorComponent(), pages);
+    }
+
+    public void openBookIfEnabled(Player player, Book book) {
+        if (!openBookEnabled || player == null || book == null) {
+            return;
+        }
+        player.openBook(book);
+    }
+
+    public void setOpenBookEnabled(boolean openBookEnabled) {
+        this.openBookEnabled = openBookEnabled;
     }
 
     List<Component> buildPages() {
