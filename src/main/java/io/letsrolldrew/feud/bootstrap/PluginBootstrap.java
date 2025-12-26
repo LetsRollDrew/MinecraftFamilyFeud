@@ -18,6 +18,7 @@ import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.commands.DisplayBoardCommands;
+import io.letsrolldrew.feud.commands.SurveyCommands;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -39,6 +40,7 @@ public final class PluginBootstrap {
     private io.letsrolldrew.feud.board.render.SlotRevealPainter slotRevealPainter;
     private HologramService hologramService;
     private HologramCommands hologramCommands;
+    private SurveyCommands surveyCommands;
     private DisplayBoardPresenter displayBoardPresenter;
     private DisplayBoardCommands boardCommands;
 
@@ -66,6 +68,7 @@ public final class PluginBootstrap {
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
         this.hologramService = new HologramService();
         this.hologramCommands = new HologramCommands(hologramService);
+        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
         this.displayBoardPresenter = new DisplayBoardService();
         this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
@@ -111,7 +114,8 @@ public final class PluginBootstrap {
             hologramCommands,
             boardCommands,
             hologramService,
-            displayBoardPresenter
+            displayBoardPresenter,
+            surveyCommands
         ));
     }
 }

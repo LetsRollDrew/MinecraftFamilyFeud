@@ -13,6 +13,7 @@ import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.commands.SurveyCommands;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -48,6 +49,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final DisplayBoardCommands boardCommands;
     private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
     private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
+    private final SurveyCommands surveyCommands;
 
     public FeudRootCommand(
         Plugin plugin,
@@ -67,7 +69,8 @@ public final class FeudRootCommand implements CommandExecutor {
         HologramCommands hologramCommands,
         DisplayBoardCommands boardCommands,
         io.letsrolldrew.feud.effects.holo.HologramService hologramService,
-        io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter
+        io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
+        SurveyCommands surveyCommands
     ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -87,6 +90,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.boardCommands = boardCommands;
         this.hologramService = hologramService;
         this.displayBoardPresenter = displayBoardPresenter;
+        this.surveyCommands = surveyCommands;
         this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
     }
 
@@ -105,10 +109,7 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("holo")) {
-            String[] remaining = new String[Math.max(0, args.length - 1)];
-            if (args.length > 1) {
-                System.arraycopy(args, 1, remaining, 0, args.length - 1);
-            }
+            String[] remaining = tail(args, 1);
             if (!sender.hasPermission(adminPermission)) {
                 sender.sendMessage("You need admin permission to manage holograms.");
                 return true;
@@ -121,11 +122,7 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("ui")) {
-            String[] remaining = new String[Math.max(0, args.length - 1)];
-            if (args.length > 1) {
-                System.arraycopy(args, 1, remaining, 0, args.length - 1);
-            }
-            return uiCommand.handle(sender, remaining);
+            return uiCommand.handle(sender, tail(args, 1));
         }
 
         if (args.length >= 2 && args[0].equalsIgnoreCase("host") && args[1].equalsIgnoreCase("book")) {
@@ -138,37 +135,11 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("board")) {
-            if (args.length >= 2 && args[1].equalsIgnoreCase("map")) {
-                if (args.length >= 3 && args[2].equalsIgnoreCase("wand")) {
-                    return handleBoardWand(sender);
-                }
-                if (args.length >= 3 && args[2].equalsIgnoreCase("initmaps")) {
-                    return handleBoardInitMaps(sender);
-                }
-                sender.sendMessage("Board map commands: /feud board map wand | /feud board map initmaps");
-                return true;
-            }
-            if (args.length >= 2 && args[1].equalsIgnoreCase("display")) {
-                String[] remaining = new String[Math.max(0, args.length - 2)];
-                if (args.length > 2) {
-                    System.arraycopy(args, 2, remaining, 0, args.length - 2);
-                }
-                return boardCommands.handle(sender, remaining);
-            }
-            sender.sendMessage("Board commands: /feud board map ... | /feud board display ...");
-            return true;
+            return handleBoard(sender, args);
         }
 
-        if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("list")) {
-            return handleSurveyList(sender);
-        }
-
-        if (args.length >= 2 && args[0].equalsIgnoreCase("survey") && args[1].equalsIgnoreCase("load")) {
-            if (args.length < 3) {
-                sender.sendMessage("Usage: /feud survey load <id>");
-                return true;
-            }
-            return handleSurveyLoad(sender, args[2]);
+        if (args.length >= 1 && args[0].equalsIgnoreCase("survey")) {
+            return surveyCommands.handle(sender, tail(args, 1));
         }
 
         return handleHelp(sender);
@@ -186,6 +157,33 @@ public final class FeudRootCommand implements CommandExecutor {
         slotRevealPainter.reveal(slot, answer.text(), answer.points());
     }
 
+    private boolean handleBoard(CommandSender sender, String[] args) {
+        if (args.length >= 2 && args[1].equalsIgnoreCase("map")) {
+            if (args.length >= 3 && args[2].equalsIgnoreCase("wand")) {
+                return handleBoardWand(sender);
+            }
+            if (args.length >= 3 && args[2].equalsIgnoreCase("initmaps")) {
+                return handleBoardInitMaps(sender);
+            }
+            sender.sendMessage("Board map commands: /feud board map wand | /feud board map initmaps");
+            return true;
+        }
+        if (args.length >= 2 && args[1].equalsIgnoreCase("display")) {
+            return boardCommands.handle(sender, tail(args, 2));
+        }
+        sender.sendMessage("Board commands: /feud board map ... | /feud board display ...");
+        return true;
+    }
+
+    private static String[] tail(String[] args, int start) {
+        if (start >= args.length) {
+            return new String[0];
+        }
+        String[] out = new String[args.length - start];
+        System.arraycopy(args, start, out, 0, args.length - start);
+        return out;
+    }
+
     @SuppressWarnings("deprecation") // Plugin#getDescription is deprecated, fix later
     private boolean handleVersion(CommandSender sender) {
         String version = plugin.getDescription().getVersion();
@@ -199,8 +197,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud - show version");
         sender.sendMessage("/feud help - this help");
         sender.sendMessage("/feud version - show version");
-        sender.sendMessage("/feud survey list - list loaded surveys");
-        sender.sendMessage("/feud survey load <id> - set active survey");
+        sender.sendMessage("/feud survey ...");
         sender.sendMessage("/feud host book - give host remote");
         sender.sendMessage("/feud ui reveal <1-8> - reveal slot");
         sender.sendMessage("/feud ui strike - add a strike");
@@ -213,22 +210,6 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud holo list");
         sender.sendMessage("/feud clear all - remove all display entities");
         sender.sendMessage("/feud entity book - dev book with entity commands");
-        return true;
-    }
-
-    private boolean handleSurveyList(CommandSender sender) {
-        if (surveyRepository == null) {
-            sender.sendMessage("Surveys not loaded.");
-            return true;
-        }
-        if (surveyRepository.listAll().isEmpty()) {
-            sender.sendMessage("No surveys loaded.");
-            return true;
-        }
-        sender.sendMessage("Loaded surveys:");
-        for (Survey survey : surveyRepository.listAll()) {
-            sender.sendMessage("- " + survey.id() + ": " + survey.question());
-        }
         return true;
     }
 
@@ -268,35 +249,6 @@ public final class FeudRootCommand implements CommandExecutor {
         } else {
             sender.sendMessage("Board map init failed (binding missing or world unloaded).");
         }
-        return true;
-    }
-
-    private boolean handleSurveyLoad(CommandSender sender, String surveyId) {
-
-        if (!sender.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to do that.");
-            return true;
-        }
-
-        if (surveyRepository == null) {
-            sender.sendMessage("Surveys not loaded.");
-            return true;
-        }
-
-        Survey survey = surveyRepository.findById(surveyId).orElse(null);
-
-        if (survey == null) {
-            sender.sendMessage("Survey not found: " + surveyId);
-            return true;
-        }
-
-        gameController.setActiveSurvey(survey);
-        sender.sendMessage("Active survey set to " + survey.displayName() + ": " + survey.question());
-
-        if (sender instanceof Player player) {
-            giveOrReplaceHostBook(player);
-        }
-
         return true;
     }
 
