@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.display;
 
-import org.bukkit.Bukkit;
+import io.letsrolldrew.feud.display.lookup.BukkitEntityLookup;
+import io.letsrolldrew.feud.display.lookup.EntityLookup;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.TextDisplay;
@@ -12,6 +13,18 @@ import java.util.UUID;
 
 public final class DisplayRegistry {
     private final Map<DisplayKey, UUID> entries = new HashMap<>();
+    private final EntityLookup entityLookup;
+
+    // default wiring uses Bukkit,
+    // we override in tests so we can inject a fake lookup, minor
+    // seam to make DisplayRegistry testable, since we can't mock entities directly
+    public DisplayRegistry() {
+        this(new BukkitEntityLookup());
+    }
+
+    public DisplayRegistry(EntityLookup entityLookup) {
+        this.entityLookup = entityLookup;
+    }
 
     public void register(DisplayKey key, Entity entity) {
         if (key == null || entity == null) {
@@ -28,7 +41,7 @@ public final class DisplayRegistry {
         if (uuid == null) {
             return Optional.empty();
         }
-        Entity entity = Bukkit.getEntity(uuid);
+        Entity entity = entityLookup.get(uuid);
         if (entity == null || entity.isDead()) {
             entries.remove(key);
             return Optional.empty();
@@ -52,7 +65,7 @@ public final class DisplayRegistry {
         if (uuid == null) {
             return;
         }
-        Entity entity = Bukkit.getEntity(uuid);
+        Entity entity = entityLookup.get(uuid);
         if (entity != null) {
             entity.remove();
         }
@@ -71,7 +84,7 @@ public final class DisplayRegistry {
             }
             UUID uuid = entry.getValue();
             if (uuid != null) {
-                Entity entity = Bukkit.getEntity(uuid);
+                Entity entity = entityLookup.get(uuid);
                 if (entity != null) {
                     entity.remove();
                 }
@@ -88,7 +101,7 @@ public final class DisplayRegistry {
             if (uuid == null) {
                 continue;
             }
-            Entity entity = Bukkit.getEntity(uuid);
+            Entity entity = entityLookup.get(uuid);
             if (entity != null) {
                 entity.remove();
                 removed++;
