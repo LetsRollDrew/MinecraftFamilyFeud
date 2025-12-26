@@ -25,6 +25,7 @@ import io.letsrolldrew.feud.commands.handlers.UiHandler;
 import io.letsrolldrew.feud.commands.handlers.VersionHandler;
 import io.letsrolldrew.feud.commands.tree.CommandNode;
 import io.letsrolldrew.feud.commands.tree.CommandTree;
+import io.letsrolldrew.feud.ui.BookFactory;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -36,6 +37,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
+import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -257,22 +259,31 @@ public final class FeudRootCommand implements CommandExecutor {
         meta.setTitle("Entity Remote");
         meta.setAuthor("FamilyFeud");
         Component page1 = Component.text()
-                .append(button("Board Create (demo)", "/feud board create demo"))
-                .append(Component.newline())
-                .append(button("Board Destroy (demo)", "/feud board destroy demo"))
-                .append(Component.newline())
-                .append(button("Board Wand", "/feud board wand"))
-                .append(Component.newline())
-                .append(button("Board InitMaps", "/feud board initmaps"))
-                .build();
+            .append(button("Board Create (demo)", "/feud board create demo"))
+            .append(Component.newline())
+            .append(button("Board Destroy (demo)", "/feud board destroy demo"))
+            .append(Component.newline())
+            .append(button("Board Wand", "/feud board wand"))
+            .append(Component.newline())
+            .append(button("Board InitMaps", "/feud board initmaps"))
+            .build();
         Component page2 = Component.text()
-                .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
-                .append(Component.newline())
-                .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
-                .append(Component.newline())
-                .append(button("Clear Displays", "/feud clear all"))
-                .build();
-        meta.pages(java.util.List.of(page1, page2));
+            .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
+            .append(Component.newline())
+            .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
+            .append(Component.newline())
+            .append(button("Clear Displays", "/feud clear all"))
+            .build();
+        Book adventureBook = BookFactory.create(
+            Component.text("Entity Remote"),
+            Component.text("FamilyFeud"),
+            java.util.List.of(page1, page2)
+        );
+        meta.pages(adventureBook.pages());
+        if (hostBookUiBuilder != null) {
+            // reuse host tag helper to keep consistency on dev books if desired
+            io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
+        }
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
         player.sendMessage("Entity book given.");
@@ -308,13 +319,21 @@ public final class FeudRootCommand implements CommandExecutor {
         meta.setTitle("Host Remote");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
-                .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
-                .append(Component.newline()).append(Component.newline())
-                .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
-                .append(Component.newline()).append(Component.newline())
-                .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
-                .build();
-        meta.pages(java.util.List.of(page));
+            .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
+            .build();
+        Book adventureBook = BookFactory.create(
+            Component.text("Host Remote"),
+            Component.text("FamilyFeud"),
+            java.util.List.of(page)
+        );
+        meta.pages(adventureBook.pages());
+        if (hostBookUiBuilder != null) {
+            io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
+        }
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
         player.sendMessage("Host remote selector given.");
