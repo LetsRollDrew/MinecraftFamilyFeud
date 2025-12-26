@@ -68,7 +68,7 @@ public final class PluginBootstrap {
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
         this.dirtyTracker = new DirtyTracker();
         this.displayRegistry = new DisplayRegistry();
-        this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(plugin);
+        this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
         this.hologramService = new HologramService();
