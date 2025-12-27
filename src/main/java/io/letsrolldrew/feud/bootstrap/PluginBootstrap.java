@@ -87,7 +87,8 @@ public final class PluginBootstrap {
         this.hologramService = new HologramService(displayRegistry);
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
-        this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService);
+        File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
+        this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService, dynamicBoardsFile);
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.displayBoardSelectionListener = new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);

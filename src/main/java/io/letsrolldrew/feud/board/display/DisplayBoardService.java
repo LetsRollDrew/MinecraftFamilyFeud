@@ -23,6 +23,7 @@ import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,10 +39,17 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private final BoardLayout layout = BoardLayout.defaultLayout();
     private final DisplayRegistry displayRegistry;
     private final AnimationService animationService;
+    private final DynamicBoardStore dynamicStore;
 
     public DisplayBoardService(DisplayRegistry displayRegistry, AnimationService animationService) {
+        this(displayRegistry, animationService, null);
+    }
+
+    public DisplayBoardService(DisplayRegistry displayRegistry, AnimationService animationService, File dynamicStoreFile) {
         this.displayRegistry = displayRegistry;
         this.animationService = animationService;
+        this.dynamicStore = new DynamicBoardStore(dynamicStoreFile);
+        loadDynamicBoards();
     }
     @Override
     public void createBoard(String boardId, Location anchor, Player facingReference) {
@@ -97,6 +105,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         BoardInstance dyn = dynamicBoards.remove(boardId);
         if (dyn != null) {
             removeSlotEntities(dyn.slots());
+            dynamicStore.removeLayout(boardId);
         }
     }
 
@@ -157,6 +166,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             removeSlotEntities(instance.slots());
         }
         dynamicBoards.clear();
+        dynamicStore.clear();
     }
 
     private SlotInstance buildSlot(String boardId, int slotIndex) {
@@ -309,6 +319,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, dynamicLayout, displayRegistry);
         if (instance != null) {
             dynamicBoards.put(boardId, instance);
+            dynamicStore.saveLayout(boardId, dynamicLayout);
         }
         return instance;
     }
@@ -319,5 +330,35 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         ids.addAll(boards.keySet());
         ids.addAll(dynamicBoards.keySet());
         return ids;
+    }
+
+    private void loadDynamicBoards() {
+        for (java.util.Map.Entry<String, DynamicBoardLayout> entry : dynamicStore.loadLayouts().entrySet()) {
+            String boardId = entry.getKey();
+            DynamicBoardLayout layout = entry.getValue();
+            if (layout == null || layout.worldId() == null) {
+                continue;
+            }
+            World world = Bukkit.getWorld(layout.worldId());
+            if (world == null) {
+                continue;
+            }
+            Location anchor = new Location(world, layout.anchor().x, layout.anchor().y, layout.anchor().z);
+            List<SlotInstance> slots = buildDynamicSlots(boardId);
+            BoardInstance instance = new BoardInstance(boardId, anchor, layout.facing().yaw(), slots, layout);
+            dynamicBoards.put(instance.boardId(), instance);
+        }
+    }
+
+    private List<SlotInstance> buildDynamicSlots(String boardId) {
+        List<SlotInstance> slots = new ArrayList<>(8);
+        int idx = 0;
+        for (int col = 0; col < 2; col++) {
+            for (int row = 0; row < 4; row++) {
+                slots.add(buildSlot(boardId, idx));
+                idx++;
+            }
+        }
+        return slots;
     }
 }

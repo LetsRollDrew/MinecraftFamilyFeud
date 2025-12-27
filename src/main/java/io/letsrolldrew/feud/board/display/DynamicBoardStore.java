@@ -4,8 +4,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,8 +24,8 @@ final class DynamicBoardStore {
         reload();
     }
 
-    List<DynamicBoardLayout> loadLayouts() {
-        List<DynamicBoardLayout> layouts = new ArrayList<>();
+    Map<String, DynamicBoardLayout> loadLayouts() {
+        Map<String, DynamicBoardLayout> layouts = new java.util.HashMap<>();
         if (file == null) {
             return layouts;
         }
@@ -70,7 +68,7 @@ final class DynamicBoardStore {
                         config.getDouble(path + "maxCorner.z")
                     )
                 );
-                layouts.add(layout);
+                layouts.put(id, layout);
             } catch (Exception ignored) {
                 // malformed entry
             }
