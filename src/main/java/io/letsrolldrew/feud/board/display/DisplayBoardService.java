@@ -33,6 +33,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private static final float CMD_FLASH = 9003.0f;
 
     private final Map<String, BoardInstance> boards = new HashMap<>();
+    private final Map<String, BoardInstance> dynamicBoards = new HashMap<>();
     private final BoardLayout layout = BoardLayout.defaultLayout();
     private final DisplayRegistry displayRegistry;
     private final AnimationService animationService;
@@ -250,6 +251,20 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             displayRegistry.remove(slot.pointsKey());
             animationService.cancel(slot.backgroundKey());
         }
+    }
+
+    public BoardInstance createDynamicBoard(String boardId, DynamicBoardLayout dynamicLayout) {
+        if (boardId == null || boardId.isBlank() || dynamicLayout == null) {
+            return null;
+        }
+        if (dynamicBoards.containsKey(boardId) || boards.containsKey(boardId)) {
+            return null;
+        }
+        BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, dynamicLayout, displayRegistry);
+        if (instance != null) {
+            dynamicBoards.put(boardId, instance);
+        }
+        return instance;
     }
 
     private void setBackgroundCmd(DisplayKey key, float cmd) {

@@ -6,11 +6,13 @@ public final class SlotInstance {
     private final DisplayKey backgroundKey;
     private final DisplayKey answerKey;
     private final DisplayKey pointsKey;
+    private final DisplayKey namespaceKey;
 
     public SlotInstance(DisplayKey backgroundKey, DisplayKey answerKey, DisplayKey pointsKey) {
         this.backgroundKey = backgroundKey;
         this.answerKey = answerKey;
         this.pointsKey = pointsKey;
+        this.namespaceKey = backgroundKey;
     }
 
     public DisplayKey backgroundKey() {
@@ -23,5 +25,9 @@ public final class SlotInstance {
 
     public DisplayKey pointsKey() {
         return pointsKey;
+    }
+
+    public DisplayKey namespaceKey() {
+        return namespaceKey;
     }
 }
