@@ -22,6 +22,8 @@ import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.commands.DisplayBoardCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
@@ -53,6 +55,8 @@ public final class PluginBootstrap {
     private DisplayRegistry displayRegistry;
     private io.letsrolldrew.feud.effects.anim.AnimationService animationService;
     private FeudRootCommand feudRootCommand;
+    private DisplayBoardSelectionStore displayBoardSelectionStore;
+    private DisplayBoardSelectionListener displayBoardSelectionListener;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -82,8 +86,12 @@ public final class PluginBootstrap {
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
         this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService);
-        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
+        this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
+        NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
+        this.displayBoardSelectionListener = new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);
+        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin", displayBoardSelectionListener);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
+        plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         registerCommands();
     }
 
