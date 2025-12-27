@@ -84,7 +84,8 @@ public final class PluginBootstrap {
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
-        this.hologramService = new HologramService(displayRegistry);
+        File hologramStore = new File(plugin.getDataFolder(), "holograms.yml");
+        this.hologramService = new HologramService(displayRegistry, hologramStore);
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
