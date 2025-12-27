@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.effects.holo;
 
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
@@ -70,6 +71,7 @@ public final class HologramService {
             } catch (Throwable ignored) {
             }
         });
+        DisplayTags.tag(display, NAMESPACE, id);
         displayRegistry.register(key, display);
         hologramsById.put(id, new HologramEntry(key, HologramType.TEXT_DISPLAY));
     }
@@ -133,6 +135,7 @@ public final class HologramService {
             } catch (Throwable ignored) {
             }
         });
+        DisplayTags.tag(display, NAMESPACE, id);
         displayRegistry.register(key, display);
         hologramsById.put(id, new HologramEntry(key, HologramType.ITEM_DISPLAY));
     }

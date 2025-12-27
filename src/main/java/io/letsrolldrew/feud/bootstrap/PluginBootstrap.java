@@ -25,6 +25,7 @@ import io.letsrolldrew.feud.commands.SurveyCommands;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import java.io.File;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -78,7 +79,8 @@ public final class PluginBootstrap {
         this.framebufferStore = new TileFramebufferStore();
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
         this.dirtyTracker = new DirtyTracker();
-        this.displayRegistry = new DisplayRegistry();
+        File displayStore = new File(plugin.getDataFolder(), "displays.yml");
+        this.displayRegistry = new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);

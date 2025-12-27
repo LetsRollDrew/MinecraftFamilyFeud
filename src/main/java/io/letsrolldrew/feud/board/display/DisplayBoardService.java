@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.board.display;
 
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.anim.AnimationService;
 import io.letsrolldrew.feud.effects.anim.AnimationStep;
 import net.kyori.adventure.key.Key;
@@ -202,7 +203,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             display.setRotation(yaw, 0f);
         } catch (Throwable ignored) {
         }
-
+        io.letsrolldrew.feud.display.DisplayTags.tag(display, "board", key.group());
         displayRegistry.register(key, display);
     }
 
@@ -239,6 +240,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         } catch (Throwable ignored) {
         }
 
+        DisplayTags.tag(display, "board", key.group());
         displayRegistry.register(key, display);
     }
 

@@ -2,6 +2,8 @@ package io.letsrolldrew.feud.board.display;
 
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
+
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -90,6 +92,7 @@ public final class DynamicDisplayBoardFactory {
         if (display == null) {
             return;
         }
+        DisplayTags.tag(display, "board", key.group());
         registry.register(key, display);
     }
 
@@ -110,6 +113,7 @@ public final class DynamicDisplayBoardFactory {
         if (display == null) {
             return;
         }
+        DisplayTags.tag(display, "board", key.group());
         registry.register(key, display);
     }
 
