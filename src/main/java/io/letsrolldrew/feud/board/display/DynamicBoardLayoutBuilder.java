@@ -60,17 +60,31 @@ public final class DynamicBoardLayoutBuilder {
         double gapX = 0;
         double gapY = 0;
 
-        // anchor at top-left in board space: top edge highest Y = maxY + 1, left edge = min corner on the face plane
+        // anchor at the top-left corner on the wall
         double anchorY = maxCorner.y + 1.0;
         double anchorX;
         double anchorZ;
+        // NOTE: +1.0 is to fix off by one issue, not sure if theres a more elegant way
+        // to do this but this hurt my head enough already so here we are
         if (facing == BoardFacing.NORTH || facing == BoardFacing.SOUTH) {
-            anchorX = minCorner.x;
-            anchorZ = facing == BoardFacing.SOUTH ? maxCorner.z : minCorner.z;
+
+            // width runs along X axis, choose left edge by right-vector sign
+            // if right points negative, left edge is the far side (maxX + 1)
+            anchorX = facing.rightX() > 0 ? minCorner.x : maxCorner.x + 1.0;
+
+            // wall plane Z: south is +Z face (maxZ + 1), north is minZ
+            anchorZ = facing == BoardFacing.SOUTH ? maxCorner.z + 1.0 : minCorner.z;
+
         } else {
-            anchorZ = minCorner.z;
-            anchorX = facing == BoardFacing.EAST ? maxCorner.x : minCorner.x;
+            // width runs along Z axis, choose left edge by right-vector sign
+             // if right points negative, left edge is the far side (maxZ + 1)
+            anchorZ = facing.rightZ() > 0 ? minCorner.z : maxCorner.z + 1.0;
+
+            // wall plane X: east is +X face (maxX + 1), west is minX
+            anchorX = facing == BoardFacing.EAST ? maxCorner.x + 1.0 : minCorner.x;
+
         }
+
         Vector3d anchor = new Vector3d(anchorX, anchorY, anchorZ);
 
         DynamicBoardLayout layout = new DynamicBoardLayout(
