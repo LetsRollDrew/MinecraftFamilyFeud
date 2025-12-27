@@ -379,27 +379,23 @@ public final class FeudRootCommand implements CommandExecutor {
 	    }
 
 	    private void giveDisplayBook(Player player, String boardId) {
-	        java.util.List<String> ids = new java.util.ArrayList<>(displayBoardPresenter.listBoards());
-	        java.util.Collections.sort(ids);
+        java.util.List<String> ids = new java.util.ArrayList<>(displayBoardPresenter.listBoards());
+        java.util.Collections.sort(ids);
 
-	        String target = boardId == null ? "" : boardId.trim();
-	        if (target.isBlank()) {
-	            target = ids.isEmpty() ? "" : ids.get(0);
-	        }
-	        if (target.isBlank()) {
-	            player.sendMessage("No display boards");
-	            return;
-	        }
+        String target = boardId == null ? "" : boardId.trim();
+        if (target.isBlank() && !ids.isEmpty()) {
+            target = ids.get(0);
+        }
 
-	        ItemStack fresh = DisplayHostRemoteBookBuilder.create(
-	            target,
-	            ids,
-	            surveyRepository,
-	            hostBookUiBuilder.getHostKey(),
-	            gameController
-	        );
-	        hostRemoteService.giveOrReplace(player, fresh);
-	        player.sendMessage("Display remote: " + target);
+        ItemStack fresh = DisplayHostRemoteBookBuilder.create(
+            target,
+            ids,
+            surveyRepository,
+            hostBookUiBuilder.getHostKey(),
+            gameController
+        );
+        hostRemoteService.giveOrReplace(player, fresh);
+        player.sendMessage(ids.isEmpty() ? "Display remote (no boards yet)" : "Display remote: " + target);
 	    }
 
     private static String[] tail(String[] args, int start) {

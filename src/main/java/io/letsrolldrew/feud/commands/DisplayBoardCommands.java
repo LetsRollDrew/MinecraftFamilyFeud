@@ -185,12 +185,13 @@ public final class DisplayBoardCommands {
     }
 
     private void refreshRemote(Player player, String boardId) {
-        if (player == null || boardId == null || boardId.isBlank() || hostRemoteService == null || surveyRepository == null || hostKey == null) {
+        if (player == null || hostRemoteService == null || surveyRepository == null || hostKey == null) {
             return;
         }
         java.util.List<String> ids = new java.util.ArrayList<>(presenter.listBoards());
         java.util.Collections.sort(ids);
-        hostRemoteService.giveOrReplace(player, DisplayHostRemoteBookBuilder.create(boardId, ids, surveyRepository, hostKey, controller));
+        String target = (boardId == null || boardId.isBlank()) && !ids.isEmpty() ? ids.get(0) : boardId;
+        hostRemoteService.giveOrReplace(player, DisplayHostRemoteBookBuilder.create(target, ids, surveyRepository, hostKey, controller));
     }
 
     private void handleCreate(CommandSender sender, String[] args) {

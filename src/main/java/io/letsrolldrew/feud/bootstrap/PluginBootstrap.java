@@ -87,7 +87,7 @@ public final class PluginBootstrap {
         File hologramStore = new File(plugin.getDataFolder(), "holograms.yml");
         this.hologramService = new HologramService(displayRegistry, hologramStore);
         this.hologramCommands = new HologramCommands(hologramService);
-        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
+        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
         this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService, dynamicBoardsFile);
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();

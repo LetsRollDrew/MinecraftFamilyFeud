@@ -26,12 +26,13 @@ public final class DisplayHostRemoteBookBuilder {
         NamespacedKey hostKey,
         GameController controller
     ) {
-        if (boardId == null || boardId.isBlank() || surveyRepository == null || hostKey == null || controller == null) {
-            throw new IllegalArgumentException("boardId/surveyRepository/hostKey/controller required");
+        if (surveyRepository == null || hostKey == null || controller == null) {
+            throw new IllegalArgumentException("surveyRepository/hostKey/controller required");
         }
+        String targetId = (boardId == null || boardId.isBlank()) ? "(none)" : boardId;
 
         HostBookUiBuilder base = new HostBookUiBuilder(
-            "/feud board display remote " + boardId,
+            "/feud board display remote " + targetId,
             surveyRepository,
             null,
             hostKey
@@ -53,7 +54,7 @@ public final class DisplayHostRemoteBookBuilder {
 
         meta.lore(List.of(
             Component.text("Display Based", NamedTextColor.GRAY),
-            Component.text("Board: " + boardId, NamedTextColor.GRAY)
+            Component.text("Board: " + targetId, NamedTextColor.GRAY)
         ));
 
         try {

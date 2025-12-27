@@ -1,5 +1,6 @@
 package io.letsrolldrew.feud.commands;
 
+import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import org.bukkit.command.CommandSender;
@@ -7,10 +8,12 @@ import org.bukkit.command.CommandSender;
 public final class SurveyCommands {
     private final SurveyRepository surveyRepository;
     private final String hostPermission;
+    private final GameController controller;
 
-    public SurveyCommands(SurveyRepository surveyRepository, String hostPermission) {
+    public SurveyCommands(SurveyRepository surveyRepository, String hostPermission, GameController controller) {
         this.surveyRepository = surveyRepository;
         this.hostPermission = hostPermission;
+        this.controller = controller;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -61,8 +64,12 @@ public final class SurveyCommands {
             sender.sendMessage("Survey not found: " + surveyId);
             return true;
         }
-        // The actual setting of the survey is still handled in FeudRootCommand
-        sender.sendMessage("Use /feud survey load <id> via root handler.");
+        if (controller != null) {
+            controller.setActiveSurvey(survey);
+            sender.sendMessage("Loaded survey: " + surveyId);
+        } else {
+            sender.sendMessage("Loaded survey: " + surveyId);
+        }
         return true;
     }
 
