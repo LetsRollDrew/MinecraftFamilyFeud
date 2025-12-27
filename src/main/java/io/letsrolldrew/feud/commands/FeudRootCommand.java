@@ -15,6 +15,7 @@ import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.commands.handlers.BoardHandler;
 import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
 import io.letsrolldrew.feud.commands.handlers.HelpHandler;
@@ -315,10 +316,24 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
         int removed = displayRegistry.removeAll();
+        removed += removeTaggedDisplays("board");
         displayBoardPresenter.clearAll();
         hologramService.clearAll();
         sender.sendMessage("Cleared " + removed + " displays");
         return true;
+    }
+
+    private int removeTaggedDisplays(String kind) {
+        int removed = 0;
+        for (var world : plugin.getServer().getWorlds()) {
+            for (org.bukkit.entity.Display display : world.getEntitiesByClass(org.bukkit.entity.Display.class)) {
+                if (DisplayTags.isManaged(display, kind)) {
+                    display.remove();
+                    removed++;
+                }
+            }
+        }
+        return removed;
     }
 
     private void giveSelectorBook(Player player) {

@@ -25,4 +25,23 @@ public final class DisplayTags {
             pdc.set(GROUP, PersistentDataType.STRING, group);
         }
     }
+
+    public static boolean isManaged(Display display) {
+        if (display == null || MANAGED == null) {
+            return false;
+        }
+        Integer flag = display.getPersistentDataContainer().get(MANAGED, PersistentDataType.INTEGER);
+        return flag != null && flag == 1;
+    }
+
+    public static boolean isManaged(Display display, String kind) {
+        if (!isManaged(display)) {
+            return false;
+        }
+        if (kind == null || KIND == null) {
+            return true;
+        }
+        String stored = display.getPersistentDataContainer().get(KIND, PersistentDataType.STRING);
+        return kind.equals(stored);
+    }
 }
