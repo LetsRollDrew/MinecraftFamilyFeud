@@ -152,6 +152,10 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             removeSlotEntities(instance.slots());
         }
         boards.clear();
+        for (BoardInstance instance : dynamicBoards.values()) {
+            removeSlotEntities(instance.slots());
+        }
+        dynamicBoards.clear();
     }
 
     private SlotInstance buildSlot(String boardId, int slotIndex) {

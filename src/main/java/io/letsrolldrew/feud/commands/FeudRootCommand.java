@@ -285,6 +285,26 @@ public final class FeudRootCommand implements CommandExecutor {
         return true;
     }
 
+    private int removeStrayDisplays() {
+        int removed = 0;
+        for (var world : plugin.getServer().getWorlds()) {
+            for (ItemDisplay item : world.getEntitiesByClass(ItemDisplay.class)) {
+                float cmd = item.getItemStack() != null && item.getItemStack().getItemMeta() != null
+                    ? item.getItemStack().getItemMeta().getCustomModelDataComponent().getFloats().stream().findFirst().orElse(0f)
+                    : 0f;
+                if (cmd >= 9000f && cmd <= 9010f) {
+                    item.remove();
+                    removed++;
+                }
+            }
+            for (TextDisplay text : world.getEntitiesByClass(TextDisplay.class)) {
+                text.remove();
+                removed++;
+            }
+        }
+        return removed;
+    }
+
     private void giveCleanupBook(Player player) {
         handleEntityBook(player);
     }
@@ -308,6 +328,7 @@ public final class FeudRootCommand implements CommandExecutor {
         int removed = displayRegistry.removeAll();
         displayBoardPresenter.clearAll();
         hologramService.clearAll();
+        removed += removeStrayDisplays();
         sender.sendMessage("Cleared " + removed + " displays");
         return true;
     }
