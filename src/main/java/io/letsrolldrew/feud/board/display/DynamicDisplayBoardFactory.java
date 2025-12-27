@@ -83,7 +83,7 @@ public final class DynamicDisplayBoardFactory {
                 entity.setTransformation(new Transformation(
                     new Vector3f(0, 0, 0),
                     new AxisAngle4f(0, 0, 0, 0),
-                    new Vector3f((float) layout.cellWidth(), (float) layout.cellHeight(), 0.1f),
+                    new Vector3f((float) layout.cellWidth(), (float) layout.cellHeight(), 0.01f),
                     new AxisAngle4f(0, 0, 0, 0)
                 ));
             } catch (Throwable ignored) {
@@ -97,18 +97,27 @@ public final class DynamicDisplayBoardFactory {
     }
 
     private static void spawnText(DisplayKey key, World world, Location loc, float yaw, DynamicBoardLayout layout, DisplayRegistry registry) {
-        TextDisplay display = world.spawn(loc, TextDisplay.class, entity -> {
+        Location spawnLoc = loc.clone();
+        double forwardNudge = layout.forwardOffset() + 0.08;
+        spawnLoc.add(layout.facing().forwardX() * forwardNudge, 0, layout.facing().forwardZ() * forwardNudge);
+
+        TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
             entity.setBillboard(Display.Billboard.FIXED);
             entity.setRotation(yaw, 0f);
-            entity.setShadowed(false);
-            entity.setSeeThrough(true);
+            entity.setShadowed(true);
+            entity.setSeeThrough(false);
             try {
                 entity.setBackgroundColor(Color.fromARGB(0));
             } catch (Throwable ignored) {
             }
-            entity.text(Component.empty().font(net.kyori.adventure.key.Key.key("feud", "feud")));
+            try {
+                entity.setBrightness(new Display.Brightness(15, 15));
+            } catch (Throwable ignored) {
+            }
+            entity.setViewRange(64f);
+            entity.text(Component.empty());
             entity.setAlignment(TextDisplay.TextAlignment.CENTER);
-            entity.setLineWidth((int) Math.max(10, layout.cellWidth() * 6));
+            entity.setLineWidth((int) Math.max(40, layout.cellWidth() * 14));
         });
         if (display == null) {
             return;

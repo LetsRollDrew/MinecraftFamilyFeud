@@ -82,10 +82,10 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
                 spawnBackground(slot.backgroundKey(), world, slotLoc, hiddenStack, facing.yaw());
 
                 Location ansLoc = space.at(colX - 1.3, yOffset, layout.textZOffset());
-                spawnText(slot.answerKey(), world, ansLoc, layout.textScale(), facing.yaw());
+                spawnText(slot.answerKey(), world, ansLoc, layout.textScale(), facing.yaw(), facing);
 
                 Location ptsLoc = space.at(colX + 1.4, yOffset, layout.textZOffset());
-                spawnText(slot.pointsKey(), world, ptsLoc, layout.textScale(), facing.yaw());
+                spawnText(slot.pointsKey(), world, ptsLoc, layout.textScale(), facing.yaw(), facing);
 
                 slots.add(slot);
                 slotIndex++;
@@ -180,6 +180,9 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private SlotInstance slotFor(String boardId, int slotIndex) {
         BoardInstance board = boards.get(boardId);
         if (board == null) {
+            board = dynamicBoards.get(boardId);
+        }
+        if (board == null) {
             return null;
         }
         int idx = slotIndex - 1;
@@ -217,19 +220,32 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         displayRegistry.register(key, display);
     }
 
-    private void spawnText(DisplayKey key, World world, Location loc, float scale, float yaw) {
-        TextDisplay display = world.spawn(loc, TextDisplay.class, entity -> {
+    private void spawnText(DisplayKey key, World world, Location loc, float scale, float yaw, BoardFacing facing) {
+        // nudge text slightly forward in board space so it renders above the background plane
+        Location spawnLoc = loc.clone();
+        double forwardNudge = 0.08;
+        spawnLoc.add(facing.forwardX() * forwardNudge, 0, facing.forwardZ() * forwardNudge);
+
+        TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
             entity.setBillboard(Display.Billboard.FIXED);
             entity.setRotation(yaw, 0f);
 
-            entity.setShadowed(false);
-            entity.setSeeThrough(true);
+            entity.setShadowed(true);
+            entity.setSeeThrough(false);
             try {
                 entity.setBackgroundColor(Color.fromARGB(0));
             } catch (Throwable ignored) {
             }
+            try {
+                entity.setBrightness(new Display.Brightness(15, 15));
+            } catch (Throwable ignored) {
+            }
+            entity.setViewRange(64f);
 
-            entity.text(Component.empty().font(Key.key("feud", "feud")));
+            entity.text(Component.empty());
+            entity.setAlignment(TextDisplay.TextAlignment.CENTER);
+            int lineWidth = (int) Math.max(40, layout.slotWidth() * 14);
+            entity.setLineWidth(lineWidth);
 
             try {
                 entity.setTransformation(new Transformation(
@@ -301,11 +317,23 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     }
 
     private void clearText(DisplayKey key) {
-        setText(key, Component.empty());
+        displayRegistry.resolveText(key).ifPresent(display -> {
+            display.text(Component.empty());
+            try {
+                display.setTextOpacity((byte) 0);
+            } catch (Throwable ignored) {
+            }
+        });
     }
 
     private void setText(DisplayKey key, Component component) {
-        displayRegistry.resolveText(key).ifPresent(display -> display.text(component.font(Key.key("feud", "feud"))));
+        displayRegistry.resolveText(key).ifPresent(display -> {
+            display.text(component);
+            try {
+                display.setTextOpacity((byte) 0xFF);
+            } catch (Throwable ignored) {
+            }
+        });
     }
 
     @Override
