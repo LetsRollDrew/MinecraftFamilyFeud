@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.board.display;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import java.util.Collection;
 
 public interface DisplayBoardPresenter {
     void createBoard(String boardId, Location anchor, Player facingReference);
@@ -15,4 +16,8 @@ public interface DisplayBoardPresenter {
     void hideSlot(String boardId, int slotIndex);
 
     void clearAll();
+
+    BoardInstance createDynamicBoard(String boardId, DynamicBoardLayout layout);
+
+    Collection<String> listBoards();
 }

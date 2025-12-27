@@ -89,7 +89,7 @@ public final class PluginBootstrap {
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.displayBoardSelectionListener = new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);
-        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin", displayBoardSelectionListener);
+        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin", displayBoardSelectionListener, displayBoardSelectionStore);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         registerCommands();

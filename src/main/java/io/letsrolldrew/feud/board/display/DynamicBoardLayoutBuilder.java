@@ -60,10 +60,17 @@ public final class DynamicBoardLayoutBuilder {
         double gapX = 0;
         double gapY = 0;
 
-        // anchor at top-left in board space: highest Y and min along width axis
-        double anchorY = maxCorner.y;
-        double anchorX = facing == BoardFacing.NORTH || facing == BoardFacing.SOUTH ? minCorner.x : maxCorner.x;
-        double anchorZ = facing == BoardFacing.NORTH || facing == BoardFacing.SOUTH ? maxCorner.z : minCorner.z;
+        // anchor at top-left in board space: top edge highest Y = maxY + 1, left edge = min corner on the face plane
+        double anchorY = maxCorner.y + 1.0;
+        double anchorX;
+        double anchorZ;
+        if (facing == BoardFacing.NORTH || facing == BoardFacing.SOUTH) {
+            anchorX = minCorner.x;
+            anchorZ = facing == BoardFacing.SOUTH ? maxCorner.z : minCorner.z;
+        } else {
+            anchorZ = minCorner.z;
+            anchorX = facing == BoardFacing.EAST ? maxCorner.x : minCorner.x;
+        }
         Vector3d anchor = new Vector3d(anchorX, anchorY, anchorZ);
 
         DynamicBoardLayout layout = new DynamicBoardLayout(

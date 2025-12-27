@@ -36,7 +36,7 @@ final class DynamicBoardLayoutBuilderTest {
         assertEquals(5.0, layout.totalHeight(), 0.0001);
         assertEquals(2.5, layout.cellWidth(), 0.0001);
         assertEquals(1.25, layout.cellHeight(), 0.0001);
-        assertEquals(68.0, layout.anchor().y, 0.0001);
+        assertEquals(69.0, layout.anchor().y, 0.0001);
         assertEquals(BoardFacing.SOUTH, layout.facing());
     }
 

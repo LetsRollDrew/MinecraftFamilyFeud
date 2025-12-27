@@ -89,10 +89,14 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     @Override
     public void destroyBoard(String boardId) {
         BoardInstance instance = boards.remove(boardId);
-        if (instance == null) {
+        if (instance != null) {
+            removeSlotEntities(instance.slots());
             return;
         }
-        removeSlotEntities(instance.slots());
+        BoardInstance dyn = dynamicBoards.remove(boardId);
+        if (dyn != null) {
+            removeSlotEntities(dyn.slots());
+        }
     }
 
     @Override
@@ -253,20 +257,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
     }
 
-    public BoardInstance createDynamicBoard(String boardId, DynamicBoardLayout dynamicLayout) {
-        if (boardId == null || boardId.isBlank() || dynamicLayout == null) {
-            return null;
-        }
-        if (dynamicBoards.containsKey(boardId) || boards.containsKey(boardId)) {
-            return null;
-        }
-        BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, dynamicLayout, displayRegistry);
-        if (instance != null) {
-            dynamicBoards.put(boardId, instance);
-        }
-        return instance;
-    }
-
     private void setBackgroundCmd(DisplayKey key, float cmd) {
         displayRegistry.resolveItem(key).ifPresent(display -> {
             ItemStack stack = display.getItemStack();
@@ -300,5 +290,28 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
     private void setText(DisplayKey key, Component component) {
         displayRegistry.resolveText(key).ifPresent(display -> display.text(component.font(Key.key("feud", "feud"))));
+    }
+
+    @Override
+    public BoardInstance createDynamicBoard(String boardId, DynamicBoardLayout dynamicLayout) {
+        if (boardId == null || boardId.isBlank() || dynamicLayout == null) {
+            return null;
+        }
+        if (dynamicBoards.containsKey(boardId) || boards.containsKey(boardId)) {
+            return null;
+        }
+        BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, dynamicLayout, displayRegistry);
+        if (instance != null) {
+            dynamicBoards.put(boardId, instance);
+        }
+        return instance;
+    }
+
+    @Override
+    public java.util.Collection<String> listBoards() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        ids.addAll(boards.keySet());
+        ids.addAll(dynamicBoards.keySet());
+        return ids;
     }
 }
