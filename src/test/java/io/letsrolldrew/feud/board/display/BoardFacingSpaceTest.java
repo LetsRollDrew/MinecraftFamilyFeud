@@ -87,15 +87,15 @@ final class BoardFacingSpaceTest {
 
         // col 0, row 0 center: right=1.0, up=-0.5, forward=0.05
         Location c00 = BoardSpace.atCellCenter(anchor, BoardFacing.SOUTH, 0, 0, layout);
-        assertEquals(1.0, c00.getX(), 1e-6);
+        assertEquals(0.05, c00.getX(), 1e-6);
         assertEquals(9.5, c00.getY(), 1e-6);
-        assertEquals(-0.05, c00.getZ(), 1e-6);
+        assertEquals(-1.0, c00.getZ(), 1e-6);
 
         // col 1, row 3 center: right=3.0, up=-3.5, forward=0.05
         Location c13 = BoardSpace.atCellCenter(anchor, BoardFacing.SOUTH, 1, 3, layout);
-        assertEquals(3.0, c13.getX(), 1e-6);
-        assertEquals(5.5, c13.getY(), 1e-6);
-        assertEquals(-0.05, c13.getZ(), 1e-6);
+        assertEquals(0.05, c13.getX(), 1e-6);
+        assertEquals(6.5, c13.getY(), 1e-6);
+        assertEquals(-3.0, c13.getZ(), 1e-6);
     }
 
     @Test
