@@ -34,21 +34,18 @@ public final class HostRemoteService {
 
         if (isHostRemote(inv.getItemInOffHand())) {
             inv.setItemInOffHand(book);
-            removeAllTaggedExcept(inv, -1, false);
             replaced = true;
             log("Placed host remote in offhand for " + player.getName());
         } else {
             int slot = findFirstHostRemoteSlot(inv);
             if (slot != -1) {
                 inv.setItem(slot, book);
-                removeAllTaggedExcept(inv, slot, true);
                 replaced = true;
                 log("Replaced host remote in slot " + slot + " for " + player.getName());
             }
         }
 
         if (!replaced) {
-            removeAllTaggedExcept(inv, -1, true);
             Map<Integer, ItemStack> leftover = inv.addItem(book);
             if (!leftover.isEmpty()) {
                 leftover.values().forEach(stack -> player.getWorld().dropItemNaturally(player.getLocation(), stack));
@@ -79,22 +76,6 @@ public final class HostRemoteService {
             }
         }
         return -1;
-    }
-
-    private void removeAllTaggedExcept(PlayerInventory inv, int protectedSlot, boolean includeSlots) {
-        if (includeSlots) {
-            for (int i = 0; i < inv.getSize(); i++) {
-                if (i == protectedSlot) {
-                    continue;
-                }
-                if (isHostRemote(inv.getItem(i))) {
-                    inv.setItem(i, null);
-                }
-            }
-        }
-        if (protectedSlot != -2 && isHostRemote(inv.getItemInOffHand())) {
-            inv.setItemInOffHand(null);
-        }
     }
 
     private Count countRemotes(PlayerInventory inv) {

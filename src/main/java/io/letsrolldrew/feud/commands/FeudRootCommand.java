@@ -252,8 +252,13 @@ public final class FeudRootCommand implements CommandExecutor {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.setTitle("Cleanup Remote");
-        meta.setAuthor("FamilyFeud");
+        try {
+            meta.title(Component.text("Cleanup Remote", NamedTextColor.GRAY));
+            meta.author(Component.text("FamilyFeud", NamedTextColor.GRAY));
+        } catch (Throwable ignored) {
+            meta.setTitle("Cleanup Remote");
+            meta.setAuthor("FamilyFeud");
+        }
         Component page1 = Component.text()
             .append(button("Board Create (demo)", "/feud board create demo"))
             .append(Component.newline())
@@ -352,6 +357,13 @@ public final class FeudRootCommand implements CommandExecutor {
         );
         if (fresh.getItemMeta() instanceof BookMeta meta) {
             meta.lore(java.util.List.of(Component.text("Map Based", NamedTextColor.GRAY)));
+            try {
+                meta.title(Component.text("Feud Host Book", NamedTextColor.GOLD));
+                meta.author(Component.text("Family Feud", NamedTextColor.GOLD));
+            } catch (Throwable ignored) {
+                meta.setTitle("Feud Host Book");
+                meta.setAuthor("Family Feud");
+            }
             fresh.setItemMeta(meta);
         }
         hostRemoteService.giveOrReplace(player, fresh);
@@ -370,6 +382,13 @@ public final class FeudRootCommand implements CommandExecutor {
         );
         if (fresh.getItemMeta() instanceof BookMeta meta) {
             meta.lore(java.util.List.of(Component.text("Display Based", NamedTextColor.GRAY)));
+            try {
+                meta.title(Component.text("Feud Host Book", NamedTextColor.AQUA));
+                meta.author(Component.text("Family Feud", NamedTextColor.AQUA));
+            } catch (Throwable ignored) {
+                meta.setTitle("Feud Host Book");
+                meta.setAuthor("Family Feud");
+            }
             fresh.setItemMeta(meta);
         }
         hostRemoteService.giveOrReplace(player, fresh);
