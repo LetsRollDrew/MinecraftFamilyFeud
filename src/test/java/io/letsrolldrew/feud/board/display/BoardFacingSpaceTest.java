@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import java.util.UUID;
 
 final class BoardFacingSpaceTest {
 
@@ -61,6 +62,40 @@ final class BoardFacingSpaceTest {
         assertEquals(66, loc.getY(), 1e-6);
         assertEquals(-1, loc.getZ(), 1e-6);
         assertEquals(BoardFacing.SOUTH.yaw(), loc.getYaw(), 1e-6f);
+    }
+
+    @Test
+    void mapsCellCentersDynamicLayout() {
+        World world = mock(World.class);
+        Location anchor = new Location(world, 0, 10, 0);
+        DynamicBoardLayout layout = new DynamicBoardLayout(
+            UUID.randomUUID(),
+            BoardFacing.SOUTH,
+            new org.joml.Vector3d(anchor.getX(), anchor.getY(), anchor.getZ()),
+            4.0,
+            4.0,
+            2.0,
+            1.0,
+            0.1,
+            0.1,
+            0,
+            0,
+            0.05,
+            new org.joml.Vector3d(),
+            new org.joml.Vector3d()
+        );
+
+        // col 0, row 0 center: right=1.0, up=-0.5, forward=0.05
+        Location c00 = BoardSpace.atCellCenter(anchor, BoardFacing.SOUTH, 0, 0, layout);
+        assertEquals(1.0, c00.getX(), 1e-6);
+        assertEquals(9.5, c00.getY(), 1e-6);
+        assertEquals(-0.05, c00.getZ(), 1e-6);
+
+        // col 1, row 3 center: right=3.0, up=-3.5, forward=0.05
+        Location c13 = BoardSpace.atCellCenter(anchor, BoardFacing.SOUTH, 1, 3, layout);
+        assertEquals(3.0, c13.getX(), 1e-6);
+        assertEquals(5.5, c13.getY(), 1e-6);
+        assertEquals(-0.05, c13.getZ(), 1e-6);
     }
 
     @Test
