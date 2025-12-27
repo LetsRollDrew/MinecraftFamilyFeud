@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
@@ -214,23 +215,26 @@ public final class FeudRootCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean handleHostBook(CommandSender sender, String flavor) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the host book.");
-            return true;
-        }
-        if (!player.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to use this.");
-            return true;
-        }
-        switch (flavor) {
-            case "map" -> giveMapBook(player);
-            case "display" -> giveDisplayBook(player);
-            case "cleanup" -> giveCleanupBook(player);
-            default -> giveSelectorBook(player);
-        }
-        return true;
-    }
+	    private boolean handleHostBook(CommandSender sender, String flavor) {
+	        if (!(sender instanceof Player player)) {
+	            sender.sendMessage("Only players can receive the host book.");
+	            return true;
+	        }
+	        if (!player.hasPermission(hostPermission)) {
+	            sender.sendMessage("You must be the host to use this.");
+	            return true;
+	        }
+	        String raw = flavor == null ? "" : flavor.trim();
+	        String head = raw.isBlank() ? "" : raw.split("\\s+", 2)[0].toLowerCase();
+	        String tail = raw.isBlank() ? "" : raw.replaceFirst("^\\S+\\s*", "");
+	        switch (head) {
+	            case "map" -> giveMapBook(player);
+	            case "display" -> giveDisplayBook(player, tail);
+	            case "cleanup" -> giveCleanupBook(player);
+	            default -> giveSelectorBook(player);
+	        }
+	        return true;
+	    }
 
     private void giveOrReplaceHostBook(Player player) {
         var fresh = hostBookUiBuilder.createBook(
@@ -370,30 +374,33 @@ public final class FeudRootCommand implements CommandExecutor {
         player.sendMessage("Map board remote given.");
     }
 
-    private void giveDisplayBook(Player player) {
-        var fresh = displayHostBookUiBuilder.createBook(
-            gameController.slotHoverTexts(),
-            gameController.getActiveSurvey(),
-            gameController.revealedSlots(),
-            gameController.strikeCount(),
-            gameController.maxStrikes(),
-            gameController.roundPoints(),
-            gameController.controllingTeam()
-        );
-        if (fresh.getItemMeta() instanceof BookMeta meta) {
-            meta.lore(java.util.List.of(Component.text("Display Based", NamedTextColor.GRAY)));
-            try {
-                meta.title(Component.text("Feud Host Book", NamedTextColor.AQUA));
-                meta.author(Component.text("Family Feud", NamedTextColor.AQUA));
-            } catch (Throwable ignored) {
-                meta.setTitle("Feud Host Book");
-                meta.setAuthor("Family Feud");
-            }
-            fresh.setItemMeta(meta);
-        }
-        hostRemoteService.giveOrReplace(player, fresh);
-        player.sendMessage("Display board remote given.");
-    }
+	    private void giveDisplayBook(Player player) {
+	        giveDisplayBook(player, "");
+	    }
+
+	    private void giveDisplayBook(Player player, String boardId) {
+	        java.util.List<String> ids = new java.util.ArrayList<>(displayBoardPresenter.listBoards());
+	        java.util.Collections.sort(ids);
+
+	        String target = boardId == null ? "" : boardId.trim();
+	        if (target.isBlank()) {
+	            target = ids.isEmpty() ? "" : ids.get(0);
+	        }
+	        if (target.isBlank()) {
+	            player.sendMessage("No display boards");
+	            return;
+	        }
+
+	        ItemStack fresh = DisplayHostRemoteBookBuilder.create(
+	            target,
+	            ids,
+	            surveyRepository,
+	            hostBookUiBuilder.getHostKey(),
+	            gameController
+	        );
+	        hostRemoteService.giveOrReplace(player, fresh);
+	        player.sendMessage("Display remote: " + target);
+	    }
 
     private static String[] tail(String[] args, int start) {
         if (start >= args.length) {

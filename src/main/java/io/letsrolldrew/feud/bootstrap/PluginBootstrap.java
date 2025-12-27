@@ -93,7 +93,17 @@ public final class PluginBootstrap {
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.displayBoardSelectionListener = new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);
-        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin", displayBoardSelectionListener, displayBoardSelectionStore);
+        this.boardCommands = new DisplayBoardCommands(
+            displayBoardPresenter,
+            "familyfeud.admin",
+            displayBoardSelectionListener,
+            displayBoardSelectionStore,
+            gameController,
+            config.hostPermission(),
+            hostRemoteService,
+            surveyRepository,
+            hostKey
+        );
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         registerCommands();
@@ -201,13 +211,16 @@ public final class PluginBootstrap {
                                 .executes(ctx -> exec(command, ctx.getSource(), "survey", "load", StringArgumentType.getString(ctx, "id"))))
                             .executes(ctx -> exec(command, ctx.getSource(), "survey", "load")))
                         .executes(ctx -> exec(command, ctx.getSource(), "survey")))
-                    .then(literal("host")
-                        .then(literal("book")
-                            .requires(src -> src.getSender().hasPermission(config.hostPermission()))
-                            .then(literal("map").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "map")))
-                            .then(literal("display").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "display")))
-                            .then(literal("cleanup").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "cleanup")))
-                            .executes(ctx -> exec(command, ctx.getSource(), "host", "book"))))
+	                    .then(literal("host")
+	                        .then(literal("book")
+	                            .requires(src -> src.getSender().hasPermission(config.hostPermission()))
+	                            .then(literal("map").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "map")))
+	                            .then(literal("display")
+	                                .then(wordArg("id")
+	                                    .executes(ctx -> exec(command, ctx.getSource(), "host", "book", "display", StringArgumentType.getString(ctx, "id"))))
+	                                .executes(ctx -> exec(command, ctx.getSource(), "host", "book", "display")))
+	                            .then(literal("cleanup").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "cleanup")))
+	                            .executes(ctx -> exec(command, ctx.getSource(), "host", "book"))))
                     .then(literal("clear")
                         .requires(src -> src.getSender().hasPermission(adminPermission))
                         .then(literal("all")

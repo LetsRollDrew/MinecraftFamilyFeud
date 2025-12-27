@@ -4,6 +4,7 @@ import io.letsrolldrew.feud.display.lookup.EntityLookup;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.World;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -29,9 +30,7 @@ final class DisplayRegistryTest {
         DisplayRegistry registry = new DisplayRegistry(lookup);
         DisplayKey key = new DisplayKey("ns", "group", "id1", "part");
 
-        Entity entity = mock(Entity.class); // mockito fake entity
-        UUID id = UUID.randomUUID();
-        when(entity.getUniqueId()).thenReturn(id);
+        Entity entity = mockEntity();
         lookup.put(entity);
 
         registry.register(key, entity);
@@ -47,9 +46,7 @@ final class DisplayRegistryTest {
         DisplayRegistry registry = new DisplayRegistry(lookup);
         DisplayKey key = new DisplayKey("ns", "group", "id1", "part");
 
-        Entity entity = mock(Entity.class);
-        UUID id = UUID.randomUUID();
-        when(entity.getUniqueId()).thenReturn(id);
+        Entity entity = mockEntity();
         lookup.put(entity);
         registry.register(key, entity);
 
@@ -66,9 +63,7 @@ final class DisplayRegistryTest {
         DisplayRegistry registry = new DisplayRegistry(lookup);
         DisplayKey key = new DisplayKey("ns", "group", "id1", "part");
 
-        Entity entity = mock(Entity.class);
-        UUID id = UUID.randomUUID();
-        when(entity.getUniqueId()).thenReturn(id);
+        Entity entity = mockEntity();
         when(entity.isDead()).thenReturn(true);
         lookup.put(entity);
         registry.register(key, entity);
@@ -84,9 +79,7 @@ final class DisplayRegistryTest {
         DisplayRegistry registry = new DisplayRegistry(lookup);
         DisplayKey key = new DisplayKey("ns", "group", "id1", "part");
 
-        Entity entity = mock(Entity.class);
-        UUID id = UUID.randomUUID();
-        when(entity.getUniqueId()).thenReturn(id);
+        Entity entity = mockEntity();
         lookup.put(entity);
         registry.register(key, entity);
 
@@ -101,15 +94,11 @@ final class DisplayRegistryTest {
         FakeLookup lookup = new FakeLookup();
         DisplayRegistry registry = new DisplayRegistry(lookup);
 
-        Entity first = mock(Entity.class);
-        UUID firstId = UUID.randomUUID();
-        when(first.getUniqueId()).thenReturn(firstId);
+        Entity first = mockEntity();
         lookup.put(first);
         registry.register(new DisplayKey("board", "g1", "id1", "part"), first);
 
-        Entity second = mock(Entity.class);
-        UUID secondId = UUID.randomUUID();
-        when(second.getUniqueId()).thenReturn(secondId);
+        Entity second = mockEntity();
         lookup.put(second);
         registry.register(new DisplayKey("other", "g2", "id2", "part"), second);
 
@@ -127,15 +116,11 @@ final class DisplayRegistryTest {
         FakeLookup lookup = new FakeLookup();
         DisplayRegistry registry = new DisplayRegistry(lookup);
 
-        Entity first = mock(Entity.class);
-        UUID firstId = UUID.randomUUID();
-        when(first.getUniqueId()).thenReturn(firstId);
+        Entity first = mockEntity();
         lookup.put(first);
         registry.register(new DisplayKey("ns", "g1", "id1", "part"), first);
 
-        Entity second = mock(Entity.class);
-        UUID secondId = UUID.randomUUID();
-        when(second.getUniqueId()).thenReturn(secondId);
+        Entity second = mockEntity();
         lookup.put(second);
         registry.register(new DisplayKey("ns", "g2", "id2", "part"), second);
 
@@ -155,12 +140,17 @@ final class DisplayRegistryTest {
         TextDisplay text = mock(TextDisplay.class);
         UUID textId = UUID.randomUUID();
         when(text.getUniqueId()).thenReturn(textId);
+        World world = mock(World.class);
+        UUID worldId = UUID.randomUUID();
+        when(world.getUID()).thenReturn(worldId);
+        when(text.getWorld()).thenReturn(world);
         lookup.put(text);
         registry.register(textKey, text);
 
         ItemDisplay item = mock(ItemDisplay.class);
         UUID itemId = UUID.randomUUID();
         when(item.getUniqueId()).thenReturn(itemId);
+        when(item.getWorld()).thenReturn(world);
         lookup.put(item);
         registry.register(itemKey, item);
 
@@ -189,5 +179,16 @@ final class DisplayRegistryTest {
         void clear() {
             map.clear();
         }
+    }
+
+    private static Entity mockEntity() {
+        Entity entity = mock(Entity.class);
+        UUID id = UUID.randomUUID();
+        when(entity.getUniqueId()).thenReturn(id);
+        World world = mock(World.class);
+        UUID worldId = UUID.randomUUID();
+        when(world.getUID()).thenReturn(worldId);
+        when(entity.getWorld()).thenReturn(world);
+        return entity;
     }
 }
