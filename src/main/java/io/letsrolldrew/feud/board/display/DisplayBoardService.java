@@ -367,14 +367,11 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             if (layout == null || layout.worldId() == null) {
                 continue;
             }
-            World world = Bukkit.getWorld(layout.worldId());
-            if (world == null) {
-                continue;
+            displayRegistry.removeByGroup("board", boardId);
+            BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, layout, displayRegistry);
+            if (instance != null) {
+                dynamicBoards.put(instance.boardId(), instance);
             }
-            Location anchor = new Location(world, layout.anchor().x, layout.anchor().y, layout.anchor().z);
-            List<SlotInstance> slots = buildDynamicSlots(boardId);
-            BoardInstance instance = new BoardInstance(boardId, anchor, layout.facing().yaw(), slots, layout);
-            dynamicBoards.put(instance.boardId(), instance);
         }
     }
 

@@ -125,6 +125,33 @@ public final class DisplayRegistry {
         return removed;
     }
 
+    public int removeByGroup(String namespace, String group) {
+        if (namespace == null || group == null) {
+            return 0;
+        }
+        int removed = 0;
+        var iterator = entries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            DisplayKey key = entry.getKey();
+            if (!namespace.equals(key.namespace()) || !group.equals(key.group())) {
+                continue;
+            }
+            UUID uuid = entry.getValue();
+            if (uuid != null) {
+                Entity entity = entityLookup.get(uuid);
+                if (entity != null) {
+                    entity.remove();
+                }
+            }
+            iterator.remove();
+            worlds.remove(key);
+            removed++;
+        }
+        persist();
+        return removed;
+    }
+
     public int removeAll() {
         int removed = 0;
         for (UUID uuid : entries.values()) {
