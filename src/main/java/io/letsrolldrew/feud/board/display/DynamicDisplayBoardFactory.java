@@ -53,12 +53,26 @@ public final class DynamicDisplayBoardFactory {
                 SlotInstance slot = buildSlot(boardId, slotIndex);
                 slots.add(slot);
                 Location bgLoc = BoardSpace.atCellCenter(anchor, layout.facing(), col, row, layout);
-                Location textLoc = bgLoc.clone();
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, yaw, layout, registry);
-                spawnText(slot.answerKey(), world, textLoc, yaw, layout, registry);
-                // optional points display could be placed with a slight vertical offset
-                Location pointsLoc = textLoc.clone().add(0, -layout.cellHeight() * 0.25, 0);
-                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry);
+
+                // get sizing from cell dimensions
+                double availableWidth = layout.cellWidth();
+                double pointsWidth = availableWidth * 0.25;
+                double answerWidth = availableWidth - pointsWidth;
+                int answerLineWidth = (int) Math.max(48, answerWidth * 22);
+                int pointsLineWidth = (int) Math.max(24, pointsWidth * 22);
+                double textScale = Math.max(0.6, Math.min(4.0, layout.cellHeight() * 0.9));
+
+                int visualRightSign = (layout.facing().rightX() >= 0) ? 1 : -1;
+
+                // positions: answer left, points right in board space
+                double answerShift = -layout.cellWidth() * 0.25 * visualRightSign;
+                double pointsShift = layout.cellWidth() * 0.25 * visualRightSign;
+                Location answerLoc = bgLoc.clone().add(layout.facing().rightX() * answerShift, 0, layout.facing().rightZ() * answerShift);
+                Location pointsLoc = bgLoc.clone().add(layout.facing().rightX() * pointsShift, 0, layout.facing().rightZ() * pointsShift);
+
+                spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, org.bukkit.entity.TextDisplay.TextAlignment.LEFT);
+                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, org.bukkit.entity.TextDisplay.TextAlignment.RIGHT);
                 slotIndex++;
             }
         }
@@ -96,7 +110,17 @@ public final class DynamicDisplayBoardFactory {
         registry.register(key, display);
     }
 
-    private static void spawnText(DisplayKey key, World world, Location loc, float yaw, DynamicBoardLayout layout, DisplayRegistry registry) {
+    private static void spawnText(
+        DisplayKey key,
+        World world,
+        Location loc,
+        float yaw,
+        DynamicBoardLayout layout,
+        DisplayRegistry registry,
+        double textScale,
+        int lineWidth,
+        TextDisplay.TextAlignment alignment
+    ) {
         Location spawnLoc = loc.clone();
         double forwardNudge = layout.forwardOffset() + 0.08;
         spawnLoc.add(layout.facing().forwardX() * forwardNudge, 0, layout.facing().forwardZ() * forwardNudge);
@@ -116,8 +140,17 @@ public final class DynamicDisplayBoardFactory {
             }
             entity.setViewRange(64f);
             entity.text(Component.empty());
-            entity.setAlignment(TextDisplay.TextAlignment.CENTER);
-            entity.setLineWidth((int) Math.max(40, layout.cellWidth() * 14));
+            entity.setAlignment(alignment);
+            entity.setLineWidth(lineWidth);
+            try {
+                entity.setTransformation(new Transformation(
+                    new Vector3f(0, 0, 0),
+                    new AxisAngle4f(0, 0, 0, 0),
+                    new Vector3f((float) textScale, (float) textScale, (float) textScale),
+                    new AxisAngle4f(0, 0, 0, 0)
+                ));
+            } catch (Throwable ignored) {
+            }
         });
         if (display == null) {
             return;
