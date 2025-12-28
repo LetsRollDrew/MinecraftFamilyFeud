@@ -84,8 +84,8 @@ public final class DynamicDisplayBoardFactory {
                 double textScale = Math.max(0.6, Math.min(4.0, layout.cellHeight() * 0.9));
 
                 // positions: answer left, points right in board space
-                double answerShift = layout.cellWidth() * 0.25;
-                double pointsShift = -layout.cellWidth() * 0.25;
+                double answerShift = layout.cellWidth() * 0.25; // move answer left, issue might be negative later
+                double pointsShift = -layout.cellWidth() * 0.25; // move poitns right, issue ^
                 Location answerLoc = bgLoc.clone().add(layout.facing().rightX() * answerShift, 0, layout.facing().rightZ() * -answerShift);
                 Location pointsLoc = bgLoc.clone().add(layout.facing().rightX() * pointsShift, 0, layout.facing().rightZ() * -pointsShift);
 
