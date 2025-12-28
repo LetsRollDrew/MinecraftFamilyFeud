@@ -84,10 +84,10 @@ public final class DynamicDisplayBoardFactory {
                 double textScale = Math.max(0.6, Math.min(4.0, layout.cellHeight() * 0.9));
 
                 // positions: answer left, points right in board space
-                double answerShift = -layout.cellWidth() * 0.25;
-                double pointsShift = layout.cellWidth() * 0.25;
-                Location answerLoc = bgLoc.clone().add(layout.facing().rightX() * answerShift, 0, layout.facing().rightZ() * answerShift);
-                Location pointsLoc = bgLoc.clone().add(layout.facing().rightX() * pointsShift, 0, layout.facing().rightZ() * pointsShift);
+                double answerShift = layout.cellWidth() * 0.25;
+                double pointsShift = -layout.cellWidth() * 0.25;
+                Location answerLoc = bgLoc.clone().add(layout.facing().rightX() * answerShift, 0, layout.facing().rightZ() * -answerShift);
+                Location pointsLoc = bgLoc.clone().add(layout.facing().rightX() * pointsShift, 0, layout.facing().rightZ() * -pointsShift);
 
                 spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, TextDisplay.TextAlignment.LEFT);
                 spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, TextDisplay.TextAlignment.RIGHT);
