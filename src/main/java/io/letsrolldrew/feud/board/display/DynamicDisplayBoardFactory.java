@@ -3,8 +3,8 @@ package io.letsrolldrew.feud.board.display;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -46,12 +46,32 @@ public final class DynamicDisplayBoardFactory {
 
         ItemStack hiddenStack = stackWithCmd(CMD_HIDDEN);
 
-        List<SlotInstance> slots = new ArrayList<>();
-        int slotIndex = 0;
-        for (int row = 0; row < 4; row++) {
-            for (int col = 0; col < 2; col++) {
+        // slot list needs to be in numeric order
+        List<SlotInstance> slots = new ArrayList<>(Collections.nCopies(8, null));
+
+        // find the world positions of the two columns
+        Location col0Center = BoardSpace.atCellCenter(anchor, layout.facing(), 0, 0, layout);
+        Location col1Center = BoardSpace.atCellCenter(anchor, layout.facing(), 1, 0, layout);
+
+        // compute the direction from col0 to col1
+        double dx = col1Center.getX() - col0Center.getX();
+        double dz = col1Center.getZ() - col0Center.getZ();
+
+        // how much that direction is aligned with board-right
+        double dot = (dx * layout.facing().rightX()) + (dz * layout.facing().rightZ());
+
+        // flip=true meeans physical col 0 gets slots 5–8 and physical col 1 gets slots 1–4
+        // flags that the columns instead of 0 1 are morel like 1 0
+        boolean flip = dot > 0;
+
+        // column based
+        for (int col = 0; col < 2; col++) {
+            for (int row = 0; row < 4; row++) {
+                int slotCol = flip ? 1 - col : col;
+                int slotIndex = (slotCol * 4) + row;
+
                 SlotInstance slot = buildSlot(boardId, slotIndex);
-                slots.add(slot);
+                slots.set(slotIndex, slot);
                 Location bgLoc = BoardSpace.atCellCenter(anchor, layout.facing(), col, row, layout);
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, yaw, layout, registry);
 
@@ -63,21 +83,22 @@ public final class DynamicDisplayBoardFactory {
                 int pointsLineWidth = (int) Math.max(24, pointsWidth * 22);
                 double textScale = Math.max(0.6, Math.min(4.0, layout.cellHeight() * 0.9));
 
-                int visualRightSign = (layout.facing().rightX() >= 0) ? 1 : -1;
-
                 // positions: answer left, points right in board space
-                double answerShift = -layout.cellWidth() * 0.25 * visualRightSign;
-                double pointsShift = layout.cellWidth() * 0.25 * visualRightSign;
+                double answerShift = -layout.cellWidth() * 0.25;
+                double pointsShift = layout.cellWidth() * 0.25;
                 Location answerLoc = bgLoc.clone().add(layout.facing().rightX() * answerShift, 0, layout.facing().rightZ() * answerShift);
                 Location pointsLoc = bgLoc.clone().add(layout.facing().rightX() * pointsShift, 0, layout.facing().rightZ() * pointsShift);
 
-                spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, org.bukkit.entity.TextDisplay.TextAlignment.LEFT);
-                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, org.bukkit.entity.TextDisplay.TextAlignment.RIGHT);
-                slotIndex++;
+                spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, TextDisplay.TextAlignment.LEFT);
+                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, TextDisplay.TextAlignment.RIGHT);
             }
         }
 
-        return new BoardInstance(boardId, anchor, yaw, slots);
+        if (slots.contains(null)) {
+            Bukkit.getLogger().warning("[feud] dynamic board " + boardId + " has unassigned slots");
+        }
+
+        return new BoardInstance(boardId, anchor, yaw, List.copyOf(slots));
     }
 
     private static SlotInstance buildSlot(String boardId, int slotIndex) {
@@ -88,7 +109,15 @@ public final class DynamicDisplayBoardFactory {
         return new SlotInstance(bgKey, ansKey, ptsKey);
     }
 
-    private static void spawnBackground(DisplayKey key, World world, Location loc, ItemStack stack, float yaw, DynamicBoardLayout layout, DisplayRegistry registry) {
+    private static void spawnBackground(
+        DisplayKey key,
+        World world,
+        Location loc,
+        ItemStack stack,
+        float yaw,
+        DynamicBoardLayout layout,
+        DisplayRegistry registry
+        ) {
         ItemDisplay display = world.spawn(loc, ItemDisplay.class, entity -> {
             entity.setItemStack(stack);
             entity.setBillboard(Display.Billboard.FIXED);
