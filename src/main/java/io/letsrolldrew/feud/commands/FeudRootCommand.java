@@ -1,12 +1,21 @@
 package io.letsrolldrew.feud.commands;
 
-import io.letsrolldrew.feud.board.BoardBindingStore;
+import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.ui.HostBookUiBuilder;
+import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
+import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
-import io.letsrolldrew.feud.board.render.BoardRenderer;
+import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.render.MapIdStore;
-import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
+import io.letsrolldrew.feud.board.render.BoardRenderer;
+import io.letsrolldrew.feud.board.render.SlotRevealPainter;
+import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.commands.SurveyCommands;
+import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.commands.handlers.BoardHandler;
 import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
 import io.letsrolldrew.feud.commands.handlers.HelpHandler;
@@ -17,27 +26,22 @@ import io.letsrolldrew.feud.commands.handlers.UiHandler;
 import io.letsrolldrew.feud.commands.handlers.VersionHandler;
 import io.letsrolldrew.feud.commands.tree.CommandNode;
 import io.letsrolldrew.feud.commands.tree.CommandTree;
-import io.letsrolldrew.feud.display.DisplayRegistry;
-import io.letsrolldrew.feud.display.DisplayTags;
-import io.letsrolldrew.feud.effects.holo.HologramCommands;
-import io.letsrolldrew.feud.game.GameController;
-import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.BookFactory;
-import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
-import io.letsrolldrew.feud.ui.HostBookUiBuilder;
-import io.letsrolldrew.feud.ui.HostRemoteService;
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.Material;
+import org.bukkit.plugin.Plugin;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.plugin.Plugin;
 
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
@@ -64,26 +68,27 @@ public final class FeudRootCommand implements CommandExecutor {
     private final CommandTree commandTree;
 
     public FeudRootCommand(
-            Plugin plugin,
-            SurveyRepository surveyRepository,
-            HostBookUiBuilder hostBookUiBuilder,
-            HostBookUiBuilder displayHostBookUiBuilder,
-            HostRemoteService hostRemoteService,
-            String hostPermission,
-            String adminPermission,
-            GameController gameController,
-            BoardWandService boardWandService,
-            BoardBindingStore boardBindingStore,
-            MapIdStore mapIdStore,
-            TileFramebufferStore framebufferStore,
-            BoardRenderer boardRenderer,
-            SlotRevealPainter slotRevealPainter,
-            HologramCommands hologramCommands,
-            DisplayBoardCommands boardCommands,
-            io.letsrolldrew.feud.effects.holo.HologramService hologramService,
-            io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
-            SurveyCommands surveyCommands,
-            DisplayRegistry displayRegistry) {
+        Plugin plugin,
+        SurveyRepository surveyRepository,
+        HostBookUiBuilder hostBookUiBuilder,
+        HostBookUiBuilder displayHostBookUiBuilder,
+        HostRemoteService hostRemoteService,
+        String hostPermission,
+        String adminPermission,
+        GameController gameController,
+        BoardWandService boardWandService,
+        BoardBindingStore boardBindingStore,
+        MapIdStore mapIdStore,
+        TileFramebufferStore framebufferStore,
+        BoardRenderer boardRenderer,
+        SlotRevealPainter slotRevealPainter,
+        HologramCommands hologramCommands,
+        DisplayBoardCommands boardCommands,
+        io.letsrolldrew.feud.effects.holo.HologramService hologramService,
+        io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
+        SurveyCommands surveyCommands,
+        DisplayRegistry displayRegistry
+    ) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.hostBookUiBuilder = hostBookUiBuilder;
@@ -104,8 +109,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.displayBoardPresenter = displayBoardPresenter;
         this.surveyCommands = surveyCommands;
         this.displayRegistry = displayRegistry;
-        this.uiCommand = new UiCommand(
-                gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
+        this.uiCommand = new UiCommand(gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
         this.commandTree = buildCommandTree();
     }
 
@@ -185,8 +189,7 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
         boardWandService.giveWand(player);
-        sender.sendMessage(
-                "Board wand given. Right-click the top-left frame, then right-click the bottom-right frame.");
+        sender.sendMessage("Board wand given. Right-click the top-left frame, then right-click the bottom-right frame.");
         return true;
     }
 
@@ -213,36 +216,37 @@ public final class FeudRootCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean handleHostBook(CommandSender sender, String flavor) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the host book.");
-            return true;
-        }
-        if (!player.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to use this.");
-            return true;
-        }
-        String raw = flavor == null ? "" : flavor.trim();
-        String head = raw.isBlank() ? "" : raw.split("\\s+", 2)[0].toLowerCase();
-        String tail = raw.isBlank() ? "" : raw.replaceFirst("^\\S+\\s*", "");
-        switch (head) {
-            case "map" -> giveMapBook(player);
-            case "display" -> giveDisplayBook(player, tail);
-            case "cleanup" -> giveCleanupBook(player);
-            default -> giveSelectorBook(player);
-        }
-        return true;
-    }
+	    private boolean handleHostBook(CommandSender sender, String flavor) {
+	        if (!(sender instanceof Player player)) {
+	            sender.sendMessage("Only players can receive the host book.");
+	            return true;
+	        }
+	        if (!player.hasPermission(hostPermission)) {
+	            sender.sendMessage("You must be the host to use this.");
+	            return true;
+	        }
+	        String raw = flavor == null ? "" : flavor.trim();
+	        String head = raw.isBlank() ? "" : raw.split("\\s+", 2)[0].toLowerCase();
+	        String tail = raw.isBlank() ? "" : raw.replaceFirst("^\\S+\\s*", "");
+	        switch (head) {
+	            case "map" -> giveMapBook(player);
+	            case "display" -> giveDisplayBook(player, tail);
+	            case "cleanup" -> giveCleanupBook(player);
+	            default -> giveSelectorBook(player);
+	        }
+	        return true;
+	    }
 
     private void giveOrReplaceHostBook(Player player) {
         var fresh = hostBookUiBuilder.createBook(
-                gameController.slotHoverTexts(),
-                gameController.getActiveSurvey(),
-                gameController.revealedSlots(),
-                gameController.strikeCount(),
-                gameController.maxStrikes(),
-                gameController.roundPoints(),
-                gameController.controllingTeam());
+            gameController.slotHoverTexts(),
+            gameController.getActiveSurvey(),
+            gameController.revealedSlots(),
+            gameController.strikeCount(),
+            gameController.maxStrikes(),
+            gameController.roundPoints(),
+            gameController.controllingTeam()
+        );
         hostRemoteService.giveOrReplace(player, fresh);
     }
 
@@ -261,23 +265,26 @@ public final class FeudRootCommand implements CommandExecutor {
             meta.setAuthor("FamilyFeud");
         }
         Component page1 = Component.text()
-                .append(button("Board Create (demo)", "/feud board create demo"))
-                .append(Component.newline())
-                .append(button("Board Destroy (demo)", "/feud board destroy demo"))
-                .append(Component.newline())
-                .append(button("Board Wand", "/feud board wand"))
-                .append(Component.newline())
-                .append(button("Board InitMaps", "/feud board initmaps"))
-                .build();
+            .append(button("Board Create (demo)", "/feud board create demo"))
+            .append(Component.newline())
+            .append(button("Board Destroy (demo)", "/feud board destroy demo"))
+            .append(Component.newline())
+            .append(button("Board Wand", "/feud board wand"))
+            .append(Component.newline())
+            .append(button("Board InitMaps", "/feud board initmaps"))
+            .build();
         Component page2 = Component.text()
-                .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
-                .append(Component.newline())
-                .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
-                .append(Component.newline())
-                .append(button("Clear Displays", "/feud clear all"))
-                .build();
+            .append(button("Holo Text Spawn", "/feud holo text spawn demo &fHELLO"))
+            .append(Component.newline())
+            .append(button("Holo Item Spawn", "/feud holo item spawn demo 9001"))
+            .append(Component.newline())
+            .append(button("Clear Displays", "/feud clear all"))
+            .build();
         Book adventureBook = BookFactory.create(
-                Component.text("Cleanup Remote"), Component.text("FamilyFeud"), java.util.List.of(page1, page2));
+            Component.text("Cleanup Remote"),
+            Component.text("FamilyFeud"),
+            java.util.List.of(page1, page2)
+        );
         meta.pages(adventureBook.pages());
         if (hostBookUiBuilder != null) {
             io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
@@ -293,13 +300,14 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private Component button(String label, String command) {
-        return Component.text(label, NamedTextColor.GOLD).clickEvent(ClickEvent.runCommand(command));
+        return Component.text(label, NamedTextColor.GOLD)
+            .clickEvent(ClickEvent.runCommand(command));
     }
 
     private Component buttonUnderlined(String label, String command) {
         return Component.text(label, NamedTextColor.GOLD)
-                .decorate(net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.runCommand(command));
+            .decorate(net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+            .clickEvent(ClickEvent.runCommand(command));
     }
 
     private boolean handleClearAll(CommandSender sender) {
@@ -334,19 +342,19 @@ public final class FeudRootCommand implements CommandExecutor {
         meta.setTitle("Remote Selector");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
-                .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
-                .append(Component.newline())
-                .append(Component.newline())
-                .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
-                .append(Component.newline())
-                .append(Component.newline())
-                .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
-                .append(Component.newline())
-                .append(Component.newline())
-                .append(buttonUnderlined("Cleanup Remote", "/feud host book cleanup"))
-                .build();
+            .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Cleanup Remote", "/feud host book cleanup"))
+            .build();
         Book adventureBook = BookFactory.create(
-                Component.text("Host Remote"), Component.text("FamilyFeud"), java.util.List.of(page));
+            Component.text("Host Remote"),
+            Component.text("FamilyFeud"),
+            java.util.List.of(page)
+        );
         meta.pages(adventureBook.pages());
         if (hostBookUiBuilder != null) {
             io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
@@ -358,13 +366,14 @@ public final class FeudRootCommand implements CommandExecutor {
 
     private void giveMapBook(Player player) {
         var fresh = hostBookUiBuilder.createBook(
-                gameController.slotHoverTexts(),
-                gameController.getActiveSurvey(),
-                gameController.revealedSlots(),
-                gameController.strikeCount(),
-                gameController.maxStrikes(),
-                gameController.roundPoints(),
-                gameController.controllingTeam());
+            gameController.slotHoverTexts(),
+            gameController.getActiveSurvey(),
+            gameController.revealedSlots(),
+            gameController.strikeCount(),
+            gameController.maxStrikes(),
+            gameController.roundPoints(),
+            gameController.controllingTeam()
+        );
         if (fresh.getItemMeta() instanceof BookMeta meta) {
             meta.lore(java.util.List.of(Component.text("Map Based", NamedTextColor.GRAY)));
             try {
@@ -380,11 +389,11 @@ public final class FeudRootCommand implements CommandExecutor {
         player.sendMessage("Map board remote given.");
     }
 
-    private void giveDisplayBook(Player player) {
-        giveDisplayBook(player, "");
-    }
+	    private void giveDisplayBook(Player player) {
+	        giveDisplayBook(player, "");
+	    }
 
-    private void giveDisplayBook(Player player, String boardId) {
+	    private void giveDisplayBook(Player player, String boardId) {
         java.util.List<String> ids = new java.util.ArrayList<>(displayBoardPresenter.listBoards());
         java.util.Collections.sort(ids);
 
@@ -394,10 +403,15 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         ItemStack fresh = DisplayHostRemoteBookBuilder.create(
-                target, ids, surveyRepository, hostBookUiBuilder.getHostKey(), gameController);
+            target,
+            ids,
+            surveyRepository,
+            hostBookUiBuilder.getHostKey(),
+            gameController
+        );
         hostRemoteService.giveOrReplace(player, fresh);
         player.sendMessage(ids.isEmpty() ? "Display remote (no boards yet)" : "Display remote: " + target);
-    }
+	    }
 
     private static String[] tail(String[] args, int start) {
         if (start >= args.length) {
@@ -422,8 +436,7 @@ public final class FeudRootCommand implements CommandExecutor {
         });
         var boardHandler = new BoardHandler((ctx, remaining) -> handleBoard(ctx.sender(), prepend("board", remaining)));
         var surveyHandler = new SurveyHandler((ctx, remaining) -> surveyCommands.handle(ctx.sender(), remaining));
-        var hostHandler = new HostHandler(
-                (ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
+        var hostHandler = new HostHandler((ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
 
         CommandNode root = new CommandNode("root", null, false, versionHandler);
 

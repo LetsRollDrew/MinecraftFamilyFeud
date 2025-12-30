@@ -1,5 +1,17 @@
 package io.letsrolldrew.feud.display;
 
+import io.letsrolldrew.feud.display.lookup.EntityLookup;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.TextDisplay;
+import org.bukkit.World;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -7,17 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import io.letsrolldrew.feud.display.lookup.EntityLookup;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import org.bukkit.World;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.TextDisplay;
-import org.junit.jupiter.api.Test;
 
 // uses a fake lookup + Mockito entities to avoid Bukkit.getEntity in unit tests
 // while still covering register/resolve/remove logic

@@ -18,8 +18,7 @@ public final class BoardInstance {
         this.dynamicLayout = null;
     }
 
-    public BoardInstance(
-            String boardId, Location anchor, float yaw, List<SlotInstance> slots, DynamicBoardLayout dynamicLayout) {
+    public BoardInstance(String boardId, Location anchor, float yaw, List<SlotInstance> slots, DynamicBoardLayout dynamicLayout) {
         this.boardId = boardId;
         this.anchor = anchor;
         this.yaw = yaw;

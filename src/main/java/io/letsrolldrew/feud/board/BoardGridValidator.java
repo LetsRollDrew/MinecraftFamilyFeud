@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.board;
 
 import io.letsrolldrew.feud.board.layout.TilePos;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +11,8 @@ public final class BoardGridValidator {
     public static final int WIDTH = 10;
     public static final int HEIGHT = 6;
 
-    private BoardGridValidator() {}
+    private BoardGridValidator() {
+    }
 
     public static Map<TilePos, FrameLocation> validate(BoardBinding binding, Collection<FrameLocation> frames) {
         if (binding == null) {
@@ -44,12 +46,10 @@ public final class BoardGridValidator {
         }
 
         // validate plane (the non-width axis stays constant)
-        if (binding.widthAxis() == HorizontalAxis.X
-                && frame.z() != binding.origin().getBlockZ()) {
+        if (binding.widthAxis() == HorizontalAxis.X && frame.z() != binding.origin().getBlockZ()) {
             return null;
         }
-        if (binding.widthAxis() == HorizontalAxis.Z
-                && frame.x() != binding.origin().getBlockX()) {
+        if (binding.widthAxis() == HorizontalAxis.Z && frame.x() != binding.origin().getBlockX()) {
             return null;
         }
 

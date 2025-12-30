@@ -1,12 +1,13 @@
 package io.letsrolldrew.feud.commands.tree;
 
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 public final class CommandNode {
     private final String literal;

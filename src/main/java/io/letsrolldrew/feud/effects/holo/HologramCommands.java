@@ -1,13 +1,14 @@
 package io.letsrolldrew.feud.effects.holo;
 
-import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-// Handles /feud holo subcommands
+import java.util.Map;
+
+//Handles /feud holo subcommands
 public final class HologramCommands {
     private final HologramService service;
     private final String adminPermission = "familyfeud.admin";

@@ -1,6 +1,6 @@
 package io.letsrolldrew.feud.board.render;
 
-// 128x128 palette index buffer for a single map tile
+//128x128 palette index buffer for a single map tile
 public final class TileBuffer {
     public static final int SIZE = 128;
     private static final int TOTAL = SIZE * SIZE;

@@ -3,9 +3,10 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.util.Validation;
-import java.util.function.Consumer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.function.Consumer;
 
 public final class UiCommand {
     private final GameController controller;
@@ -13,11 +14,7 @@ public final class UiCommand {
     private final Consumer<Player> bookRefresher;
     private final Consumer<Integer> revealCallback;
 
-    public UiCommand(
-            GameController controller,
-            String hostPermission,
-            Consumer<Player> bookRefresher,
-            Consumer<Integer> revealCallback) {
+    public UiCommand(GameController controller, String hostPermission, Consumer<Player> bookRefresher, Consumer<Integer> revealCallback) {
         this.controller = controller;
         this.hostPermission = Validation.requireNonBlank(hostPermission, "host-permission");
         this.bookRefresher = bookRefresher;
@@ -127,8 +124,7 @@ public final class UiCommand {
         }
         int before = controller.roundPoints();
         controller.awardRoundPoints();
-        sender.sendMessage("Awarded " + before + " points to "
-                + controller.controllingTeam().name() + ".");
+        sender.sendMessage("Awarded " + before + " points to " + controller.controllingTeam().name() + ".");
         refreshIfPlayer(sender);
     }
 

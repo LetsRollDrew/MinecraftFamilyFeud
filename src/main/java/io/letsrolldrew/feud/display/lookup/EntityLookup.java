@@ -1,7 +1,8 @@
 package io.letsrolldrew.feud.display.lookup;
 
-import java.util.UUID;
 import org.bukkit.entity.Entity;
+
+import java.util.UUID;
 
 public interface EntityLookup {
     Entity get(UUID id);

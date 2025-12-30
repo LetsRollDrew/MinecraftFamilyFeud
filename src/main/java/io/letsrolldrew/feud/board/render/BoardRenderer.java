@@ -2,10 +2,11 @@ package io.letsrolldrew.feud.board.render;
 
 import io.letsrolldrew.feud.board.layout.BoardLayout10x6;
 import io.letsrolldrew.feud.board.layout.TilePos;
+
 import java.awt.Color;
 
-// Paints a simple base (border + interior fill) into tile framebuffers
-// Tiles should still be mutable from here so other renderers can update them for game flow
+//Paints a simple base (border + interior fill) into tile framebuffers
+//Tiles should still be mutable from here so other renderers can update them for game flow
 // TODO: When artists are done with the map art, add a way to load them from a directory
 public final class BoardRenderer {
     private final TileFramebufferStore store;

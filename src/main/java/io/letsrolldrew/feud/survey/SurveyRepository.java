@@ -1,16 +1,17 @@
 package io.letsrolldrew.feud.survey;
 
 import io.letsrolldrew.feud.util.Validation;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 
 public final class SurveyRepository {
     private final Map<String, Survey> surveysById;
@@ -60,8 +61,8 @@ public final class SurveyRepository {
             String text = Validation.requireNonBlank(asString(raw.get("text")), "answer.text");
             int points = Validation.requirePositive(asInt(raw.get("points")), "answer.points");
             List<String> aliases = raw.get("aliases") instanceof List<?> list
-                    ? list.stream().map(Object::toString).toList()
-                    : List.of();
+                ? list.stream().map(Object::toString).toList()
+                : List.of();
 
             if (!answerTexts.add(text.toLowerCase())) {
                 throw new IllegalArgumentException("Duplicate answer text in survey " + id + ": " + text);

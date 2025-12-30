@@ -3,11 +3,6 @@ package io.letsrolldrew.feud.effects.holo;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -25,6 +20,12 @@ import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 public final class HologramService {
     private static final String NAMESPACE = "holo";
@@ -73,10 +74,11 @@ public final class HologramService {
             }
             try {
                 entity.setTransformation(new Transformation(
-                        new Vector3f(0, 0, 0),
-                        new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f(0.6f, 0.6f, 0.6f),
-                        new AxisAngle4f(0, 0, 0, 0)));
+                    new Vector3f(0, 0, 0),
+                    new AxisAngle4f(0, 0, 0, 0),
+                    new Vector3f(0.6f, 0.6f, 0.6f),
+                    new AxisAngle4f(0, 0, 0, 0)
+                ));
             } catch (Throwable ignored) {
             }
         });
@@ -138,10 +140,11 @@ public final class HologramService {
             entity.setBillboard(Display.Billboard.VERTICAL);
             try {
                 entity.setTransformation(new Transformation(
-                        new Vector3f(0, 0, 0),
-                        new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f(2.0f, 2.0f, 2.0f),
-                        new AxisAngle4f(0, 0, 0, 0)));
+                    new Vector3f(0, 0, 0),
+                    new AxisAngle4f(0, 0, 0, 0),
+                    new Vector3f(2.0f, 2.0f, 2.0f),
+                    new AxisAngle4f(0, 0, 0, 0)
+                ));
             } catch (Throwable ignored) {
             }
         });
@@ -181,11 +184,13 @@ public final class HologramService {
     }
 
     private Optional<TextDisplay> resolveText(String id) {
-        return resolveEntry(id, HologramType.TEXT_DISPLAY).flatMap(entry -> displayRegistry.resolveText(entry.key()));
+        return resolveEntry(id, HologramType.TEXT_DISPLAY)
+            .flatMap(entry -> displayRegistry.resolveText(entry.key()));
     }
 
     private Optional<ItemDisplay> resolveItem(String id) {
-        return resolveEntry(id, HologramType.ITEM_DISPLAY).flatMap(entry -> displayRegistry.resolveItem(entry.key()));
+        return resolveEntry(id, HologramType.ITEM_DISPLAY)
+            .flatMap(entry -> displayRegistry.resolveItem(entry.key()));
     }
 
     private Optional<HologramEntry> resolveEntry(String id, HologramType expectedType) {
@@ -208,8 +213,7 @@ public final class HologramService {
             DisplayKey key = type == HologramType.ITEM_DISPLAY ? itemKey(id) : textKey(id);
             hologramsById.put(id, new HologramEntry(key, type));
 
-            Entity entity =
-                    resolveEntity(entry.getValue().worldId(), entry.getValue().entityId());
+            Entity entity = resolveEntity(entry.getValue().worldId(), entry.getValue().entityId());
             if (type == HologramType.TEXT_DISPLAY && entity instanceof TextDisplay) {
                 displayRegistry.register(key, entity);
             } else if (type == HologramType.ITEM_DISPLAY && entity instanceof ItemDisplay) {
@@ -244,5 +248,6 @@ public final class HologramService {
         return component.font(Key.key("feud", "feud"));
     }
 
-    public static record HologramEntry(DisplayKey key, HologramType type) {}
+    public static record HologramEntry(DisplayKey key, HologramType type) {
+    }
 }

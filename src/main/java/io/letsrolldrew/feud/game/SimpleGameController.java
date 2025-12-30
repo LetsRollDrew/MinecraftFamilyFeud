@@ -1,15 +1,16 @@
 package io.letsrolldrew.feud.game;
 
-import io.letsrolldrew.feud.survey.AnswerOption;
-import io.letsrolldrew.feud.survey.Survey;
-import io.letsrolldrew.feud.util.Validation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-// Minimal controller to support host actions for now
+import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.survey.Survey;
+import io.letsrolldrew.feud.util.Validation;
+
+//Minimal controller to support host actions for now
 
 public final class SimpleGameController implements GameController {
     private final int maxStrikes;
@@ -29,9 +30,7 @@ public final class SimpleGameController implements GameController {
     public void revealSlot(int slotIndex) {
         Validation.requireInRange(slotIndex, 1, 8, "slotIndex");
         boolean added = revealedSlots.add(slotIndex);
-        if (added
-                && activeSurvey != null
-                && slotIndex - 1 < activeSurvey.answers().size()) {
+        if (added && activeSurvey != null && slotIndex - 1 < activeSurvey.answers().size()) {
             AnswerOption option = activeSurvey.answers().get(slotIndex - 1);
             roundPoints += option.points();
         }

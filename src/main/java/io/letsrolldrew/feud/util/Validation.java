@@ -1,10 +1,12 @@
 package io.letsrolldrew.feud.util;
 
-// Small utility helpers used when parsing config/survey yaml files
+//Small utility helpers used when parsing config/survey yaml files
 public final class Validation {
-    private Validation() {}
+    private Validation() {
+    }
 
-    // Check if a string is present, trim and throws if blank/null.
+
+    //Check if a string is present, trim and throws if blank/null.
 
     public static String requireNonBlank(String value, String field) {
         if (value == null || value.trim().isEmpty()) {
@@ -23,7 +25,8 @@ public final class Validation {
     public static int requireInRange(int value, int minInclusive, int maxInclusive, String field) {
         if (value < minInclusive || value > maxInclusive) {
             throw new IllegalArgumentException(
-                    field + " must be between " + minInclusive + " and " + maxInclusive + " (got " + value + ")");
+                field + " must be between " + minInclusive + " and " + maxInclusive + " (got " + value + ")"
+            );
         }
         return value;
     }

@@ -1,14 +1,15 @@
 package io.letsrolldrew.feud.effects.anim;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import io.letsrolldrew.feud.display.DisplayKey;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class AnimationServiceTest {
 
@@ -21,7 +22,9 @@ final class AnimationServiceTest {
         AtomicBoolean firstCalled = new AtomicBoolean(false);
         AtomicBoolean secondCalled = new AtomicBoolean(false);
         List<AnimationStep> steps = List.of(
-                new AnimationStep(1, () -> firstCalled.set(true)), new AnimationStep(2, () -> secondCalled.set(true)));
+            new AnimationStep(1, () -> firstCalled.set(true)),
+            new AnimationStep(2, () -> secondCalled.set(true))
+        );
 
         service.schedule(key, steps);
 

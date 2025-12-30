@@ -1,11 +1,12 @@
 package io.letsrolldrew.feud.effects.holo;
 
+import org.bukkit.configuration.file.YamlConfiguration;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 // persist holo ids so /feud holo list/remove works after restart
 final class HologramStore {
@@ -91,5 +92,6 @@ final class HologramStore {
         }
     }
 
-    record StoredHologram(HologramType type, UUID worldId, UUID entityId) {}
+    record StoredHologram(HologramType type, UUID worldId, UUID entityId) {
+    }
 }

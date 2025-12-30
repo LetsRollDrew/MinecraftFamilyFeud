@@ -10,8 +10,8 @@ import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
-import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 
 public final class DisplayBoardCommands {
@@ -26,15 +26,16 @@ public final class DisplayBoardCommands {
     private final NamespacedKey hostKey;
 
     public DisplayBoardCommands(
-            DisplayBoardPresenter presenter,
-            String adminPermission,
-            DisplayBoardSelectionListener selectionListener,
-            DisplayBoardSelectionStore selectionStore,
-            GameController controller,
-            String hostPermission,
-            HostRemoteService hostRemoteService,
-            SurveyRepository surveyRepository,
-            NamespacedKey hostKey) {
+        DisplayBoardPresenter presenter,
+        String adminPermission,
+        DisplayBoardSelectionListener selectionListener,
+        DisplayBoardSelectionStore selectionStore,
+        GameController controller,
+        String hostPermission,
+        HostRemoteService hostRemoteService,
+        SurveyRepository surveyRepository,
+        NamespacedKey hostKey
+    ) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
@@ -190,8 +191,7 @@ public final class DisplayBoardCommands {
         java.util.List<String> ids = new java.util.ArrayList<>(presenter.listBoards());
         java.util.Collections.sort(ids);
         String target = (boardId == null || boardId.isBlank()) && !ids.isEmpty() ? ids.get(0) : boardId;
-        hostRemoteService.giveOrReplace(
-                player, DisplayHostRemoteBookBuilder.create(target, ids, surveyRepository, hostKey, controller));
+        hostRemoteService.giveOrReplace(player, DisplayHostRemoteBookBuilder.create(target, ids, surveyRepository, hostKey, controller));
     }
 
     private void handleCreate(CommandSender sender, String[] args) {

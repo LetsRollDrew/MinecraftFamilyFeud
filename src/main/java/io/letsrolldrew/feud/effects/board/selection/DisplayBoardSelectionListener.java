@@ -39,8 +39,7 @@ public final class DisplayBoardSelectionListener implements Listener {
         ItemStack wand = new ItemStack(Material.STICK);
         ItemMeta meta = wand.getItemMeta();
         if (meta != null) {
-            meta.displayName(net.kyori.adventure.text.Component.text(
-                    "Display Board Selector", net.kyori.adventure.text.format.NamedTextColor.AQUA));
+            meta.displayName(net.kyori.adventure.text.Component.text("Display Board Selector", net.kyori.adventure.text.format.NamedTextColor.AQUA));
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(wandKey, PersistentDataType.INTEGER, 1);
             wand.setItemMeta(meta);
@@ -75,9 +74,10 @@ public final class DisplayBoardSelectionListener implements Listener {
 
         UUID worldId = event.getClickedBlock().getWorld().getUID();
         Vector3d corner = new Vector3d(
-                event.getClickedBlock().getX(),
-                event.getClickedBlock().getY(),
-                event.getClickedBlock().getZ());
+            event.getClickedBlock().getX(),
+            event.getClickedBlock().getY(),
+            event.getClickedBlock().getZ()
+        );
         Vector3d normal = new Vector3d(face.getModX(), face.getModY(), face.getModZ());
 
         Partial first = partials.get(player.getUniqueId());
@@ -110,7 +110,13 @@ public final class DisplayBoardSelectionListener implements Listener {
             return;
         }
 
-        DisplayBoardSelection selection = new DisplayBoardSelection(worldId, first.corner, corner, facing, normal);
+        DisplayBoardSelection selection = new DisplayBoardSelection(
+            worldId,
+            first.corner,
+            corner,
+            facing,
+            normal
+        );
         if (selection.isInvalid()) {
             player.sendMessage("Selection failed: " + selection.invalidReason());
             partials.remove(player.getUniqueId());
@@ -122,8 +128,7 @@ public final class DisplayBoardSelectionListener implements Listener {
 
         double width = Math.abs(first.corner.x - corner.x) + 1;
         double height = Math.abs(first.corner.y - corner.y) + 1;
-        player.sendMessage(
-                "Display selection saved: width=" + width + " height=" + height + " facing=" + facing.name());
+        player.sendMessage("Display selection saved: width=" + width + " height=" + height + " facing=" + facing.name());
     }
 
     private boolean isHoldingWand(Player player) {
@@ -149,5 +154,6 @@ public final class DisplayBoardSelectionListener implements Listener {
         };
     }
 
-    private record Partial(UUID worldId, Vector3d corner, BoardFacing facing, Vector3d normal) {}
+    private record Partial(UUID worldId, Vector3d corner, BoardFacing facing, Vector3d normal) {
+    }
 }

@@ -10,10 +10,14 @@ import org.junit.jupiter.api.Test;
 
 final class DisplayBoardSelectionStoreTest {
 
-    private static DisplayBoardSelection selection(
-            UUID world, double ax, double ay, double az, double bx, double by, double bz) {
+    private static DisplayBoardSelection selection(UUID world, double ax, double ay, double az, double bx, double by, double bz) {
         return new DisplayBoardSelection(
-                world, new Vector3d(ax, ay, az), new Vector3d(bx, by, bz), BoardFacing.NORTH, new Vector3d(0, 0, -1));
+            world,
+            new Vector3d(ax, ay, az),
+            new Vector3d(bx, by, bz),
+            BoardFacing.NORTH,
+            new Vector3d(0, 0, -1)
+        );
     }
 
     @Test

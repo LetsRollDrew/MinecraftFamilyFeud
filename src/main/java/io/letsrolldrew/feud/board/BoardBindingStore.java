@@ -1,15 +1,16 @@
 package io.letsrolldrew.feud.board;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
-// Persists a single board binding to a YAML file
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
+//Persists a single board binding to a YAML file
 public final class BoardBindingStore {
     private final Plugin plugin;
     private final File file;
@@ -31,13 +32,8 @@ public final class BoardBindingStore {
         Integer originX = getInt(cfg, "origin.x");
         Integer originY = getInt(cfg, "origin.y");
         Integer originZ = getInt(cfg, "origin.z");
-        if (worldStr == null
-                || facingStr == null
-                || axisStr == null
-                || sign == 0
-                || originX == null
-                || originY == null
-                || originZ == null) {
+        if (worldStr == null || facingStr == null || axisStr == null || sign == 0
+            || originX == null || originY == null || originZ == null) {
             plugin.getLogger().warning("board-binding.yml is incomplete; ignoring.");
             return Optional.empty();
         }
