@@ -1,5 +1,10 @@
 package io.letsrolldrew.feud.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import be.seeseemelk.mockbukkit.MockBukkit;
+import be.seeseemelk.mockbukkit.ServerMock;
+import be.seeseemelk.mockbukkit.entity.PlayerMock;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -8,11 +13,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
-import be.seeseemelk.mockbukkit.entity.PlayerMock;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Disabled("MockBukkit registry setup currently broken under test harness; enable once registry data is resolved")
 class HostRemoteServiceTest {
@@ -114,7 +114,9 @@ class HostRemoteServiceTest {
         if (stack == null || !stack.hasItemMeta()) {
             return false;
         }
-        var val = stack.getItemMeta().getPersistentDataContainer().get(key, org.bukkit.persistence.PersistentDataType.INTEGER);
+        var val = stack.getItemMeta()
+                .getPersistentDataContainer()
+                .get(key, org.bukkit.persistence.PersistentDataType.INTEGER);
         return val != null && val == 1;
     }
 }

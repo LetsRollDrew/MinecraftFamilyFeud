@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("com.diffplug.spotless") version "8.1.0"
     id("xyz.jpenilla.run-paper") version "2.3.0"
 }
 
@@ -12,6 +13,12 @@ java {
     }
 }
 
+spotless {
+    java {
+        target("src/main/java/**/*.java", "src/test/java/**/*.java")
+        palantirJavaFormat("2.83.0")
+    }
+}
 repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
     mavenCentral()

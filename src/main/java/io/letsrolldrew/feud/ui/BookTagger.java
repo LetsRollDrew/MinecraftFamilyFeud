@@ -9,8 +9,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 public final class BookTagger {
 
-    private BookTagger() {
-    }
+    private BookTagger() {}
 
     public static void tagHostRemote(BookMeta meta, NamespacedKey hostKey) {
         if (meta == null || hostKey == null) {

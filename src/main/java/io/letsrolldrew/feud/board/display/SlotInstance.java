@@ -9,7 +9,8 @@ public final class SlotInstance {
     private final DisplayKey pointsKey;
     private final DisplayKey namespaceKey;
 
-    public SlotInstance(DisplayKey backgroundKey, DisplayKey answerTopKey, DisplayKey answerBottomKey, DisplayKey pointsKey) {
+    public SlotInstance(
+            DisplayKey backgroundKey, DisplayKey answerTopKey, DisplayKey answerBottomKey, DisplayKey pointsKey) {
         this.backgroundKey = backgroundKey;
         this.answerTopKey = answerTopKey;
         this.answerBottomKey = answerBottomKey;

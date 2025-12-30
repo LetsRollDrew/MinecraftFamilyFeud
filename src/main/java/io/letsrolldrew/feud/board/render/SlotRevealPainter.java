@@ -2,12 +2,11 @@ package io.letsrolldrew.feud.board.render;
 
 import io.letsrolldrew.feud.board.layout.BoardLayout10x6;
 import io.letsrolldrew.feud.board.layout.TilePos;
-
 import java.awt.Color;
 import java.util.List;
 
 @SuppressWarnings("removal") // MapPalette.matchColor is deprecated, fix later
-//Renders a revealed answer into the 3 text tiles + points into the points tile
+// Renders a revealed answer into the 3 text tiles + points into the points tile
 public final class SlotRevealPainter {
     private final TileFramebufferStore store;
     private final DirtyTracker dirty;
@@ -19,16 +18,21 @@ public final class SlotRevealPainter {
 
     public SlotRevealPainter(TileFramebufferStore store, DirtyTracker dirty, BoardRenderer renderer) {
         this(
-            store,
-            dirty,
-            new TextPainter(),
-            org.bukkit.map.MapPalette.matchColor(Color.WHITE),
-            org.bukkit.map.MapPalette.matchColor(Color.WHITE),
-            renderer.getCoverTextColor()
-        );
+                store,
+                dirty,
+                new TextPainter(),
+                org.bukkit.map.MapPalette.matchColor(Color.WHITE),
+                org.bukkit.map.MapPalette.matchColor(Color.WHITE),
+                renderer.getCoverTextColor());
     }
 
-    public SlotRevealPainter(TileFramebufferStore store, DirtyTracker dirty, TextPainter textPainter, byte answerColor, byte pointsColor, byte bgColor) {
+    public SlotRevealPainter(
+            TileFramebufferStore store,
+            DirtyTracker dirty,
+            TextPainter textPainter,
+            byte answerColor,
+            byte pointsColor,
+            byte bgColor) {
         this.store = store;
         this.dirty = dirty;
         this.textPainter = textPainter;

@@ -20,10 +20,8 @@ public final class PluginConfig {
     }
 
     public static PluginConfig fromSection(ConfigurationSection section) {
-        String hostPermission = Validation.requireNonBlank(
-            section.getString("host-permission", "familyfeud.host"),
-            "host-permission"
-        );
+        String hostPermission =
+                Validation.requireNonBlank(section.getString("host-permission", "familyfeud.host"), "host-permission");
         boolean allowChatGuesses = section.getBoolean("allow-chat-guesses", false);
         int maxStrikes = Validation.requirePositive(section.getInt("max-strikes", 3), "max-strikes");
         return new PluginConfig(hostPermission, allowChatGuesses, maxStrikes);

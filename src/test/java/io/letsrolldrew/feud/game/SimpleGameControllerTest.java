@@ -1,12 +1,12 @@
 package io.letsrolldrew.feud.game;
 
-import io.letsrolldrew.feud.survey.AnswerOption;
-import io.letsrolldrew.feud.survey.Survey;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.survey.Survey;
+import org.junit.jupiter.api.Test;
 
 class SimpleGameControllerTest {
 
@@ -64,14 +64,12 @@ class SimpleGameControllerTest {
     void revealAddsAnswerPointsOnce() {
         SimpleGameController controller = new SimpleGameController(3);
         Survey survey = new Survey(
-            "sample",
-            "Sample Survey",
-            "Q",
-            java.util.List.of(
-                new AnswerOption("One", 10, java.util.List.of()),
-                new AnswerOption("Two", 5, java.util.List.of())
-            )
-        );
+                "sample",
+                "Sample Survey",
+                "Q",
+                java.util.List.of(
+                        new AnswerOption("One", 10, java.util.List.of()),
+                        new AnswerOption("Two", 5, java.util.List.of())));
         controller.setActiveSurvey(survey);
         controller.revealSlot(1);
         controller.revealSlot(1); // no double-count
@@ -107,14 +105,12 @@ class SimpleGameControllerTest {
     void providesHoverTextsFromActiveSurvey() {
         SimpleGameController controller = new SimpleGameController(3);
         Survey survey = new Survey(
-            "sample",
-            "Sample Survey",
-            "Q",
-            java.util.List.of(
-                new AnswerOption("One", 10, java.util.List.of()),
-                new AnswerOption("Two", 5, java.util.List.of())
-            )
-        );
+                "sample",
+                "Sample Survey",
+                "Q",
+                java.util.List.of(
+                        new AnswerOption("One", 10, java.util.List.of()),
+                        new AnswerOption("Two", 5, java.util.List.of())));
         controller.setActiveSurvey(survey);
         java.util.List<String> hovers = controller.slotHoverTexts();
         assertEquals("Reveal (One: 10)", hovers.get(0));

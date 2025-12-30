@@ -1,7 +1,6 @@
 package io.letsrolldrew.feud.survey;
 
 import io.letsrolldrew.feud.util.Validation;
-
 import java.util.Collections;
 import java.util.List;
 

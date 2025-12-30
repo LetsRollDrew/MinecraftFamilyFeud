@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-//Pure mapping helpers for the 10x6 board (8x4 interior with 8 slots)
+// Pure mapping helpers for the 10x6 board (8x4 interior with 8 slots)
 public final class BoardLayout10x6 {
     public static final int WIDTH = 10;
     public static final int HEIGHT = 6;
@@ -16,10 +16,9 @@ public final class BoardLayout10x6 {
     private static final int INTERIOR_Y_START = 1;
     private static final int INTERIOR_Y_END = 4;
 
-    private BoardLayout10x6() {
-    }
+    private BoardLayout10x6() {}
 
-    //All border tiles cords (top, bottom, left, right)
+    // All border tiles cords (top, bottom, left, right)
     public static Set<TilePos> borderTiles() {
         Set<TilePos> tiles = new HashSet<>();
         // top and bottom
@@ -35,7 +34,7 @@ public final class BoardLayout10x6 {
         return Collections.unmodifiableSet(tiles);
     }
 
-    //All interior tiles cords (8x4)
+    // All interior tiles cords (8x4)
     public static Set<TilePos> interiorTiles() {
         Set<TilePos> tiles = new HashSet<>();
         for (int y = INTERIOR_Y_START; y <= INTERIOR_Y_END; y++) {
@@ -46,9 +45,9 @@ public final class BoardLayout10x6 {
         return Collections.unmodifiableSet(tiles);
     }
 
-    //Slot numbering:
-    //1-4 = left column top to bottom (rows y=1..4)
-    //5-8 = right column top to bottom (rows y=1..4)
+    // Slot numbering:
+    // 1-4 = left column top to bottom (rows y=1..4)
+    // 5-8 = right column top to bottom (rows y=1..4)
     public static List<TilePos> tilesForSlot(int slot) {
         validateSlot(slot);
         int row = (slot - 1) % 4; // 0-based row index in interior

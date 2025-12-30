@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-    // Draws a large single digit across multiple tiles
-    // For Example:
-    // Current layout 10x6 interior 8x4: Q Q Q P (points tile covered like Q) then
-    // we pass the middle 2 text tiles to center the digit between them "Q QNum BerQ Q"
-    // If expanded to Q Q Q Q Q, we would pass all 5 text tiles so the digit centers on the middle Q
+// Draws a large single digit across multiple tiles
+// For Example:
+// Current layout 10x6 interior 8x4: Q Q Q P (points tile covered like Q) then
+// we pass the middle 2 text tiles to center the digit between them "Q QNum BerQ Q"
+// If expanded to Q Q Q Q Q, we would pass all 5 text tiles so the digit centers on the middle Q
 public final class BigDigitPainter {
     private static final int GLYPH_W = 5;
     private static final int GLYPH_H = 7;
@@ -59,96 +59,16 @@ public final class BigDigitPainter {
     }
 
     private void loadDigits() {
-        glyphs.put('1', rows(
-            "..1..",
-            ".11..",
-            "..1..",
-            "..1..",
-            "..1..",
-            "..1..",
-            ".111."
-        ));
-        glyphs.put('2', rows(
-            ".111.",
-            "1...1",
-            "....1",
-            "..11.",
-            ".1...",
-            "1....",
-            "11111"
-        ));
-        glyphs.put('3', rows(
-            ".111.",
-            "....1",
-            "...1.",
-            "..11.",
-            "....1",
-            "1...1",
-            ".111."
-        ));
-        glyphs.put('4', rows(
-            "...1.",
-            "..11.",
-            ".1.1.",
-            "1..1.",
-            "11111",
-            "...1.",
-            "...1."
-        ));
-        glyphs.put('5', rows(
-            "11111",
-            "1....",
-            "1111.",
-            "....1",
-            "....1",
-            "1...1",
-            ".111."
-        ));
-        glyphs.put('6', rows(
-            ".111.",
-            "1....",
-            "1....",
-            "1111.",
-            "1...1",
-            "1...1",
-            ".111."
-        ));
-        glyphs.put('7', rows(
-            "11111",
-            "....1",
-            "...1.",
-            "..1..",
-            ".1...",
-            ".1...",
-            ".1..."
-        ));
-        glyphs.put('8', rows(
-            ".111.",
-            "1...1",
-            "1...1",
-            ".111.",
-            "1...1",
-            "1...1",
-            ".111."
-        ));
-        glyphs.put('9', rows(
-            ".111.",
-            "1...1",
-            "1...1",
-            ".1111",
-            "....1",
-            "....1",
-            ".111."
-        ));
-        glyphs.put('0', rows(
-            "11111",
-            "1...1",
-            "1..11",
-            "1.1.1",
-            "11..1",
-            "1...1",
-            "11111"
-        ));
+        glyphs.put('1', rows("..1..", ".11..", "..1..", "..1..", "..1..", "..1..", ".111."));
+        glyphs.put('2', rows(".111.", "1...1", "....1", "..11.", ".1...", "1....", "11111"));
+        glyphs.put('3', rows(".111.", "....1", "...1.", "..11.", "....1", "1...1", ".111."));
+        glyphs.put('4', rows("...1.", "..11.", ".1.1.", "1..1.", "11111", "...1.", "...1."));
+        glyphs.put('5', rows("11111", "1....", "1111.", "....1", "....1", "1...1", ".111."));
+        glyphs.put('6', rows(".111.", "1....", "1....", "1111.", "1...1", "1...1", ".111."));
+        glyphs.put('7', rows("11111", "....1", "...1.", "..1..", ".1...", ".1...", ".1..."));
+        glyphs.put('8', rows(".111.", "1...1", "1...1", ".111.", "1...1", "1...1", ".111."));
+        glyphs.put('9', rows(".111.", "1...1", "1...1", ".1111", "....1", "....1", ".111."));
+        glyphs.put('0', rows("11111", "1...1", "1..11", "1.1.1", "11..1", "1...1", "11111"));
     }
 
     private boolean[][] rows(String... rows) {
