@@ -12,18 +12,17 @@ import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.components.CustomModelDataComponent;
+import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
-import org.bukkit.entity.Display;
-import org.bukkit.util.Transformation;
 
 // Spawns a display-based board from a DynamicBoardLayout and registers associated entities
-
 public final class DynamicDisplayBoardFactory {
 
     // hidden background CMD value
@@ -60,24 +59,29 @@ public final class DynamicDisplayBoardFactory {
         // how much that direction is aligned with board-right
         double dot = (dx * layout.facing().rightX()) + (dz * layout.facing().rightZ());
 
-        // flip=true meeans physical col 0 gets slots 5–8 and physical col 1 gets slots 1–4
-        // flags that the columns instead of 0 1 are morel like 1 0
+        // flip=true means physical col 0 gets slots 5–8 and physical col 1 gets slots 1–4
         boolean flip = dot > 0;
 
-        // give answer 75% share and points 25% regions in each cell
+        // 75/25-ish split
         double cellW = layout.cellWidth();
         double cellH = layout.cellHeight();
         double pointsW = cellW * 0.25;
         double gapW = cellW * 0.03;
         double padW = cellW * 0.06;
         double answerW = cellW - pointsW - gapW;
+
         double textScale = Math.max(0.8, Math.min(6.0, cellH * 1.6));
-        double verticalNudge = -cellH * 0.05; // NOTE: fix this scaling sending too high
+        double verticalNudge = -cellH * 0.05;
+
+        // initial spawn line widths (DisplayBoardService will override on write)
         double pxPerBlock = 30.0;
         int answerLineWidth = (int) Math.max(1, Math.round((answerW - (2 * padW)) * pxPerBlock / textScale));
         int pointsLineWidth = (int) Math.max(1, Math.round((pointsW - (2 * padW)) * pxPerBlock / textScale));
 
-        // column based
+        // distance between stacked lines (world blocks)
+        double lineGap = cellH * 0.32;
+        double halfGap = lineGap / 2.0;
+
         for (int col = 0; col < 2; col++) {
             for (int row = 0; row < 4; row++) {
                 int slotCol = flip ? 1 - col : col;
@@ -85,11 +89,16 @@ public final class DynamicDisplayBoardFactory {
 
                 SlotInstance slot = buildSlot(boardId, slotIndex);
                 slots.set(slotIndex, slot);
+
                 Location bgLoc = BoardSpace.atCellCenter(anchor, layout.facing(), col, row, layout);
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, yaw, layout, registry);
 
                 double visualSign = flip ? -1.0 : 1.0;
-                // centers of the answer (left) and points (right) regions, relative to the cell center
+
+                // IMPORTANT:
+                // TextDisplay position behaves like the CENTER of the lineWidth box.
+                // So we must place the entity at the CENTER of the answer/points regions,
+                // then use lineWidth + alignment to control left/right padding.
                 double answerOffset = (-(pointsW / 2.0) - (gapW / 2.0)) * visualSign;
                 double pointsOffset = ((answerW / 2.0) + (gapW / 2.0)) * visualSign;
 
@@ -105,8 +114,22 @@ public final class DynamicDisplayBoardFactory {
                     layout.facing().rightZ() * pointsOffset
                 );
 
-                spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, verticalNudge, TextDisplay.TextAlignment.LEFT);
-                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, verticalNudge, TextDisplay.TextAlignment.RIGHT);
+                // spawn top at CENTER, bottom at CENTER - halfGap
+                Location answerTopLoc = answerLoc.clone();
+                Location answerBotLoc = answerLoc.clone().add(0, -halfGap, 0);
+
+                spawnText(
+                    slot.answerTopKey(), world, answerTopLoc, yaw, layout, registry,
+                    textScale, answerLineWidth, verticalNudge, TextDisplay.TextAlignment.LEFT
+                );
+                spawnText(
+                    slot.answerBottomKey(), world, answerBotLoc, yaw, layout, registry,
+                    textScale, answerLineWidth, verticalNudge, TextDisplay.TextAlignment.LEFT
+                );
+                spawnText(
+                    slot.pointsKey(), world, pointsLoc, yaw, layout, registry,
+                    textScale, pointsLineWidth, verticalNudge, TextDisplay.TextAlignment.RIGHT
+                );
             }
         }
 
@@ -120,9 +143,10 @@ public final class DynamicDisplayBoardFactory {
     private static SlotInstance buildSlot(String boardId, int slotIndex) {
         String slotId = "slot" + (slotIndex + 1);
         DisplayKey bgKey = new DisplayKey("board", boardId, slotId, "bg");
-        DisplayKey ansKey = new DisplayKey("board", boardId, slotId, "answer");
+        DisplayKey ansTopKey = new DisplayKey("board", boardId, slotId, "answer_top");
+        DisplayKey ansBotKey = new DisplayKey("board", boardId, slotId, "answer_bot");
         DisplayKey ptsKey = new DisplayKey("board", boardId, slotId, "points");
-        return new SlotInstance(bgKey, ansKey, ptsKey);
+        return new SlotInstance(bgKey, ansTopKey, ansBotKey, ptsKey);
     }
 
     private static void spawnBackground(
@@ -133,7 +157,7 @@ public final class DynamicDisplayBoardFactory {
         float yaw,
         DynamicBoardLayout layout,
         DisplayRegistry registry
-        ) {
+    ) {
         ItemDisplay display = world.spawn(loc, ItemDisplay.class, entity -> {
             entity.setItemStack(stack);
             entity.setBillboard(Display.Billboard.FIXED);
@@ -168,7 +192,10 @@ public final class DynamicDisplayBoardFactory {
         TextDisplay.TextAlignment alignment
     ) {
         Location spawnLoc = loc.clone();
-        double forwardNudge = layout.forwardOffset() + 0.08;
+
+        // BoardSpace.atCellCenter already applied forwardOffset via bgLoc,
+        // and answerLoc/pointsLoc are derived from that, so only a tiny nudge is needed.
+        double forwardNudge = 0.08;
         spawnLoc.add(layout.facing().forwardX() * forwardNudge, 0, layout.facing().forwardZ() * forwardNudge);
 
         TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
@@ -177,9 +204,7 @@ public final class DynamicDisplayBoardFactory {
             entity.setShadowed(true);
             entity.setSeeThrough(false);
             try {
-                //entity.setBackgroundColor(Color.fromARGB(0)); //no background
-                entity.setDefaultBackground(false); // NOTE: debugging to view boundaries removing later
-                entity.setBackgroundColor(Color.fromARGB(0x80FF00FF)); // NOTE:  ^
+                entity.setBackgroundColor(Color.fromARGB(0));
             } catch (Throwable ignored) {
             }
             try {
