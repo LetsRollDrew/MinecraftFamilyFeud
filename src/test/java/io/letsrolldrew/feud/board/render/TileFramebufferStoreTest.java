@@ -1,10 +1,10 @@
 package io.letsrolldrew.feud.board.render;
 
-import io.letsrolldrew.feud.board.layout.TilePos;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import io.letsrolldrew.feud.board.layout.TilePos;
+import org.junit.jupiter.api.Test;
 
 class TileFramebufferStoreTest {
 

@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("com.diffplug.spotless") version "8.1.0"
     id("xyz.jpenilla.run-paper") version "2.3.0"
 }
 
@@ -9,6 +10,13 @@ version = "0.1.0-SNAPSHOT"
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+spotless {
+    java {
+        target("src/main/java/**/*.java", "src/test/java/**/*.java")
+        palantirJavaFormat("2.83.0")
     }
 }
 

@@ -1,9 +1,8 @@
 package io.letsrolldrew.feud.board;
 
-import org.bukkit.block.BlockFace;
-
 import java.util.Objects;
 import java.util.UUID;
+import org.bukkit.block.BlockFace;
 
 // frame info (block coords + facing + id)
 public record FrameLocation(UUID uuid, int x, int y, int z, BlockFace facing) {

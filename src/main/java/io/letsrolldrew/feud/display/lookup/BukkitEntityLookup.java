@@ -1,9 +1,8 @@
 package io.letsrolldrew.feud.display.lookup;
 
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
-
-import java.util.UUID;
 
 public final class BukkitEntityLookup implements EntityLookup {
     @Override

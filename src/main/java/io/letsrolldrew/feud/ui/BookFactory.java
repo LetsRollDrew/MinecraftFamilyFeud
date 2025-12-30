@@ -9,8 +9,7 @@ import net.kyori.adventure.text.Component;
 
 public final class BookFactory {
 
-    private BookFactory() {
-    }
+    private BookFactory() {}
 
     public static Book create(Component title, Component author, List<Component> pages) {
         if (title == null) {

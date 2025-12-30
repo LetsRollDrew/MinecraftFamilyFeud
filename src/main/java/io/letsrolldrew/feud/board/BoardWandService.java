@@ -1,6 +1,12 @@
 package io.letsrolldrew.feud.board;
 
 import io.letsrolldrew.feud.board.layout.TilePos;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -20,14 +26,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-//Gives the board wand and captures top-left + bottom-right item frames to bind the 10x6 wall
+// Gives the board wand and captures top-left + bottom-right item frames to bind the 10x6 wall
 public final class BoardWandService implements Listener {
     private static final int EXPECTED_WIDTH = 10;
     private static final int EXPECTED_HEIGHT = 6;
@@ -47,7 +46,8 @@ public final class BoardWandService implements Listener {
         ItemStack wand = new ItemStack(Material.STICK);
         ItemMeta meta = wand.getItemMeta();
         if (meta != null) {
-            meta.displayName(net.kyori.adventure.text.Component.text("Feud Board Wand", net.kyori.adventure.text.format.NamedTextColor.GOLD));
+            meta.displayName(net.kyori.adventure.text.Component.text(
+                    "Feud Board Wand", net.kyori.adventure.text.format.NamedTextColor.GOLD));
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(wandKey, PersistentDataType.INTEGER, 1);
             wand.setItemMeta(meta);
@@ -138,11 +138,11 @@ public final class BoardWandService implements Listener {
         int widthSign = xConst ? Integer.signum(b.blockZ - a.blockZ) : Integer.signum(b.blockX - a.blockX);
         int topY = Math.max(a.blockY, b.blockY);
         int originX = axis == HorizontalAxis.X
-            ? (widthSign > 0 ? Math.min(a.blockX, b.blockX) : Math.max(a.blockX, b.blockX))
-            : a.blockX; // x is constant when axis is Z
+                ? (widthSign > 0 ? Math.min(a.blockX, b.blockX) : Math.max(a.blockX, b.blockX))
+                : a.blockX; // x is constant when axis is Z
         int originZ = axis == HorizontalAxis.Z
-            ? (widthSign > 0 ? Math.min(a.blockZ, b.blockZ) : Math.max(a.blockZ, b.blockZ))
-            : a.blockZ; // z is constant when axis is X
+                ? (widthSign > 0 ? Math.min(a.blockZ, b.blockZ) : Math.max(a.blockZ, b.blockZ))
+                : a.blockZ; // z is constant when axis is X
 
         // validate frames exist at all positions
         World world = Bukkit.getWorld(a.worldId);
@@ -165,7 +165,8 @@ public final class BoardWandService implements Listener {
         return new BoardBinding(a.worldId, a.facing, axis, widthSign, originX, topY, originZ);
     }
 
-    private Map<String, ItemFrame> collectFrames(World world, BlockFace facing, int originX, int originZ, int topY, HorizontalAxis axis, int widthSign) {
+    private Map<String, ItemFrame> collectFrames(
+            World world, BlockFace facing, int originX, int originZ, int topY, HorizontalAxis axis, int widthSign) {
         int minX = originX + (axis == HorizontalAxis.X && widthSign < 0 ? -(EXPECTED_WIDTH - 1) : 0);
         int maxX = originX + (axis == HorizontalAxis.X && widthSign > 0 ? (EXPECTED_WIDTH - 1) : 0);
         int minZ = originZ + (axis == HorizontalAxis.Z && widthSign < 0 ? -(EXPECTED_WIDTH - 1) : 0);
@@ -206,12 +207,11 @@ public final class BoardWandService implements Listener {
         static Selection from(ItemFrame frame) {
             var loc = frame.getLocation();
             return new Selection(
-                Objects.requireNonNull(loc.getWorld()).getUID(),
-                loc.getBlockX(),
-                loc.getBlockY(),
-                loc.getBlockZ(),
-                frame.getFacing()
-            );
+                    Objects.requireNonNull(loc.getWorld()).getUID(),
+                    loc.getBlockX(),
+                    loc.getBlockY(),
+                    loc.getBlockZ(),
+                    frame.getFacing());
         }
     }
 }

@@ -1,5 +1,7 @@
 package io.letsrolldrew.feud.commands;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
 import be.seeseemelk.mockbukkit.command.ConsoleCommandSenderMock;
@@ -7,8 +9,6 @@ import io.letsrolldrew.feud.FeudPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class FeudCommandDispatchTest {
 

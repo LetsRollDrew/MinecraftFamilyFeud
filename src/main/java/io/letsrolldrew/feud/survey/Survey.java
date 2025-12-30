@@ -1,7 +1,6 @@
 package io.letsrolldrew.feud.survey;
 
 import io.letsrolldrew.feud.util.Validation;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -14,10 +13,8 @@ public final class Survey {
 
     public Survey(String id, String displayName, String question, List<AnswerOption> answers) {
         this.id = Validation.requireNonBlank(id, "survey.id");
-        this.displayName = Validation.requireNonBlank(
-            displayName != null ? displayName : question,
-            "survey.displayName"
-        );
+        this.displayName =
+                Validation.requireNonBlank(displayName != null ? displayName : question, "survey.displayName");
         this.question = Validation.requireNonBlank(question, "survey.question");
         if (answers == null || answers.isEmpty()) {
             throw new IllegalArgumentException("survey.answers must not be empty");

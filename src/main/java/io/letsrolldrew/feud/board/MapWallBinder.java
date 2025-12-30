@@ -5,6 +5,8 @@ import io.letsrolldrew.feud.board.layout.TilePos;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.board.render.TileMapRenderer;
+import java.io.IOException;
+import java.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -14,9 +16,6 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
-
-import java.io.IOException;
-import java.util.*;
 
 // Assigns unique maps to each tile and attaches renderers
 public final class MapWallBinder {
@@ -84,14 +83,18 @@ public final class MapWallBinder {
 
     private Map<String, ItemFrame> collectFrames(World world, BoardBinding binding) {
 
-        int minX = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.X && binding.widthSign() < 0 ?
-            binding.origin().getBlockX() - (BoardLayout10x6.WIDTH - 1) : binding.origin().getBlockX();
-        int maxX = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.X && binding.widthSign() > 0 ?
-            binding.origin().getBlockX() + (BoardLayout10x6.WIDTH - 1) : binding.origin().getBlockX();
-        int minZ = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.Z && binding.widthSign() < 0 ?
-            binding.origin().getBlockZ() - (BoardLayout10x6.WIDTH - 1) : binding.origin().getBlockZ();
-        int maxZ = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.Z && binding.widthSign() > 0 ?
-            binding.origin().getBlockZ() + (BoardLayout10x6.WIDTH - 1) : binding.origin().getBlockZ();
+        int minX = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.X && binding.widthSign() < 0
+                ? binding.origin().getBlockX() - (BoardLayout10x6.WIDTH - 1)
+                : binding.origin().getBlockX();
+        int maxX = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.X && binding.widthSign() > 0
+                ? binding.origin().getBlockX() + (BoardLayout10x6.WIDTH - 1)
+                : binding.origin().getBlockX();
+        int minZ = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.Z && binding.widthSign() < 0
+                ? binding.origin().getBlockZ() - (BoardLayout10x6.WIDTH - 1)
+                : binding.origin().getBlockZ();
+        int maxZ = binding.widthAxis() == io.letsrolldrew.feud.board.HorizontalAxis.Z && binding.widthSign() > 0
+                ? binding.origin().getBlockZ() + (BoardLayout10x6.WIDTH - 1)
+                : binding.origin().getBlockZ();
 
         int minY = binding.origin().getBlockY() - (BoardLayout10x6.HEIGHT - 1);
         int maxY = binding.origin().getBlockY();
@@ -103,7 +106,12 @@ public final class MapWallBinder {
             if (frame.getFacing() != binding.facing()) {
                 continue;
             }
-            frames.putIfAbsent(key(frame.getLocation().getBlockX(), frame.getLocation().getBlockY(), frame.getLocation().getBlockZ()), frame);
+            frames.putIfAbsent(
+                    key(
+                            frame.getLocation().getBlockX(),
+                            frame.getLocation().getBlockY(),
+                            frame.getLocation().getBlockZ()),
+                    frame);
         }
         return frames;
     }
@@ -112,12 +120,11 @@ public final class MapWallBinder {
         List<FrameLocation> list = new ArrayList<>();
         for (ItemFrame frame : frames) {
             list.add(new FrameLocation(
-                frame.getUniqueId(),
-                frame.getLocation().getBlockX(),
-                frame.getLocation().getBlockY(),
-                frame.getLocation().getBlockZ(),
-                frame.getFacing()
-            ));
+                    frame.getUniqueId(),
+                    frame.getLocation().getBlockX(),
+                    frame.getLocation().getBlockY(),
+                    frame.getLocation().getBlockZ(),
+                    frame.getFacing()));
         }
         return list;
     }

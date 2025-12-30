@@ -5,18 +5,11 @@ import java.util.Objects;
 import java.util.UUID;
 import org.joml.Vector3d;
 
-
 // Immutable selection of a rectangular surface for spawning a display board
 // just a snapshot of the board data like we do in map bindings
 
 public record DisplayBoardSelection(
-    UUID worldId,
-    Vector3d cornerA,
-    Vector3d cornerB,
-    BoardFacing facing,
-    Vector3d surfaceNormal
-)
-{
+        UUID worldId, Vector3d cornerA, Vector3d cornerB, BoardFacing facing, Vector3d surfaceNormal) {
     public boolean isValid() {
         return invalidReason() == null;
     }

@@ -7,19 +7,17 @@ import org.joml.Vector3d;
 // anchor is the top-left corner in board space for the given facing (way board is facing)
 
 public record DynamicBoardLayout(
-    UUID worldId,
-    BoardFacing facing,
-    Vector3d anchor,
-    double totalWidth,
-    double totalHeight,
-    double cellWidth,
-    double cellHeight,
-    double padX,
-    double padY,
-    double gapX,
-    double gapY,
-    double forwardOffset,
-    Vector3d minCorner,
-    Vector3d maxCorner
-) {
-}
+        UUID worldId,
+        BoardFacing facing,
+        Vector3d anchor,
+        double totalWidth,
+        double totalHeight,
+        double cellWidth,
+        double cellHeight,
+        double padX,
+        double padY,
+        double gapX,
+        double gapY,
+        double forwardOffset,
+        Vector3d minCorner,
+        Vector3d maxCorner) {}

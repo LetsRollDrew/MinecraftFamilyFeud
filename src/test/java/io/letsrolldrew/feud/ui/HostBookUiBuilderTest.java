@@ -1,15 +1,14 @@
 package io.letsrolldrew.feud.ui;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("deprecation") // ClickEvent#value is deprecated in adventure API, fix later
 class HostBookUiBuilderTest {
@@ -20,14 +19,13 @@ class HostBookUiBuilderTest {
 
         List<String> hovers = Collections.nCopies(8, "Reveal");
         List<Component> pages = builder.buildPages(
-            hovers,
-            null,               // activeSurvey
-            Set.of(),           // revealedSlots
-            0,                  // strikeCount
-            3,                  // maxStrikes
-            0,                  // roundPoints
-            io.letsrolldrew.feud.game.TeamControl.NONE
-        );
+                hovers,
+                null, // activeSurvey
+                Set.of(), // revealedSlots
+                0, // strikeCount
+                3, // maxStrikes
+                0, // roundPoints
+                io.letsrolldrew.feud.game.TeamControl.NONE);
 
         List<String> commands = collectCommands(pages.get(0));
         assertTrue(commands.contains("/feud ui reveal 1"));

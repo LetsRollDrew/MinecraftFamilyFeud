@@ -1,24 +1,24 @@
 package io.letsrolldrew.feud.board.display;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+
+import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import java.util.UUID;
-
 final class BoardFacingSpaceTest {
 
     /**********************************************************************************
-    * verifies BoardFacing.fromYaw() snapping yaw angles to correct directions
-    *
-    * covers:
-    * - exact cardinals (0/90/180/270) and wrap-around (360)
-    * - near-cardinal values Ex: (89, 181) to validate snap behavior
-    * - negative yaws (-90, -180, -270) to validate direction correction
-    * - 'Cardinals' meaning South/West/North/East
-    **********************************************************************************/
+     * verifies BoardFacing.fromYaw() snapping yaw angles to correct directions
+     *
+     * covers:
+     * - exact cardinals (0/90/180/270) and wrap-around (360)
+     * - near-cardinal values Ex: (89, 181) to validate snap behavior
+     * - negative yaws (-90, -180, -270) to validate direction correction
+     * - 'Cardinals' meaning South/West/North/East
+     **********************************************************************************/
     @Test
     void snapsYawToCardinals() {
         assertEquals(BoardFacing.SOUTH, BoardFacing.fromYaw(0f));
@@ -36,22 +36,22 @@ final class BoardFacingSpaceTest {
     }
 
     /************************************************************************************
-    * BoardSpace.at(right, up, forward) maps board local offsets into world
-    * coordinates when we are facing SOUTH
-    *
-    * setup:
-    * - origin: (0, 64, 0)
-    * - offsets: (right=1, up=2, forward=3)
-    *
-    * expectations:
-    * - up goes to +Y (64 + 2 = 66)
-    * - forward/right rotate into the expected X/Z for SOUTH
-    * - returned location yaw matches the facing yaw
-    *
-    * note:
-    * - "close enough" check: Location coords = doubles (using 1e-6), yaw = float (using 1e-6f)
-    * - Rest of the tests follow this same pattern for other facings
-    ************************************************************************************/
+     * BoardSpace.at(right, up, forward) maps board local offsets into world
+     * coordinates when we are facing SOUTH
+     *
+     * setup:
+     * - origin: (0, 64, 0)
+     * - offsets: (right=1, up=2, forward=3)
+     *
+     * expectations:
+     * - up goes to +Y (64 + 2 = 66)
+     * - forward/right rotate into the expected X/Z for SOUTH
+     * - returned location yaw matches the facing yaw
+     *
+     * note:
+     * - "close enough" check: Location coords = doubles (using 1e-6), yaw = float (using 1e-6f)
+     * - Rest of the tests follow this same pattern for other facings
+     ************************************************************************************/
     @Test
     void mapsOffsetsSouth() {
         World world = mock(World.class);
@@ -69,21 +69,20 @@ final class BoardFacingSpaceTest {
         World world = mock(World.class);
         Location anchor = new Location(world, 0, 15, 0);
         DynamicBoardLayout layout = new DynamicBoardLayout(
-            UUID.randomUUID(),
-            BoardFacing.SOUTH,
-            new org.joml.Vector3d(anchor.getX(), anchor.getY(), anchor.getZ()),
-            4.0,
-            4.0,
-            2.0,
-            1.0,
-            0.1,
-            0.1,
-            0,
-            0,
-            0.05,
-            new org.joml.Vector3d(),
-            new org.joml.Vector3d()
-        );
+                UUID.randomUUID(),
+                BoardFacing.SOUTH,
+                new org.joml.Vector3d(anchor.getX(), anchor.getY(), anchor.getZ()),
+                4.0,
+                4.0,
+                2.0,
+                1.0,
+                0.1,
+                0.1,
+                0,
+                0,
+                0.05,
+                new org.joml.Vector3d(),
+                new org.joml.Vector3d());
 
         // col 0, row 0 center: right=1.0, up=-0.5, forward=0.05
         Location c00 = BoardSpace.atCellCenter(anchor, BoardFacing.SOUTH, 0, 0, layout);

@@ -2,10 +2,9 @@ package io.letsrolldrew.feud.board.render;
 
 import io.letsrolldrew.feud.board.layout.BoardLayout10x6;
 import io.letsrolldrew.feud.board.layout.TilePos;
-
 import java.util.List;
 
-//Draws hidden covers for all slots and marks tiles dirty
+// Draws hidden covers for all slots and marks tiles dirty
 public final class SlotCoverPainter {
     private final TileFramebufferStore store;
     private final DirtyTracker dirty;
@@ -14,12 +13,11 @@ public final class SlotCoverPainter {
     private final byte digitColor;
 
     public SlotCoverPainter(
-        TileFramebufferStore store,
-        DirtyTracker dirty,
-        BigDigitPainter bigDigitPainter,
-        byte coverTextColor,
-        byte digitColor
-    ) {
+            TileFramebufferStore store,
+            DirtyTracker dirty,
+            BigDigitPainter bigDigitPainter,
+            byte coverTextColor,
+            byte digitColor) {
         this.store = store;
         this.dirty = dirty;
         this.bigDigitPainter = bigDigitPainter;
@@ -42,7 +40,8 @@ public final class SlotCoverPainter {
             dirty.markDirty(pos);
         }
         // large slot number centered across the middle two text tiles
-        List<TileBuffer> textBuffers = tiles.subList(1, 3).stream().map(store::get).toList();
+        List<TileBuffer> textBuffers =
+                tiles.subList(1, 3).stream().map(store::get).toList();
         bigDigitPainter.drawDigitAcrossBuffers(textBuffers, String.valueOf(slot), digitColor);
     }
 

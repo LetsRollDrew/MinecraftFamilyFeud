@@ -5,6 +5,13 @@ import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.anim.AnimationService;
 import io.letsrolldrew.feud.effects.anim.AnimationStep;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -20,14 +27,6 @@ import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public final class DisplayBoardService implements DisplayBoardPresenter {
     private static final float CMD_HIDDEN = 9001.0f;
@@ -78,8 +77,8 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         this(displayRegistry, animationService, null);
     }
 
-    public DisplayBoardService(DisplayRegistry displayRegistry, AnimationService animationService,
-            File dynamicStoreFile) {
+    public DisplayBoardService(
+            DisplayRegistry displayRegistry, AnimationService animationService, File dynamicStoreFile) {
         this.displayRegistry = displayRegistry;
         this.animationService = animationService;
         this.dynamicStore = new DynamicBoardStore(dynamicStoreFile);
@@ -103,12 +102,10 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         BoardFacing facing = BoardFacing.fromYaw(facingReference.getLocation().getYaw());
         BoardSpace space = new BoardSpace(anchor.clone(), facing);
-
         ItemStack hiddenStack = stackWithCmd(CMD_HIDDEN);
 
         List<SlotInstance> slots = new ArrayList<>(layout.slotRows() * layout.slotCols());
         int slotIndex = 0;
-
         for (int col = 0; col < layout.slotCols(); col++) {
             double colX = col == 0 ? 0.0 : layout.slotWidth() + layout.columnGap();
 
@@ -120,7 +117,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, facing.yaw());
 
-                // static answer/points locations (kept identical)
                 Location answerCenter = space.at(colX + STATIC_ANSWER_CENTER_X, yOffset, layout.textZOffset());
                 Location pointsCenter = space.at(colX + STATIC_POINTS_CENTER_X, yOffset, layout.textZOffset());
 
@@ -128,11 +124,29 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
                 Location answerTopLoc = answerCenter.clone();
                 Location answerBotLoc = answerCenter.clone().add(0, -halfGap, 0);
 
-                spawnText(slot.answerTopKey(), world, answerTopLoc, facing.yaw(), facing, staticMetrics,
+                spawnText(
+                        slot.answerTopKey(),
+                        world,
+                        answerTopLoc,
+                        facing.yaw(),
+                        facing,
+                        staticMetrics,
                         TextDisplay.TextAlignment.LEFT);
-                spawnText(slot.answerBottomKey(), world, answerBotLoc, facing.yaw(), facing, staticMetrics,
+                spawnText(
+                        slot.answerBottomKey(),
+                        world,
+                        answerBotLoc,
+                        facing.yaw(),
+                        facing,
+                        staticMetrics,
                         TextDisplay.TextAlignment.LEFT);
-                spawnText(slot.pointsKey(), world, pointsCenter, facing.yaw(), facing, staticMetrics,
+                spawnText(
+                        slot.pointsKey(),
+                        world,
+                        pointsCenter,
+                        facing.yaw(),
+                        facing,
+                        staticMetrics,
                         TextDisplay.TextAlignment.RIGHT);
 
                 slots.add(slot);
@@ -316,10 +330,8 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             BoardFacing facing,
             LayoutMetrics metrics,
             TextDisplay.TextAlignment alignment) {
-        Location spawnLoc = loc.clone().add(
-                facing.forwardX() * TEXT_FORWARD_NUDGE,
-                0,
-                facing.forwardZ() * TEXT_FORWARD_NUDGE);
+        Location spawnLoc =
+                loc.clone().add(facing.forwardX() * TEXT_FORWARD_NUDGE, 0, facing.forwardZ() * TEXT_FORWARD_NUDGE);
 
         TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
             entity.setBillboard(Display.Billboard.FIXED);
@@ -334,7 +346,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             entity.setAlignment(alignment);
             entity.setLineWidth(LINE_WIDTH_NO_WRAP);
 
-            // deterministic spawn translation
             entity.setTransformation(new Transformation(
                     new Vector3f(0, (float) metrics.spawnTyBlocks(), 0),
                     new AxisAngle4f(0, 0, 0, 0),
@@ -404,23 +415,13 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     }
 
     private record FitPolicy(
-            double charsPerBlock,
-            double minScaleFactor,
-            float txBlocks,
-            TextDisplay.TextAlignment alignment) {
-    }
+            double charsPerBlock, double minScaleFactor, float txBlocks, TextDisplay.TextAlignment alignment) {}
 
     private static final FitPolicy ANSWER_FIT = new FitPolicy(
-            ANSWER_CHARS_PER_BLOCK,
-            MIN_SCALE_FACTOR_ANSWER,
-            ANSWER_RIGHT_NUDGE_BLOCKS,
-            TextDisplay.TextAlignment.LEFT);
+            ANSWER_CHARS_PER_BLOCK, MIN_SCALE_FACTOR_ANSWER, ANSWER_RIGHT_NUDGE_BLOCKS, TextDisplay.TextAlignment.LEFT);
 
-    private static final FitPolicy POINTS_FIT = new FitPolicy(
-            POINTS_CHARS_PER_BLOCK,
-            MIN_SCALE_FACTOR_POINTS,
-            0f,
-            TextDisplay.TextAlignment.RIGHT);
+    private static final FitPolicy POINTS_FIT =
+            new FitPolicy(POINTS_CHARS_PER_BLOCK, MIN_SCALE_FACTOR_POINTS, 0f, TextDisplay.TextAlignment.RIGHT);
 
     // *********************************
     // write text
@@ -439,10 +440,10 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         // 2 words go top/bottom
         if (parts.length == 2) {
             positionAnswerDisplays(boardId, slot, true);
-            applyFittedText(boardId, slot.answerTopKey(), Component.text(parts[0]), parts[0], ANSWER_FIT,
-                    Region.ANSWER);
-            applyFittedText(boardId, slot.answerBottomKey(), Component.text(parts[1]), parts[1], ANSWER_FIT,
-                    Region.ANSWER);
+            applyFittedText(
+                    boardId, slot.answerTopKey(), Component.text(parts[0]), parts[0], ANSWER_FIT, Region.ANSWER);
+            applyFittedText(
+                    boardId, slot.answerBottomKey(), Component.text(parts[1]), parts[1], ANSWER_FIT, Region.ANSWER);
             return;
         }
 
@@ -478,12 +479,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     }
 
     private void applyFittedText(
-            String boardId,
-            DisplayKey key,
-            Component component,
-            String widthSample,
-            FitPolicy fit,
-            Region region) {
+            String boardId, DisplayKey key, Component component, String widthSample, FitPolicy fit, Region region) {
         LayoutMetrics m = metricsFor(boardId);
 
         displayRegistry.resolveText(key).ifPresent(display -> {
@@ -597,7 +593,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         double halfGap = (cellH * 0.32) / 2.0;
 
-        // these are the only two "centering" knobs that ever matter
         double spawnTy = 0.0;
         double baselineNudge = -cellH * 0.10;
 
@@ -615,7 +610,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         double baseScale = Math.max(0.8, Math.min(6.0, cellH * 1.6));
 
-        // match the factory spawn translation so "write-time" transforms aren't
+        // match the factory spawn translation so write-time transforms aren't
         // fighting spawn-time transforms
         double spawnTy = -cellH * 0.05;
         double baselineNudge = -cellH * 0.10;
@@ -632,19 +627,15 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             double baseScale,
             double spawnTyBlocks,
             double answerHalfGapBlocks,
-            double baselineNudgeBlocks
-
-    )
-
-    {
-    }
+            double baselineNudgeBlocks) {}
 
     // *********************************
     // dynamic load
     // *********************************
 
     private void loadDynamicBoards() {
-        for (Map.Entry<String, DynamicBoardLayout> entry : dynamicStore.loadLayouts().entrySet()) {
+        for (Map.Entry<String, DynamicBoardLayout> entry :
+                dynamicStore.loadLayouts().entrySet()) {
             String boardId = entry.getKey();
             DynamicBoardLayout layout = entry.getValue();
             if (layout == null || layout.worldId() == null) {

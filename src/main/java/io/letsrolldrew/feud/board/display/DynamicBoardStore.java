@@ -1,11 +1,10 @@
 package io.letsrolldrew.feud.board.display;
 
-import org.bukkit.configuration.file.YamlConfiguration;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 // Persists dynamic board metadata so boards remain addressable after restart
 // without this data, boards would lose their layout and players would not be able to
@@ -40,34 +39,30 @@ final class DynamicBoardStore {
                 UUID worldId = UUID.fromString(config.getString(path + "world"));
                 BoardFacing facing = BoardFacing.valueOf(config.getString(path + "facing"));
                 var anchor = new org.joml.Vector3d(
-                    config.getDouble(path + "anchor.x"),
-                    config.getDouble(path + "anchor.y"),
-                    config.getDouble(path + "anchor.z")
-                );
+                        config.getDouble(path + "anchor.x"),
+                        config.getDouble(path + "anchor.y"),
+                        config.getDouble(path + "anchor.z"));
                 DynamicBoardLayout layout = new DynamicBoardLayout(
-                    worldId,
-                    facing,
-                    anchor,
-                    config.getDouble(path + "totalWidth"),
-                    config.getDouble(path + "totalHeight"),
-                    config.getDouble(path + "cellWidth"),
-                    config.getDouble(path + "cellHeight"),
-                    config.getDouble(path + "padX"),
-                    config.getDouble(path + "padY"),
-                    config.getDouble(path + "gapX"),
-                    config.getDouble(path + "gapY"),
-                    config.getDouble(path + "forwardOffset"),
-                    new org.joml.Vector3d(
-                        config.getDouble(path + "minCorner.x"),
-                        config.getDouble(path + "minCorner.y"),
-                        config.getDouble(path + "minCorner.z")
-                    ),
-                    new org.joml.Vector3d(
-                        config.getDouble(path + "maxCorner.x"),
-                        config.getDouble(path + "maxCorner.y"),
-                        config.getDouble(path + "maxCorner.z")
-                    )
-                );
+                        worldId,
+                        facing,
+                        anchor,
+                        config.getDouble(path + "totalWidth"),
+                        config.getDouble(path + "totalHeight"),
+                        config.getDouble(path + "cellWidth"),
+                        config.getDouble(path + "cellHeight"),
+                        config.getDouble(path + "padX"),
+                        config.getDouble(path + "padY"),
+                        config.getDouble(path + "gapX"),
+                        config.getDouble(path + "gapY"),
+                        config.getDouble(path + "forwardOffset"),
+                        new org.joml.Vector3d(
+                                config.getDouble(path + "minCorner.x"),
+                                config.getDouble(path + "minCorner.y"),
+                                config.getDouble(path + "minCorner.z")),
+                        new org.joml.Vector3d(
+                                config.getDouble(path + "maxCorner.x"),
+                                config.getDouble(path + "maxCorner.y"),
+                                config.getDouble(path + "maxCorner.z")));
                 layouts.put(id, layout);
             } catch (Exception ignored) {
                 // malformed entry
