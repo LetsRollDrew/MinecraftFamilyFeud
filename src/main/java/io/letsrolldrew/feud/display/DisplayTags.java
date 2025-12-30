@@ -9,8 +9,7 @@ public final class DisplayTags {
     private static final NamespacedKey KIND = NamespacedKey.fromString("feud:kind");
     private static final NamespacedKey GROUP = NamespacedKey.fromString("feud:group");
 
-    private DisplayTags() {
-    }
+    private DisplayTags() {}
 
     public static void tag(Display display, String kind, String group) {
         if (display == null || MANAGED == null || KIND == null || GROUP == null) {

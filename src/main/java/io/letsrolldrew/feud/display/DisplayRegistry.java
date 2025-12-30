@@ -2,13 +2,6 @@ package io.letsrolldrew.feud.display;
 
 import io.letsrolldrew.feud.display.lookup.BukkitEntityLookup;
 import io.letsrolldrew.feud.display.lookup.EntityLookup;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Display;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.TextDisplay;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.TextDisplay;
 
 public final class DisplayRegistry {
     private final Map<DisplayKey, UUID> entries = new HashMap<>();
@@ -42,7 +41,7 @@ public final class DisplayRegistry {
         this.storeConfig = storeFile == null ? null : new YamlConfiguration();
         if (storeFile != null) {
             if (storeFile.getParentFile() != null) {
-                //data folder exists
+                // data folder exists
                 storeFile.getParentFile().mkdirs();
             }
             loadFromDisk();
@@ -192,7 +191,12 @@ public final class DisplayRegistry {
                 String group = str(map, "group");
                 String id = str(map, "id");
                 String part = str(map, "part");
-                if (worldId == null || entityId == null || namespace == null || group == null || id == null || part == null) {
+                if (worldId == null
+                        || entityId == null
+                        || namespace == null
+                        || group == null
+                        || id == null
+                        || part == null) {
                     changed = true;
                     continue;
                 }
@@ -243,7 +247,7 @@ public final class DisplayRegistry {
         storeConfig.set("entries", raw);
         try {
             if (storeFile.getParentFile() != null) {
-                //data folder exists
+                // data folder exists
                 storeFile.getParentFile().mkdirs();
             }
             storeConfig.save(storeFile);

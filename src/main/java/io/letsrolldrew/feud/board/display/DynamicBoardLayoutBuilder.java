@@ -13,8 +13,7 @@ public final class DynamicBoardLayoutBuilder {
     private static final double DEFAULT_PAD_FRACTION = 0.05;
     private static final double FORWARD_OFFSET = 0.06;
 
-    private DynamicBoardLayoutBuilder() {
-    }
+    private DynamicBoardLayoutBuilder() {}
 
     public static Result build(DisplayBoardSelection selection) {
         if (selection == null || selection.isInvalid()) {
@@ -28,16 +27,8 @@ public final class DynamicBoardLayoutBuilder {
 
         double width;
         double height = Math.abs(a.y - b.y) + 1.0;
-        Vector3d minCorner = new Vector3d(
-            Math.min(a.x, b.x),
-            Math.min(a.y, b.y),
-            Math.min(a.z, b.z)
-        );
-        Vector3d maxCorner = new Vector3d(
-            Math.max(a.x, b.x),
-            Math.max(a.y, b.y),
-            Math.max(a.z, b.z)
-        );
+        Vector3d minCorner = new Vector3d(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
+        Vector3d maxCorner = new Vector3d(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
 
         // width along the horizontal axis depending on facing direction
         if (facing == BoardFacing.NORTH || facing == BoardFacing.SOUTH) {
@@ -77,32 +68,30 @@ public final class DynamicBoardLayoutBuilder {
 
         } else {
             // width runs along Z axis, choose left edge by right-vector sign
-             // if right points negative, left edge is the far side (maxZ + 1)
+            // if right points negative, left edge is the far side (maxZ + 1)
             anchorZ = facing.rightZ() > 0 ? minCorner.z : maxCorner.z + 1.0;
 
             // wall plane X: east is +X face (maxX + 1), west is minX
             anchorX = facing == BoardFacing.EAST ? maxCorner.x + 1.0 : minCorner.x;
-
         }
 
         Vector3d anchor = new Vector3d(anchorX, anchorY, anchorZ);
 
         DynamicBoardLayout layout = new DynamicBoardLayout(
-            worldId,
-            facing,
-            anchor,
-            width,
-            height,
-            cellWidth,
-            cellHeight,
-            padX,
-            padY,
-            gapX,
-            gapY,
-            FORWARD_OFFSET,
-            minCorner,
-            maxCorner
-        );
+                worldId,
+                facing,
+                anchor,
+                width,
+                height,
+                cellWidth,
+                cellHeight,
+                padX,
+                padY,
+                gapX,
+                gapY,
+                FORWARD_OFFSET,
+                minCorner,
+                maxCorner);
         return new Result(layout, null);
     }
 

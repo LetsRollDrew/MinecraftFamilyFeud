@@ -2,11 +2,10 @@ package io.letsrolldrew.feud.board.render;
 
 import io.letsrolldrew.feud.board.layout.BoardLayout10x6;
 import io.letsrolldrew.feud.board.layout.TilePos;
-
 import java.util.HashMap;
 import java.util.Map;
 
-//Holds one TileBuffer per TilePos (10x6)
+// Holds one TileBuffer per TilePos (10x6)
 public final class TileFramebufferStore {
     private final Map<TilePos, TileBuffer> buffers = new HashMap<>();
 

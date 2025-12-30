@@ -4,7 +4,7 @@ import io.letsrolldrew.feud.survey.Survey;
 import java.util.List;
 import java.util.Set;
 
-//Core game control surface for host actions
+// Core game control surface for host actions
 
 public interface GameController {
     void revealSlot(int slotIndex);

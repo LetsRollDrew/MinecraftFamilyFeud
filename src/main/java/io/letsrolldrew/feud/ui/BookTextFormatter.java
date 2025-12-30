@@ -2,7 +2,7 @@ package io.letsrolldrew.feud.ui;
 
 import net.kyori.adventure.text.Component;
 
-//Centralizing text/layout helpers for the host book.
+// Centralizing text/layout helpers for the host book.
 
 public final class BookTextFormatter {
     public static final char NBSP = '\u00A0';
@@ -12,14 +12,13 @@ public final class BookTextFormatter {
 
     private static final int REVEALED_TOKEN_MAX = 5;
 
-    private BookTextFormatter() {
-    }
+    private BookTextFormatter() {}
 
     public static String unrevealedLabel(int slot) {
         return "Reveal" + NBSP + slot;
     }
 
-    //Compact revealed button label: TOKEN + points
+    // Compact revealed button label: TOKEN + points
     public static String formatRevealedLabel(String answer, int points) {
         String token = pickToken(answer);
         if (token.length() > REVEALED_TOKEN_MAX) {
@@ -100,7 +99,6 @@ public final class BookTextFormatter {
 
         return scrubToken(parts[0]);
     }
-
 
     private static String scrubToken(String token) {
         String cleaned = token.replaceAll("[^A-Z0-9]", "");

@@ -13,14 +13,10 @@ import org.junit.jupiter.api.Test;
 
 final class DynamicBoardLayoutBuilderTest {
 
-    private static DisplayBoardSelection sel(BoardFacing facing, double ax, double ay, double az, double bx, double by, double bz) {
+    private static DisplayBoardSelection sel(
+            BoardFacing facing, double ax, double ay, double az, double bx, double by, double bz) {
         return new DisplayBoardSelection(
-            UUID.randomUUID(),
-            new Vector3d(ax, ay, az),
-            new Vector3d(bx, by, bz),
-            facing,
-            new Vector3d(0, 0, 1)
-        );
+                UUID.randomUUID(), new Vector3d(ax, ay, az), new Vector3d(bx, by, bz), facing, new Vector3d(0, 0, 1));
     }
 
     @Test

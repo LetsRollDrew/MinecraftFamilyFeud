@@ -1,8 +1,8 @@
 package io.letsrolldrew.feud.board.display;
 
+import java.util.Collection;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import java.util.Collection;
 
 public interface DisplayBoardPresenter {
     void createBoard(String boardId, Location anchor, Player facingReference);

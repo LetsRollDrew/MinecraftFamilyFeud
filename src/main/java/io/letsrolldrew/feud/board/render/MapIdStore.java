@@ -1,15 +1,14 @@
 package io.letsrolldrew.feud.board.render;
 
 import io.letsrolldrew.feud.board.layout.TilePos;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
-//Persists the TilePos to map id mapping so board maps survive server restarts
+// Persists the TilePos to map id mapping so board maps survive server restarts
 public final class MapIdStore {
     private final File file;
 

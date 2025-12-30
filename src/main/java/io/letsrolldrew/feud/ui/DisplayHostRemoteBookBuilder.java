@@ -2,60 +2,51 @@ package io.letsrolldrew.feud.ui;
 
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 public final class DisplayHostRemoteBookBuilder {
 
-    private DisplayHostRemoteBookBuilder() {
-    }
+    private DisplayHostRemoteBookBuilder() {}
 
     public static ItemStack create(
-        String boardId,
-        Collection<String> boardIds,
-        SurveyRepository surveyRepository,
-        NamespacedKey hostKey,
-        GameController controller
-    ) {
+            String boardId,
+            Collection<String> boardIds,
+            SurveyRepository surveyRepository,
+            NamespacedKey hostKey,
+            GameController controller) {
         if (surveyRepository == null || hostKey == null || controller == null) {
             throw new IllegalArgumentException("surveyRepository/hostKey/controller required");
         }
         String targetId = (boardId == null || boardId.isBlank()) ? "(none)" : boardId;
 
-        HostBookUiBuilder base = new HostBookUiBuilder(
-            "/feud board display remote " + targetId,
-            surveyRepository,
-            null,
-            hostKey
-        );
+        HostBookUiBuilder base =
+                new HostBookUiBuilder("/feud board display remote " + targetId, surveyRepository, null, hostKey);
 
         ItemStack book = base.createBook(
-            controller.slotHoverTexts(),
-            controller.getActiveSurvey(),
-            controller.revealedSlots(),
-            controller.strikeCount(),
-            controller.maxStrikes(),
-            controller.roundPoints(),
-            controller.controllingTeam()
-        );
+                controller.slotHoverTexts(),
+                controller.getActiveSurvey(),
+                controller.revealedSlots(),
+                controller.strikeCount(),
+                controller.maxStrikes(),
+                controller.roundPoints(),
+                controller.controllingTeam());
 
         if (!(book.getItemMeta() instanceof BookMeta meta)) {
             return book;
         }
 
         meta.lore(List.of(
-            Component.text("Display Based", NamedTextColor.GRAY),
-            Component.text("Board: " + targetId, NamedTextColor.GRAY)
-        ));
+                Component.text("Display Based", NamedTextColor.GRAY),
+                Component.text("Board: " + targetId, NamedTextColor.GRAY)));
 
         try {
             meta.title(Component.text("Feud Host Book", NamedTextColor.AQUA));
@@ -76,11 +67,11 @@ public final class DisplayHostRemoteBookBuilder {
         Component header = Component.text("Display Boards", NamedTextColor.GOLD);
         if (boardIds == null || boardIds.isEmpty()) {
             return Component.text()
-                .append(header)
-                .append(Component.newline())
-                .append(Component.newline())
-                .append(Component.text("No boards found", NamedTextColor.GRAY))
-                .build();
+                    .append(header)
+                    .append(Component.newline())
+                    .append(Component.newline())
+                    .append(Component.text("No boards found", NamedTextColor.GRAY))
+                    .build();
         }
 
         List<Component> lines = new ArrayList<>();
@@ -93,8 +84,8 @@ public final class DisplayHostRemoteBookBuilder {
                 continue;
             }
             NamedTextColor color = id.equals(activeId) ? NamedTextColor.GREEN : NamedTextColor.AQUA;
-            Component line = Component.text(id, color)
-                .clickEvent(ClickEvent.runCommand("/feud host book display " + id));
+            Component line =
+                    Component.text(id, color).clickEvent(ClickEvent.runCommand("/feud host book display " + id));
             lines.add(line);
         }
 

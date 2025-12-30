@@ -1,11 +1,9 @@
 package io.letsrolldrew.feud.commands.tree;
 
+import java.util.Arrays;
+import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Objects;
 
 public final class CommandTree {
     private final CommandNode root;

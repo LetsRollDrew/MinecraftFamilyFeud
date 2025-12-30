@@ -28,8 +28,7 @@ public final class DynamicDisplayBoardFactory {
     // hidden background CMD value
     private static final float CMD_HIDDEN = 9001.0f;
 
-    private DynamicDisplayBoardFactory() {
-    }
+    private DynamicDisplayBoardFactory() {}
 
     public static BoardInstance create(String boardId, DynamicBoardLayout layout, DisplayRegistry registry) {
         if (boardId == null || boardId.isBlank() || layout == null || registry == null) {
@@ -102,34 +101,55 @@ public final class DynamicDisplayBoardFactory {
                 double answerOffset = (-(pointsW / 2.0) - (gapW / 2.0)) * visualSign;
                 double pointsOffset = ((answerW / 2.0) + (gapW / 2.0)) * visualSign;
 
-                Location answerLoc = bgLoc.clone().add(
-                    layout.facing().rightX() * answerOffset,
-                    0,
-                    layout.facing().rightZ() * answerOffset
-                );
+                Location answerLoc = bgLoc.clone()
+                        .add(
+                                layout.facing().rightX() * answerOffset,
+                                0,
+                                layout.facing().rightZ() * answerOffset);
 
-                Location pointsLoc = bgLoc.clone().add(
-                    layout.facing().rightX() * pointsOffset,
-                    0,
-                    layout.facing().rightZ() * pointsOffset
-                );
+                Location pointsLoc = bgLoc.clone()
+                        .add(
+                                layout.facing().rightX() * pointsOffset,
+                                0,
+                                layout.facing().rightZ() * pointsOffset);
 
                 // spawn top at CENTER, bottom at CENTER - halfGap
                 Location answerTopLoc = answerLoc.clone();
                 Location answerBotLoc = answerLoc.clone().add(0, -halfGap, 0);
 
                 spawnText(
-                    slot.answerTopKey(), world, answerTopLoc, yaw, layout, registry,
-                    textScale, answerLineWidth, verticalNudge, TextDisplay.TextAlignment.LEFT
-                );
+                        slot.answerTopKey(),
+                        world,
+                        answerTopLoc,
+                        yaw,
+                        layout,
+                        registry,
+                        textScale,
+                        answerLineWidth,
+                        verticalNudge,
+                        TextDisplay.TextAlignment.LEFT);
                 spawnText(
-                    slot.answerBottomKey(), world, answerBotLoc, yaw, layout, registry,
-                    textScale, answerLineWidth, verticalNudge, TextDisplay.TextAlignment.LEFT
-                );
+                        slot.answerBottomKey(),
+                        world,
+                        answerBotLoc,
+                        yaw,
+                        layout,
+                        registry,
+                        textScale,
+                        answerLineWidth,
+                        verticalNudge,
+                        TextDisplay.TextAlignment.LEFT);
                 spawnText(
-                    slot.pointsKey(), world, pointsLoc, yaw, layout, registry,
-                    textScale, pointsLineWidth, verticalNudge, TextDisplay.TextAlignment.RIGHT
-                );
+                        slot.pointsKey(),
+                        world,
+                        pointsLoc,
+                        yaw,
+                        layout,
+                        registry,
+                        textScale,
+                        pointsLineWidth,
+                        verticalNudge,
+                        TextDisplay.TextAlignment.RIGHT);
             }
         }
 
@@ -150,25 +170,23 @@ public final class DynamicDisplayBoardFactory {
     }
 
     private static void spawnBackground(
-        DisplayKey key,
-        World world,
-        Location loc,
-        ItemStack stack,
-        float yaw,
-        DynamicBoardLayout layout,
-        DisplayRegistry registry
-    ) {
+            DisplayKey key,
+            World world,
+            Location loc,
+            ItemStack stack,
+            float yaw,
+            DynamicBoardLayout layout,
+            DisplayRegistry registry) {
         ItemDisplay display = world.spawn(loc, ItemDisplay.class, entity -> {
             entity.setItemStack(stack);
             entity.setBillboard(Display.Billboard.FIXED);
             entity.setRotation(yaw, 0f);
             try {
                 entity.setTransformation(new Transformation(
-                    new Vector3f(0, 0, 0),
-                    new AxisAngle4f(0, 0, 0, 0),
-                    new Vector3f((float) layout.cellWidth(), (float) layout.cellHeight(), 0.01f),
-                    new AxisAngle4f(0, 0, 0, 0)
-                ));
+                        new Vector3f(0, 0, 0),
+                        new AxisAngle4f(0, 0, 0, 0),
+                        new Vector3f((float) layout.cellWidth(), (float) layout.cellHeight(), 0.01f),
+                        new AxisAngle4f(0, 0, 0, 0)));
             } catch (Throwable ignored) {
             }
         });
@@ -180,23 +198,23 @@ public final class DynamicDisplayBoardFactory {
     }
 
     private static void spawnText(
-        DisplayKey key,
-        World world,
-        Location loc,
-        float yaw,
-        DynamicBoardLayout layout,
-        DisplayRegistry registry,
-        double textScale,
-        int lineWidth,
-        double verticalNudge,
-        TextDisplay.TextAlignment alignment
-    ) {
+            DisplayKey key,
+            World world,
+            Location loc,
+            float yaw,
+            DynamicBoardLayout layout,
+            DisplayRegistry registry,
+            double textScale,
+            int lineWidth,
+            double verticalNudge,
+            TextDisplay.TextAlignment alignment) {
         Location spawnLoc = loc.clone();
 
         // BoardSpace.atCellCenter already applied forwardOffset via bgLoc,
         // and answerLoc/pointsLoc are derived from that, so only a tiny nudge is needed.
         double forwardNudge = 0.08;
-        spawnLoc.add(layout.facing().forwardX() * forwardNudge, 0, layout.facing().forwardZ() * forwardNudge);
+        spawnLoc.add(
+                layout.facing().forwardX() * forwardNudge, 0, layout.facing().forwardZ() * forwardNudge);
 
         TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
             entity.setBillboard(Display.Billboard.FIXED);
@@ -217,11 +235,10 @@ public final class DynamicDisplayBoardFactory {
             entity.setLineWidth(lineWidth);
             try {
                 entity.setTransformation(new Transformation(
-                    new Vector3f(0, (float) verticalNudge, 0),
-                    new AxisAngle4f(0, 0, 0, 0),
-                    new Vector3f((float) textScale, (float) textScale, (float) textScale),
-                    new AxisAngle4f(0, 0, 0, 0)
-                ));
+                        new Vector3f(0, (float) verticalNudge, 0),
+                        new AxisAngle4f(0, 0, 0, 0),
+                        new Vector3f((float) textScale, (float) textScale, (float) textScale),
+                        new AxisAngle4f(0, 0, 0, 0)));
             } catch (Throwable ignored) {
             }
         });
