@@ -30,6 +30,20 @@ public final class BoardSpace {
         return new Location(anchor.getWorld(), x, y, z, facing.yaw(), 0f);
     }
 
+    // these map col/row in a DynamicBoardLayout to world space top left anchor + center
+    public static Location atCellCenter(Location anchor, BoardFacing facing, int col, int row, DynamicBoardLayout layout) {
+        double right = (col * layout.cellWidth()) + (layout.cellWidth() / 2.0);
+        double up = -((row * layout.cellHeight()) + (layout.cellHeight() / 2.0));
+        double forward = layout.forwardOffset();
+        return new BoardSpace(anchor, facing).at(right, up, forward);
+    }
+
+    public static Location atCellTopLeft(Location anchor, BoardFacing facing, int col, int row, DynamicBoardLayout layout) {
+        double right = col * layout.cellWidth();
+        double up = -(row * layout.cellHeight());
+        return new BoardSpace(anchor, facing).at(right, up, 0);
+    }
+
     public BoardFacing facing() {
         return facing;
     }

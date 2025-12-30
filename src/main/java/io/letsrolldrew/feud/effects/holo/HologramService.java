@@ -2,12 +2,15 @@ package io.letsrolldrew.feud.effects.holo;
 
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
@@ -18,17 +21,26 @@ import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class HologramService {
     private static final String NAMESPACE = "holo";
     private final Map<String, HologramEntry> hologramsById = new HashMap<>();
     private final DisplayRegistry displayRegistry;
+    private final HologramStore store;
 
     public HologramService(DisplayRegistry displayRegistry) {
+        this(displayRegistry, null);
+    }
+
+    public HologramService(DisplayRegistry displayRegistry, File storeFile) {
         this.displayRegistry = displayRegistry;
+        this.store = new HologramStore(storeFile);
+        loadFromStore();
     }
 
     public boolean exists(String id) {
@@ -70,8 +82,10 @@ public final class HologramService {
             } catch (Throwable ignored) {
             }
         });
+        DisplayTags.tag(display, NAMESPACE, id);
         displayRegistry.register(key, display);
         hologramsById.put(id, new HologramEntry(key, HologramType.TEXT_DISPLAY));
+        store.save(id, HologramType.TEXT_DISPLAY, display.getWorld().getUID(), display.getUniqueId());
     }
 
     public void setText(String id, Component text) {
@@ -101,6 +115,7 @@ public final class HologramService {
             return;
         }
         displayRegistry.remove(entry.key());
+        store.remove(id);
     }
 
     public void spawnItem(String id, Player player, Material material, int customModelData) {
@@ -133,8 +148,10 @@ public final class HologramService {
             } catch (Throwable ignored) {
             }
         });
+        DisplayTags.tag(display, NAMESPACE, id);
         displayRegistry.register(key, display);
         hologramsById.put(id, new HologramEntry(key, HologramType.ITEM_DISPLAY));
+        store.save(id, HologramType.ITEM_DISPLAY, display.getWorld().getUID(), display.getUniqueId());
     }
 
     public void moveItemToPlayer(String id, Player player) {
@@ -163,6 +180,7 @@ public final class HologramService {
     public void clearAll() {
         displayRegistry.removeByNamespace(NAMESPACE);
         hologramsById.clear();
+        store.clear();
     }
 
     private Optional<TextDisplay> resolveText(String id) {
@@ -178,17 +196,41 @@ public final class HologramService {
     private Optional<HologramEntry> resolveEntry(String id, HologramType expectedType) {
         HologramEntry entry = hologramsById.get(id);
         if (entry == null || entry.type() != expectedType) {
-            if (entry != null && entry.type() != expectedType) {
-                hologramsById.remove(id);
-            }
             return Optional.empty();
         }
         var entity = displayRegistry.resolve(entry.key());
         if (entity.isEmpty()) {
-            hologramsById.remove(id);
             return Optional.empty();
         }
         return Optional.of(entry);
+    }
+
+    private void loadFromStore() {
+        hologramsById.clear();
+        for (var entry : store.loadAll().entrySet()) {
+            String id = entry.getKey();
+            HologramType type = entry.getValue().type();
+            DisplayKey key = type == HologramType.ITEM_DISPLAY ? itemKey(id) : textKey(id);
+            hologramsById.put(id, new HologramEntry(key, type));
+
+            Entity entity = resolveEntity(entry.getValue().worldId(), entry.getValue().entityId());
+            if (type == HologramType.TEXT_DISPLAY && entity instanceof TextDisplay) {
+                displayRegistry.register(key, entity);
+            } else if (type == HologramType.ITEM_DISPLAY && entity instanceof ItemDisplay) {
+                displayRegistry.register(key, entity);
+            }
+        }
+    }
+
+    private static Entity resolveEntity(UUID worldId, UUID entityId) {
+        if (worldId == null || entityId == null) {
+            return null;
+        }
+        var world = Bukkit.getWorld(worldId);
+        if (world == null) {
+            return null;
+        }
+        return world.getEntity(entityId);
     }
 
     private DisplayKey textKey(String id) {

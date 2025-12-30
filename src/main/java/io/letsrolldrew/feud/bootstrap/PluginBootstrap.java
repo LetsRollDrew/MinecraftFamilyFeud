@@ -22,7 +22,10 @@ import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.commands.DisplayBoardCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import java.io.File;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -53,6 +56,8 @@ public final class PluginBootstrap {
     private DisplayRegistry displayRegistry;
     private io.letsrolldrew.feud.effects.anim.AnimationService animationService;
     private FeudRootCommand feudRootCommand;
+    private DisplayBoardSelectionStore displayBoardSelectionStore;
+    private DisplayBoardSelectionListener displayBoardSelectionListener;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -74,16 +79,33 @@ public final class PluginBootstrap {
         this.framebufferStore = new TileFramebufferStore();
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
         this.dirtyTracker = new DirtyTracker();
-        this.displayRegistry = new DisplayRegistry();
+        File displayStore = new File(plugin.getDataFolder(), "displays.yml");
+        this.displayRegistry = new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter = new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
-        this.hologramService = new HologramService(displayRegistry);
+        File hologramStore = new File(plugin.getDataFolder(), "holograms.yml");
+        this.hologramService = new HologramService(displayRegistry, hologramStore);
         this.hologramCommands = new HologramCommands(hologramService);
-        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission());
-        this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService);
-        this.boardCommands = new DisplayBoardCommands(displayBoardPresenter, "familyfeud.admin");
+        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
+        File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
+        this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService, dynamicBoardsFile);
+        this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
+        NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
+        this.displayBoardSelectionListener = new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);
+        this.boardCommands = new DisplayBoardCommands(
+            displayBoardPresenter,
+            "familyfeud.admin",
+            displayBoardSelectionListener,
+            displayBoardSelectionStore,
+            gameController,
+            config.hostPermission(),
+            hostRemoteService,
+            surveyRepository,
+            hostKey
+        );
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
+        plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         registerCommands();
     }
 
@@ -189,16 +211,16 @@ public final class PluginBootstrap {
                                 .executes(ctx -> exec(command, ctx.getSource(), "survey", "load", StringArgumentType.getString(ctx, "id"))))
                             .executes(ctx -> exec(command, ctx.getSource(), "survey", "load")))
                         .executes(ctx -> exec(command, ctx.getSource(), "survey")))
-                    .then(literal("host")
-                        .then(literal("book")
-                            .requires(src -> src.getSender().hasPermission(config.hostPermission()))
-                            .then(literal("map").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "map")))
-                            .then(literal("display").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "display")))
-                            .executes(ctx -> exec(command, ctx.getSource(), "host", "book"))))
-                    .then(literal("entity")
-                        .then(literal("book")
-                            .requires(src -> src.getSender().hasPermission(adminPermission))
-                            .executes(ctx -> exec(command, ctx.getSource(), "entity", "book"))))
+	                    .then(literal("host")
+	                        .then(literal("book")
+	                            .requires(src -> src.getSender().hasPermission(config.hostPermission()))
+	                            .then(literal("map").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "map")))
+	                            .then(literal("display")
+	                                .then(wordArg("id")
+	                                    .executes(ctx -> exec(command, ctx.getSource(), "host", "book", "display", StringArgumentType.getString(ctx, "id"))))
+	                                .executes(ctx -> exec(command, ctx.getSource(), "host", "book", "display")))
+	                            .then(literal("cleanup").executes(ctx -> exec(command, ctx.getSource(), "host", "book", "cleanup")))
+	                            .executes(ctx -> exec(command, ctx.getSource(), "host", "book"))))
                     .then(literal("clear")
                         .requires(src -> src.getSender().hasPermission(adminPermission))
                         .then(literal("all")

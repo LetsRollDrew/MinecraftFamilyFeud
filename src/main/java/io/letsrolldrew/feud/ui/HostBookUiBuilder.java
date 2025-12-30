@@ -77,6 +77,13 @@ public final class HostBookUiBuilder {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         BookTagger.tagHostRemote(meta, hostKey);
+        try {
+            meta.title(titleComponent());
+            meta.author(authorComponent());
+        } catch (Throwable ignored) {
+            meta.setTitle(titleString());
+            meta.setAuthor("Family Feud");
+        }
         meta.pages(adventureBook.pages());
         book.setItemMeta(meta);
         return book;

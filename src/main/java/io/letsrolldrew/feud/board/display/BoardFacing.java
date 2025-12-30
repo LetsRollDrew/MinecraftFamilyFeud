@@ -1,10 +1,10 @@
 package io.letsrolldrew.feud.board.display;
 
 public enum BoardFacing {
-    NORTH(180f, -1, 0),
-    EAST(-90f, 0, 1),
-    SOUTH(0f, 1, 0),
-    WEST(90f, 0, -1);
+    NORTH(180f, 0, -1),
+    EAST(-90f, 1, 0),
+    SOUTH(0f, 0, 1),
+    WEST(90f, -1, 0);
 
     private final float yaw;
     private final double forwardX;
@@ -29,11 +29,11 @@ public enum BoardFacing {
     }
 
     public double rightX() {
-        return forwardZ;
+        return -forwardZ;
     }
 
     public double rightZ() {
-        return -forwardX;
+        return forwardX;
     }
 
     public static BoardFacing fromYaw(float yawDeg) {

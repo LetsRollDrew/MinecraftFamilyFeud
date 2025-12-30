@@ -23,7 +23,7 @@ public record BoardLayout(
             0.25,
             3.2f,
             1.0f,
-            1.0f,
+            0.01f,//thin thickness to prevent text z-fighting
             0.7f,
             0.02
         );

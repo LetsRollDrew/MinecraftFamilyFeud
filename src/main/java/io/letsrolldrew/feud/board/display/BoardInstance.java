@@ -8,12 +8,22 @@ public final class BoardInstance {
     private final Location anchor;
     private final float yaw;
     private final List<SlotInstance> slots;
+    private final DynamicBoardLayout dynamicLayout;
 
     public BoardInstance(String boardId, Location anchor, float yaw, List<SlotInstance> slots) {
         this.boardId = boardId;
         this.anchor = anchor;
         this.yaw = yaw;
         this.slots = slots;
+        this.dynamicLayout = null;
+    }
+
+    public BoardInstance(String boardId, Location anchor, float yaw, List<SlotInstance> slots, DynamicBoardLayout dynamicLayout) {
+        this.boardId = boardId;
+        this.anchor = anchor;
+        this.yaw = yaw;
+        this.slots = slots;
+        this.dynamicLayout = dynamicLayout;
     }
 
     public String boardId() {
@@ -30,5 +40,9 @@ public final class BoardInstance {
 
     public List<SlotInstance> slots() {
         return slots;
+    }
+
+    public DynamicBoardLayout dynamicLayout() {
+        return dynamicLayout;
     }
 }

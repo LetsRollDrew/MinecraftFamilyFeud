@@ -14,7 +14,7 @@ public final class HostHandler implements CommandHandler {
 
     @Override
     public boolean handle(CommandContext context, String[] remainingArgs) {
-        String flavor = remainingArgs.length >= 1 ? remainingArgs[0] : "";
+        String flavor = remainingArgs.length == 0 ? "" : String.join(" ", remainingArgs);
         return delegate.apply(context, flavor);
     }
 }

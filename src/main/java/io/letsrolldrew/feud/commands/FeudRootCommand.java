@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
@@ -14,9 +15,9 @@ import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.commands.SurveyCommands;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.commands.handlers.BoardHandler;
 import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
-import io.letsrolldrew.feud.commands.handlers.EntityBookHandler;
 import io.letsrolldrew.feud.commands.handlers.HelpHandler;
 import io.letsrolldrew.feud.commands.handlers.HoloHandler;
 import io.letsrolldrew.feud.commands.handlers.HostHandler;
@@ -172,7 +173,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud holo item spawn|move|remove ...");
         sender.sendMessage("/feud holo list");
         sender.sendMessage("/feud clear all - remove all display entities");
-        sender.sendMessage("/feud entity book - dev book with entity commands");
+        sender.sendMessage("/feud host book cleanup - cleanup remote");
         return true;
     }
 
@@ -215,22 +216,26 @@ public final class FeudRootCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean handleHostBook(CommandSender sender, String flavor) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the host book.");
-            return true;
-        }
-        if (!player.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to use this.");
-            return true;
-        }
-        switch (flavor) {
-            case "map" -> giveMapBook(player);
-            case "display" -> giveDisplayBook(player);
-            default -> giveSelectorBook(player);
-        }
-        return true;
-    }
+	    private boolean handleHostBook(CommandSender sender, String flavor) {
+	        if (!(sender instanceof Player player)) {
+	            sender.sendMessage("Only players can receive the host book.");
+	            return true;
+	        }
+	        if (!player.hasPermission(hostPermission)) {
+	            sender.sendMessage("You must be the host to use this.");
+	            return true;
+	        }
+	        String raw = flavor == null ? "" : flavor.trim();
+	        String head = raw.isBlank() ? "" : raw.split("\\s+", 2)[0].toLowerCase();
+	        String tail = raw.isBlank() ? "" : raw.replaceFirst("^\\S+\\s*", "");
+	        switch (head) {
+	            case "map" -> giveMapBook(player);
+	            case "display" -> giveDisplayBook(player, tail);
+	            case "cleanup" -> giveCleanupBook(player);
+	            default -> giveSelectorBook(player);
+	        }
+	        return true;
+	    }
 
     private void giveOrReplaceHostBook(Player player) {
         var fresh = hostBookUiBuilder.createBook(
@@ -250,14 +255,15 @@ public final class FeudRootCommand implements CommandExecutor {
             sender.sendMessage("Only players can receive the entity book.");
             return true;
         }
-        if (!player.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to use this.");
-            return true;
-        }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.setTitle("Entity Remote");
-        meta.setAuthor("FamilyFeud");
+        try {
+            meta.title(Component.text("Cleanup Remote", NamedTextColor.GRAY));
+            meta.author(Component.text("FamilyFeud", NamedTextColor.GRAY));
+        } catch (Throwable ignored) {
+            meta.setTitle("Cleanup Remote");
+            meta.setAuthor("FamilyFeud");
+        }
         Component page1 = Component.text()
             .append(button("Board Create (demo)", "/feud board create demo"))
             .append(Component.newline())
@@ -275,19 +281,22 @@ public final class FeudRootCommand implements CommandExecutor {
             .append(button("Clear Displays", "/feud clear all"))
             .build();
         Book adventureBook = BookFactory.create(
-            Component.text("Entity Remote"),
+            Component.text("Cleanup Remote"),
             Component.text("FamilyFeud"),
             java.util.List.of(page1, page2)
         );
         meta.pages(adventureBook.pages());
         if (hostBookUiBuilder != null) {
-            // reuse host tag helper to keep consistency on dev books if desired
             io.letsrolldrew.feud.ui.BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
         }
         book.setItemMeta(meta);
         player.getInventory().addItem(book);
-        player.sendMessage("Entity book given.");
+        player.sendMessage("Cleanup book given.");
         return true;
+    }
+
+    private void giveCleanupBook(Player player) {
+        handleEntityBook(player);
     }
 
     private Component button(String label, String command) {
@@ -307,16 +316,30 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
         int removed = displayRegistry.removeAll();
+        removed += removeTaggedDisplays("board");
         displayBoardPresenter.clearAll();
         hologramService.clearAll();
         sender.sendMessage("Cleared " + removed + " displays");
         return true;
     }
 
+    private int removeTaggedDisplays(String kind) {
+        int removed = 0;
+        for (var world : plugin.getServer().getWorlds()) {
+            for (org.bukkit.entity.Display display : world.getEntitiesByClass(org.bukkit.entity.Display.class)) {
+                if (DisplayTags.isManaged(display, kind)) {
+                    display.remove();
+                    removed++;
+                }
+            }
+        }
+        return removed;
+    }
+
     private void giveSelectorBook(Player player) {
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        meta.setTitle("Host Remote");
+        meta.setTitle("Remote Selector");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
             .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
@@ -324,6 +347,8 @@ public final class FeudRootCommand implements CommandExecutor {
             .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
             .append(Component.newline()).append(Component.newline())
             .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
+            .append(Component.newline()).append(Component.newline())
+            .append(buttonUnderlined("Cleanup Remote", "/feud host book cleanup"))
             .build();
         Book adventureBook = BookFactory.create(
             Component.text("Host Remote"),
@@ -351,29 +376,42 @@ public final class FeudRootCommand implements CommandExecutor {
         );
         if (fresh.getItemMeta() instanceof BookMeta meta) {
             meta.lore(java.util.List.of(Component.text("Map Based", NamedTextColor.GRAY)));
+            try {
+                meta.title(Component.text("Feud Host Book", NamedTextColor.GOLD));
+                meta.author(Component.text("Family Feud", NamedTextColor.GOLD));
+            } catch (Throwable ignored) {
+                meta.setTitle("Feud Host Book");
+                meta.setAuthor("Family Feud");
+            }
             fresh.setItemMeta(meta);
         }
         hostRemoteService.giveOrReplace(player, fresh);
         player.sendMessage("Map board remote given.");
     }
 
-    private void giveDisplayBook(Player player) {
-        var fresh = displayHostBookUiBuilder.createBook(
-            gameController.slotHoverTexts(),
-            gameController.getActiveSurvey(),
-            gameController.revealedSlots(),
-            gameController.strikeCount(),
-            gameController.maxStrikes(),
-            gameController.roundPoints(),
-            gameController.controllingTeam()
-        );
-        if (fresh.getItemMeta() instanceof BookMeta meta) {
-            meta.lore(java.util.List.of(Component.text("Display Based", NamedTextColor.GRAY)));
-            fresh.setItemMeta(meta);
+	    private void giveDisplayBook(Player player) {
+	        giveDisplayBook(player, "");
+	    }
+
+	    private void giveDisplayBook(Player player, String boardId) {
+        java.util.List<String> ids = new java.util.ArrayList<>(displayBoardPresenter.listBoards());
+        java.util.Collections.sort(ids);
+
+        String target = boardId == null ? "" : boardId.trim();
+        if (target.isBlank() && !ids.isEmpty()) {
+            target = ids.get(0);
         }
+
+        ItemStack fresh = DisplayHostRemoteBookBuilder.create(
+            target,
+            ids,
+            surveyRepository,
+            hostBookUiBuilder.getHostKey(),
+            gameController
+        );
         hostRemoteService.giveOrReplace(player, fresh);
-        player.sendMessage("Display board remote given.");
-    }
+        player.sendMessage(ids.isEmpty() ? "Display remote (no boards yet)" : "Display remote: " + target);
+	    }
 
     private static String[] tail(String[] args, int start) {
         if (start >= args.length) {
@@ -399,7 +437,6 @@ public final class FeudRootCommand implements CommandExecutor {
         var boardHandler = new BoardHandler((ctx, remaining) -> handleBoard(ctx.sender(), prepend("board", remaining)));
         var surveyHandler = new SurveyHandler((ctx, remaining) -> surveyCommands.handle(ctx.sender(), remaining));
         var hostHandler = new HostHandler((ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
-        var entityBookHandler = new EntityBookHandler(ctx -> handleEntityBook(ctx.sender()));
 
         CommandNode root = new CommandNode("root", null, false, versionHandler);
 
@@ -418,10 +455,6 @@ public final class FeudRootCommand implements CommandExecutor {
         CommandNode host = new CommandNode("host");
         host.addChild(new CommandNode("book", null, false, hostHandler));
         root.addChild(host);
-
-        CommandNode entity = new CommandNode("entity");
-        entity.addChild(new CommandNode("book", null, false, entityBookHandler));
-        root.addChild(entity);
 
         return new CommandTree(root, helpHandler);
     }
