@@ -7,6 +7,7 @@ import io.letsrolldrew.feud.effects.anim.AnimationService;
 import io.letsrolldrew.feud.effects.anim.AnimationStep;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -36,6 +37,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
     private final Map<String, BoardInstance> boards = new HashMap<>();
     private final Map<String, BoardInstance> dynamicBoards = new HashMap<>();
+    private final Map<String, LayoutMetrics> metricsByBoardId = new HashMap<>();
     private final BoardLayout layout = BoardLayout.defaultLayout();
     private final DisplayRegistry displayRegistry;
     private final AnimationService animationService;
@@ -93,6 +95,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
 
         boards.put(boardId, new BoardInstance(boardId, anchor.clone(), facing.yaw(), slots));
+        metricsByBoardId.put(boardId, metricsFromStaticLayout());
     }
 
     @Override
@@ -100,12 +103,14 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         BoardInstance instance = boards.remove(boardId);
         if (instance != null) {
             removeSlotEntities(instance.slots());
+            metricsByBoardId.remove(boardId);
             return;
         }
         BoardInstance dyn = dynamicBoards.remove(boardId);
         if (dyn != null) {
             removeSlotEntities(dyn.slots());
             dynamicStore.removeLayout(boardId);
+            metricsByBoardId.remove(boardId);
         }
     }
 
@@ -135,10 +140,10 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             new AnimationStep(0, () -> setBackgroundCmd(slot.backgroundKey(), CMD_FLASH)),
             new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_HIDDEN)),
             new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_FLASH)),
-            new AnimationStep(2, () -> {
-                setBackgroundCmd(slot.backgroundKey(), CMD_REVEALED);
-                setAnswerText(slot.answerKey(), answer);
-                setPointsText(slot.pointsKey(), points);
+            new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_REVEALED)),
+            new AnimationStep(0, () -> {
+                setAnswerText(boardId, slot.answerKey(), answer);
+                setPointsText(boardId, slot.pointsKey(), points);
             })
         );
         animationService.schedule(slot.backgroundKey(), steps);
@@ -167,6 +172,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
         dynamicBoards.clear();
         dynamicStore.clear();
+        metricsByBoardId.clear();
     }
 
     private SlotInstance buildSlot(String boardId, int slotIndex) {
@@ -306,14 +312,14 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         });
     }
 
-    private void setAnswerText(DisplayKey key, String text) {
+    private void setAnswerText(String boardId, DisplayKey key, String text) {
         Component value = text == null ? Component.empty() : Component.text(text);
-        setText(key, value);
+        applyAnswerText(boardId, key, value);
     }
 
-    private void setPointsText(DisplayKey key, Integer points) {
+    private void setPointsText(String boardId, DisplayKey key, Integer points) {
         String value = points == null ? "" : Integer.toString(points);
-        setText(key, Component.text(value));
+        applyPointsText(boardId, key, Component.text(value));
     }
 
     private void clearText(DisplayKey key) {
@@ -326,14 +332,79 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         });
     }
 
-    private void setText(DisplayKey key, Component component) {
+    private void applyPointsText(String boardId, DisplayKey key, Component component) {
+        LayoutMetrics metrics = metricsFor(boardId);
         displayRegistry.resolveText(key).ifPresent(display -> {
+            display.setAlignment(TextDisplay.TextAlignment.RIGHT);
+            String plain = PlainTextComponentSerializer.plainText().serialize(component).trim();
+
+            double regionBlocks = Math.max(0.01, metrics.pointsWidth() - (2.0 * metrics.pad()));
+            double regionPx = regionBlocks * metrics.pxPerBlock();
+
+            double desiredScale = metrics.baseScale();
+            if (!plain.isEmpty()) {
+                double estimatedPx = plain.length() * 7.0;
+                double maxScaleToFit = regionPx / Math.max(1.0, estimatedPx);
+                desiredScale = Math.min(desiredScale, maxScaleToFit);
+                desiredScale = Math.max(desiredScale, metrics.baseScale() * 0.45);
+            }
+
+            float scale = (float) desiredScale;
+            setUniformScale(display, scale);
+
+            int lineWidthPx = (int) Math.max(1, Math.round(regionPx / Math.max(0.001, scale)));
+            display.setLineWidth(lineWidthPx);
             display.text(component);
             try {
                 display.setTextOpacity((byte) 0xFF);
             } catch (Throwable ignored) {
             }
         });
+    }
+
+    private void applyAnswerText(String boardId, DisplayKey key, Component component) {
+        LayoutMetrics metrics = metricsFor(boardId);
+        displayRegistry.resolveText(key).ifPresent(display -> {
+            String plain = PlainTextComponentSerializer.plainText().serialize(component).trim();
+            boolean multiWord = plain.contains(" ");
+            display.setAlignment(TextDisplay.TextAlignment.LEFT);
+
+            double regionBlocks = Math.max(0.01, metrics.answerWidth() - (2.0 * metrics.pad()));
+            double regionPx = regionBlocks * metrics.pxPerBlock();
+
+            double desiredScale = metrics.baseScale();
+            if (!multiWord && !plain.isEmpty()) {
+                double estimatedPx = plain.length() * 7.0;
+                double maxScaleToFit = regionPx / Math.max(1.0, estimatedPx);
+                desiredScale = Math.min(desiredScale, maxScaleToFit);
+                desiredScale = Math.max(desiredScale, metrics.baseScale() * 0.45);
+            }
+
+            float scale = (float) desiredScale;
+            setUniformScale(display, scale);
+
+            int lineWidthPx = (int) Math.max(1, Math.round(regionPx / Math.max(0.001, scale)));
+            display.setLineWidth(lineWidthPx);
+
+            display.text(component);
+            try {
+                display.setTextOpacity((byte) 0xFF);
+            } catch (Throwable ignored) {
+            }
+        });
+    }
+
+    private static void setUniformScale(TextDisplay display, float uniformScale) {
+        try {
+            Transformation current = display.getTransformation();
+            display.setTransformation(new Transformation(
+                new Vector3f(current.getTranslation()),
+                new AxisAngle4f(current.getLeftRotation()),
+                new Vector3f(uniformScale, uniformScale, uniformScale),
+                new AxisAngle4f(current.getRightRotation())
+            ));
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override
@@ -348,6 +419,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         if (instance != null) {
             dynamicBoards.put(boardId, instance);
             dynamicStore.saveLayout(boardId, dynamicLayout);
+            metricsByBoardId.put(boardId, metricsFromDynamicLayout(dynamicLayout));
         }
         return instance;
     }
@@ -371,10 +443,12 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, layout, displayRegistry);
             if (instance != null) {
                 dynamicBoards.put(instance.boardId(), instance);
+                metricsByBoardId.put(boardId, metricsFromDynamicLayout(layout));
             }
         }
     }
 
+    //might no longer need
     private List<SlotInstance> buildDynamicSlots(String boardId) {
         List<SlotInstance> slots = new ArrayList<>(8);
         int idx = 0;
@@ -385,5 +459,43 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
             }
         }
         return slots;
+    }
+
+    private LayoutMetrics metricsFor(String boardId) {
+        LayoutMetrics metrics = metricsByBoardId.get(boardId);
+        if (metrics != null) {
+            return metrics;
+        }
+        return metricsFromStaticLayout();
+    }
+
+    // genuinely just a fallback for above ^ if something goes wrong
+    // just gets the default layout metrics
+    private LayoutMetrics metricsFromStaticLayout() {
+        BoardLayout layout = BoardLayout.defaultLayout();
+        double cellW = layout.slotWidth();
+        double cellH = layout.slotHeight();
+        double pointsW = cellW * 0.25;
+        double gapW = cellW * 0.03;
+        double padW = cellW * 0.06;
+        double answerW = cellW - pointsW - gapW;
+        double textScale = layout.textScale();
+        double pxPerBlock = 90.0;
+        return new LayoutMetrics(answerW, pointsW, padW, pxPerBlock, textScale);
+    }
+
+    private LayoutMetrics metricsFromDynamicLayout(DynamicBoardLayout layout) {
+        double cellW = layout.cellWidth();
+        double cellH = layout.cellHeight();
+        double pointsW = cellW * 0.25;
+        double gapW = cellW * 0.03;
+        double padW = cellW * 0.06;
+        double answerW = cellW - pointsW - gapW;
+        double textScale = Math.max(0.8, Math.min(6.0, cellH * 1.6));
+        double pxPerBlock = 90.0;
+        return new LayoutMetrics(answerW, pointsW, padW, pxPerBlock, textScale);
+    }
+
+    private record LayoutMetrics(double answerWidth, double pointsWidth, double pad, double pxPerBlock, double baseScale) {
     }
 }

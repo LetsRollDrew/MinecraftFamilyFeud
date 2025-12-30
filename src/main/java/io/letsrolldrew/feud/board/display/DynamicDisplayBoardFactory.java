@@ -64,6 +64,19 @@ public final class DynamicDisplayBoardFactory {
         // flags that the columns instead of 0 1 are morel like 1 0
         boolean flip = dot > 0;
 
+        // give answer 75% share and points 25% regions in each cell
+        double cellW = layout.cellWidth();
+        double cellH = layout.cellHeight();
+        double pointsW = cellW * 0.25;
+        double gapW = cellW * 0.03;
+        double padW = cellW * 0.06;
+        double answerW = cellW - pointsW - gapW;
+        double textScale = Math.max(0.8, Math.min(6.0, cellH * 1.6));
+        double verticalNudge = -cellH * 0.05; // NOTE: fix this scaling sending too high
+        double pxPerBlock = 30.0;
+        int answerLineWidth = (int) Math.max(1, Math.round((answerW - (2 * padW)) * pxPerBlock / textScale));
+        int pointsLineWidth = (int) Math.max(1, Math.round((pointsW - (2 * padW)) * pxPerBlock / textScale));
+
         // column based
         for (int col = 0; col < 2; col++) {
             for (int row = 0; row < 4; row++) {
@@ -75,22 +88,25 @@ public final class DynamicDisplayBoardFactory {
                 Location bgLoc = BoardSpace.atCellCenter(anchor, layout.facing(), col, row, layout);
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, yaw, layout, registry);
 
-                // get sizing from cell dimensions
-                double availableWidth = layout.cellWidth();
-                double pointsWidth = availableWidth * 0.25;
-                double answerWidth = availableWidth - pointsWidth;
-                int answerLineWidth = (int) Math.max(48, answerWidth * 22);
-                int pointsLineWidth = (int) Math.max(24, pointsWidth * 22);
-                double textScale = Math.max(0.6, Math.min(4.0, layout.cellHeight() * 0.9));
+                double visualSign = flip ? -1.0 : 1.0;
+                // centers of the answer (left) and points (right) regions, relative to the cell center
+                double answerOffset = (-(pointsW / 2.0) - (gapW / 2.0)) * visualSign;
+                double pointsOffset = ((answerW / 2.0) + (gapW / 2.0)) * visualSign;
 
-                // positions: answer left, points right in board space
-                double answerShift = layout.cellWidth() * 0.25; // move answer left, issue might be negative later
-                double pointsShift = -layout.cellWidth() * 0.25; // move poitns right, issue ^
-                Location answerLoc = bgLoc.clone().add(layout.facing().rightX() * answerShift, 0, layout.facing().rightZ() * -answerShift);
-                Location pointsLoc = bgLoc.clone().add(layout.facing().rightX() * pointsShift, 0, layout.facing().rightZ() * -pointsShift);
+                Location answerLoc = bgLoc.clone().add(
+                    layout.facing().rightX() * answerOffset,
+                    0,
+                    layout.facing().rightZ() * answerOffset
+                );
 
-                spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, TextDisplay.TextAlignment.LEFT);
-                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, TextDisplay.TextAlignment.RIGHT);
+                Location pointsLoc = bgLoc.clone().add(
+                    layout.facing().rightX() * pointsOffset,
+                    0,
+                    layout.facing().rightZ() * pointsOffset
+                );
+
+                spawnText(slot.answerKey(), world, answerLoc, yaw, layout, registry, textScale, answerLineWidth, verticalNudge, TextDisplay.TextAlignment.LEFT);
+                spawnText(slot.pointsKey(), world, pointsLoc, yaw, layout, registry, textScale, pointsLineWidth, verticalNudge, TextDisplay.TextAlignment.RIGHT);
             }
         }
 
@@ -148,6 +164,7 @@ public final class DynamicDisplayBoardFactory {
         DisplayRegistry registry,
         double textScale,
         int lineWidth,
+        double verticalNudge,
         TextDisplay.TextAlignment alignment
     ) {
         Location spawnLoc = loc.clone();
@@ -160,7 +177,9 @@ public final class DynamicDisplayBoardFactory {
             entity.setShadowed(true);
             entity.setSeeThrough(false);
             try {
-                entity.setBackgroundColor(Color.fromARGB(0));
+                //entity.setBackgroundColor(Color.fromARGB(0)); //no background
+                entity.setDefaultBackground(false); // NOTE: debugging to view boundaries removing later
+                entity.setBackgroundColor(Color.fromARGB(0x80FF00FF)); // NOTE:  ^
             } catch (Throwable ignored) {
             }
             try {
@@ -173,7 +192,7 @@ public final class DynamicDisplayBoardFactory {
             entity.setLineWidth(lineWidth);
             try {
                 entity.setTransformation(new Transformation(
-                    new Vector3f(0, 0, 0),
+                    new Vector3f(0, (float) verticalNudge, 0),
                     new AxisAngle4f(0, 0, 0, 0),
                     new Vector3f((float) textScale, (float) textScale, (float) textScale),
                     new AxisAngle4f(0, 0, 0, 0)
