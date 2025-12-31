@@ -9,11 +9,21 @@ public final class TeamCommands {
     private final TeamService teamService;
     private final String hostPermission;
     private final String adminPermission;
+    private final io.letsrolldrew.feud.effects.buzz.BuzzerCommands buzzerCommands;
 
     public TeamCommands(TeamService teamService, String hostPermission, String adminPermission) {
+        this(teamService, hostPermission, adminPermission, null);
+    }
+
+    public TeamCommands(
+            TeamService teamService,
+            String hostPermission,
+            String adminPermission,
+            io.letsrolldrew.feud.effects.buzz.BuzzerCommands buzzerCommands) {
         this.teamService = Objects.requireNonNull(teamService, "teamService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
+        this.buzzerCommands = buzzerCommands;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -31,6 +41,7 @@ public final class TeamCommands {
             case "info" -> handleInfo(sender);
             case "reset" -> handleReset(sender);
             case "set" -> handleSet(sender, args);
+            case "buzzer" -> handleBuzzer(sender, args);
             default -> help(sender);
         }
         return true;
@@ -85,6 +96,7 @@ public final class TeamCommands {
         sender.sendMessage("/feud team info");
         sender.sendMessage("/feud team reset");
         sender.sendMessage("/feud team set <red|blue> name <new-name>");
+        sender.sendMessage("/feud team buzzer bind|clear|test <red|blue>");
         return true;
     }
 
@@ -98,6 +110,24 @@ public final class TeamCommands {
         }
 
         return sender.hasPermission(adminPermission);
+    }
+
+    private void handleBuzzer(CommandSender sender, String[] args) {
+        if (buzzerCommands == null) {
+            sender.sendMessage("Buzzer commands are not available");
+            return;
+        }
+        String[] tail = tail(args, 1);
+        buzzerCommands.handleTeamBuzzer(sender, tail);
+    }
+
+    private String[] tail(String[] args, int start) {
+        if (args == null || start >= args.length) {
+            return new String[0];
+        }
+        String[] out = new String[args.length - start];
+        System.arraycopy(args, start, out, 0, args.length - start);
+        return out;
     }
 
     private String formatTeamLine(TeamId team) {
