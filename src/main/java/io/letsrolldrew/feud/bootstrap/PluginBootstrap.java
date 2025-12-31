@@ -24,6 +24,8 @@ import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.effects.timer.TimerService;
+import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
+import io.letsrolldrew.feud.effects.buzz.BuzzerService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
@@ -70,6 +72,8 @@ public final class PluginBootstrap {
     private TimerPanelPresenter timerPanelPresenter;
     private TimerService timerService;
     private TimerCommands timerCommands;
+    private BuzzerService buzzerService;
+    private BuzzerCommands buzzerCommands;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -81,7 +85,6 @@ public final class PluginBootstrap {
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
         this.teamService = new TeamService();
-        this.teamCommands = new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin");
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
         this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
@@ -100,6 +103,15 @@ public final class PluginBootstrap {
         this.timerService = new TimerService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin), System::currentTimeMillis, 20);
         this.timerCommands = new TimerCommands(timerService, config.hostPermission(), "familyfeud.admin");
+        this.buzzerService = new BuzzerService(
+                new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin),
+                System::currentTimeMillis,
+                teamService,
+                12_000L,
+                1_000L);
+        this.buzzerCommands = new BuzzerCommands(buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
+        this.teamCommands =
+                new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
@@ -176,6 +188,7 @@ public final class PluginBootstrap {
                 teamService,
                 scorePanelPresenter,
                 timerCommands,
+                buzzerCommands,
                 displayRegistry);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
@@ -264,6 +277,9 @@ public final class PluginBootstrap {
                         .then(literal("team")
                                 .then(greedyArgs("rest", command, "team"))
                                 .executes(ctx -> exec(command, ctx.getSource(), "team")))
+                        .then(literal("buzz")
+                                .then(greedyArgs("rest", command, "buzz"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "buzz")))
                         .then(literal("timer")
                                 .then(greedyArgs("rest", command, "timer"))
                                 .executes(ctx -> exec(command, ctx.getSource(), "timer")))

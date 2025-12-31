@@ -68,4 +68,15 @@ final class FeudCommandDispatchTest {
         String msg = console.nextMessage().toLowerCase();
         assertTrue(msg.contains("timer"));
     }
+
+    @Test
+    void buzzCommandIsReachable() {
+        ConsoleCommandSenderMock console = server.getConsoleSender();
+
+        boolean handled = server.dispatchCommand(console, "feud buzz reset");
+
+        assertTrue(handled);
+        String msg = console.nextMessage().toLowerCase();
+        assertTrue(msg.contains("buzz"));
+    }
 }
