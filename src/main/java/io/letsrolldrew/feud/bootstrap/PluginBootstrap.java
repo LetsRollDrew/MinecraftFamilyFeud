@@ -20,12 +20,13 @@ import io.letsrolldrew.feud.config.PluginConfig;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
+import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
+import io.letsrolldrew.feud.effects.buzz.BuzzerListener;
+import io.letsrolldrew.feud.effects.buzz.BuzzerService;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.effects.timer.TimerService;
-import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
-import io.letsrolldrew.feud.effects.buzz.BuzzerService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
@@ -74,6 +75,7 @@ public final class PluginBootstrap {
     private TimerCommands timerCommands;
     private BuzzerService buzzerService;
     private BuzzerCommands buzzerCommands;
+    private BuzzerListener buzzerListener;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -109,9 +111,10 @@ public final class PluginBootstrap {
                 teamService,
                 12_000L,
                 1_000L);
-        this.buzzerCommands = new BuzzerCommands(buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
-        this.teamCommands =
-                new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
+        this.buzzerCommands =
+                new BuzzerCommands(buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
+        this.teamCommands = new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
+        this.buzzerListener = new BuzzerListener(buzzerService, teamService);
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
@@ -142,6 +145,7 @@ public final class PluginBootstrap {
                 scorePanelPresenter);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
         registerCommands();
     }
 
