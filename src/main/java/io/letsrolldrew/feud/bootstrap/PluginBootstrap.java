@@ -154,7 +154,8 @@ public final class PluginBootstrap {
                 surveyRepository,
                 hostKey,
                 teamService,
-                scorePanelPresenter);
+                scorePanelPresenter,
+                timerPanelPresenter);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);

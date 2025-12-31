@@ -286,24 +286,28 @@ public final class HostBookUiBuilder {
 
         Component spawnButtons = Component.empty()
                 .append(buttonRunCommand(
-                        "B", "/feud board display dynamic board1", "Spawn Board", NamedTextColor.BLUE, true))
+                        "B", "/feud board display selection board board1", "Spawn Board", NamedTextColor.BLUE, true))
                 .append(Component.space())
                 .append(buttonRunCommand(
                         "SPR",
-                        "/feud board display dynamic board1",
+                        "/feud board display selection panels board1",
                         "Spawn Score Panel (Red)",
                         NamedTextColor.BLUE,
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
                         "SPB",
-                        "/feud board display dynamic board1",
+                        "/feud board display selection panels board1",
                         "Spawn Score Panel (Blue)",
                         NamedTextColor.BLUE,
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
-                        "T", "/feud board display dynamic board1", "Spawn Timer Panel", NamedTextColor.BLUE, true));
+                        "T",
+                        "/feud board display selection timer board1",
+                        "Spawn Timer Panel",
+                        NamedTextColor.BLUE,
+                        true));
 
         Component teamsLabel = Component.text("Buzzer:", NamedTextColor.GRAY);
 

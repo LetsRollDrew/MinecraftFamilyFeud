@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DynamicBoardLayoutBuilder;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
@@ -29,6 +30,7 @@ public final class DisplayBoardCommands {
     private final NamespacedKey hostKey;
     private final TeamService teamService;
     private final ScorePanelPresenter scorePanelPresenter;
+    private final TimerPanelPresenter timerPanelPresenter;
 
     public DisplayBoardCommands(
             DisplayBoardPresenter presenter,
@@ -41,7 +43,8 @@ public final class DisplayBoardCommands {
             SurveyRepository surveyRepository,
             NamespacedKey hostKey,
             TeamService teamService,
-            ScorePanelPresenter scorePanelPresenter) {
+            ScorePanelPresenter scorePanelPresenter,
+            TimerPanelPresenter timerPanelPresenter) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
@@ -53,6 +56,7 @@ public final class DisplayBoardCommands {
         this.hostKey = hostKey;
         this.teamService = teamService;
         this.scorePanelPresenter = scorePanelPresenter;
+        this.timerPanelPresenter = timerPanelPresenter;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -72,6 +76,7 @@ public final class DisplayBoardCommands {
         switch (action) {
             case "create" -> handleCreate(sender, args);
             case "dynamic" -> handleCreateDynamic(sender, args);
+            case "selection" -> handleSelectionSpawn(sender, args);
             case "list" -> handleList(sender);
             case "remove", "delete" -> handleRemove(sender, args);
             case "wand", "selector" -> handleWand(sender);
@@ -270,6 +275,67 @@ public final class DisplayBoardCommands {
         }
         presenter.destroyBoard(args[1]);
         sender.sendMessage("Board '" + args[1] + "' removed.");
+    }
+
+    private void handleSelectionSpawn(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can spawn from a selection");
+            return;
+        }
+        if (args.length < 3) {
+            sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId>");
+            return;
+        }
+        if (selectionStore == null) {
+            sender.sendMessage("No selection available");
+            return;
+        }
+
+        DisplayBoardSelection selection = selectionStore.get(player.getUniqueId());
+        if (selection == null) {
+            sender.sendMessage("No selection saved. Use the Display Selector wand first.");
+            return;
+        }
+
+        var result = DynamicBoardLayoutBuilder.build(selection);
+        if (!result.success()) {
+            sender.sendMessage("Selection invalid: " + result.error());
+            return;
+        }
+
+        String target = args[1].toLowerCase();
+        String boardId = args[2];
+
+        if (target.equals("board")) {
+            if (presenter.createDynamicBoard(boardId, result.layout()) == null) {
+                sender.sendMessage("Board id already exists or creation failed.");
+                return;
+            }
+            sender.sendMessage("Dynamic board '" + boardId + "' created from selection.");
+            return;
+        }
+
+        if (target.equals("panels")) {
+            if (scorePanelPresenter == null) {
+                sender.sendMessage("Score panels are not available.");
+                return;
+            }
+            scorePanelPresenter.spawnForBoard(boardId, result.layout());
+            sender.sendMessage("Score panels spawned for '" + boardId + "' using selection.");
+            return;
+        }
+
+        if (target.equals("timer")) {
+            if (timerPanelPresenter == null) {
+                sender.sendMessage("Timer panel is not available.");
+                return;
+            }
+            timerPanelPresenter.spawnForBoard(boardId, result.layout());
+            sender.sendMessage("Timer panel spawned for '" + boardId + "' using selection.");
+            return;
+        }
+
+        sender.sendMessage("Unknown selection target. Use board/panels/timer.");
     }
 
     private void handleList(CommandSender sender) {
