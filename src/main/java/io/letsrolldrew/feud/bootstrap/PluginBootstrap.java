@@ -88,7 +88,10 @@ public final class PluginBootstrap {
         this.gameController = new SimpleGameController(config.maxStrikes());
         this.teamService = new TeamService();
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
-        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
+        this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
+        NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
+        this.hostBookUiBuilder =
+                new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey, displayBoardSelectionStore);
         this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
@@ -127,11 +130,10 @@ public final class PluginBootstrap {
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
         this.displayBoardPresenter = new DisplayBoardService(
                 displayRegistry, animationService, dynamicBoardsFile, scorePanelPresenter, timerPanelPresenter);
-        this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
-        NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.displayBoardSelectionListener =
                 new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
-                    var fresh = hostBookUiBuilder.createBook(
+                    var fresh = hostBookUiBuilder.createBookFor(
+                            player,
                             gameController.slotHoverTexts(),
                             gameController.getActiveSurvey(),
                             gameController.revealedSlots(),

@@ -270,7 +270,8 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private void giveOrReplaceHostBook(Player player) {
-        var fresh = hostBookUiBuilder.createBook(
+        var fresh = hostBookUiBuilder.createBookFor(
+                player,
                 gameController.slotHoverTexts(),
                 gameController.getActiveSurvey(),
                 gameController.revealedSlots(),
@@ -392,7 +393,8 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private void giveMapBook(Player player) {
-        var fresh = hostBookUiBuilder.createBook(
+        var fresh = hostBookUiBuilder.createBookFor(
+                player,
                 gameController.slotHoverTexts(),
                 gameController.getActiveSurvey(),
                 gameController.revealedSlots(),

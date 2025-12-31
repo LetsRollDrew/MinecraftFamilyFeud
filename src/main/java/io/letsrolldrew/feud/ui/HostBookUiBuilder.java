@@ -7,6 +7,8 @@ import static io.letsrolldrew.feud.ui.BookTextFormatter.strikeLine;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.toNoBreak;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.unrevealedLabel;
 
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
@@ -34,10 +36,11 @@ public final class HostBookUiBuilder {
     private final SurveyRepository surveyRepository;
     private final List<String> fallbackHovers;
     private final NamespacedKey hostKey;
+    private final DisplayBoardSelectionStore selectionStore;
     private boolean openBookEnabled;
 
     public HostBookUiBuilder(String commandPrefix) {
-        this(commandPrefix, null, null, null);
+        this(commandPrefix, null, null, null, null);
     }
 
     public HostBookUiBuilder(
@@ -45,18 +48,37 @@ public final class HostBookUiBuilder {
             SurveyRepository surveyRepository,
             List<String> fallbackHovers,
             NamespacedKey hostKey) {
+        this(commandPrefix, surveyRepository, fallbackHovers, hostKey, null);
+    }
+
+    public HostBookUiBuilder(
+            String commandPrefix,
+            SurveyRepository surveyRepository,
+            List<String> fallbackHovers,
+            NamespacedKey hostKey,
+            DisplayBoardSelectionStore selectionStore) {
         this.commandPrefix = Validation.requireNonBlank(commandPrefix, "commandPrefix");
         this.surveyRepository = surveyRepository;
         this.fallbackHovers = fallbackHovers;
         this.hostKey = hostKey;
+        this.selectionStore = selectionStore;
     }
 
     public ItemStack createBook(Survey activeSurvey) {
         return createBook(resolveHoverTexts(), activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
     }
 
+    public ItemStack createBookFor(Player player, Survey activeSurvey) {
+        return createBookFor(
+                player, resolveHoverTexts(), activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
+    }
+
     public ItemStack createBook(List<String> hovers, Survey activeSurvey) {
         return createBook(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
+    }
+
+    public ItemStack createBookFor(Player player, List<String> hovers, Survey activeSurvey) {
+        return createBookFor(player, hovers, activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
     }
 
     public ItemStack createBook(
@@ -67,8 +89,8 @@ public final class HostBookUiBuilder {
             int maxStrikes,
             int roundPoints,
             TeamControl controllingTeam) {
-        List<Component> pages =
-                buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
+        List<Component> pages = buildPages(
+                hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam, null);
         Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
@@ -100,6 +122,34 @@ public final class HostBookUiBuilder {
                 maxStrikes,
                 roundPoints,
                 controllingTeam);
+    }
+
+    public ItemStack createBookFor(
+            Player player,
+            List<String> hovers,
+            Survey activeSurvey,
+            Set<Integer> revealedSlots,
+            int strikeCount,
+            int maxStrikes,
+            int roundPoints,
+            TeamControl controllingTeam) {
+        DisplayBoardSelection selection = selectionFor(player);
+        List<Component> pages = buildPages(
+                hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam, selection);
+        Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        BookTagger.tagHostRemote(meta, hostKey);
+        try {
+            meta.title(titleComponent());
+            meta.author(authorComponent());
+        } catch (Throwable ignored) {
+            meta.setTitle(titleString());
+            meta.setAuthor("Family Feud");
+        }
+        meta.pages(adventureBook.pages());
+        book.setItemMeta(meta);
+        return book;
     }
 
     public ItemStack createBook(
@@ -149,8 +199,8 @@ public final class HostBookUiBuilder {
             int maxStrikes,
             int roundPoints,
             TeamControl controllingTeam) {
-        List<Component> pages =
-                buildPages(hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
+        List<Component> pages = buildPages(
+                hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam, null);
         return BookFactory.create(titleComponent(), authorComponent(), pages);
     }
 
@@ -166,12 +216,12 @@ public final class HostBookUiBuilder {
     }
 
     List<Component> buildPages() {
-        return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
+        return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0, TeamControl.NONE, null);
     }
 
     List<Component> buildPages(List<String> hoverTexts, Survey activeSurvey) {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
-        return buildPages(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE);
+        return buildPages(hovers, activeSurvey, Collections.emptySet(), 0, 3, 0, TeamControl.NONE, null);
     }
 
     List<Component> buildPages(
@@ -181,13 +231,15 @@ public final class HostBookUiBuilder {
             int strikeCount,
             int maxStrikes,
             int roundPoints,
-            TeamControl controllingTeam) {
+            TeamControl controllingTeam,
+            DisplayBoardSelection selection) {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
 
         List<Component> pages = new ArrayList<>();
         pages.add(controlPage(
                 hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
         pages.add(surveyLoadPage(activeSurvey));
+        pages.add(selectorPage(selection));
         pages.add(teamsTimerPage());
         return pages;
     }
@@ -209,6 +261,59 @@ public final class HostBookUiBuilder {
                 .append(buttonRunCommand("reset", "/feud buzz reset", "Reset buzz lock", NamedTextColor.BLUE, true));
 
         return page(teamsLine, timerLine, buzzLine);
+    }
+
+    private Component selectorPage(DisplayBoardSelection selection) {
+        Component header = Component.text("Display Selector", NamedTextColor.GOLD);
+
+        Component selectionLine = selection == null
+                ? Component.text("Selection: none (use the Display Selector wand)", NamedTextColor.GRAY)
+                : Component.text(
+                        "Selection: " + formatBounds(selection) + " ("
+                                + selection.facing().name() + ")",
+                        NamedTextColor.YELLOW);
+
+        Component selectorLine = Component.text("Selector: ")
+                .append(buttonRunCommand(
+                        "give selector",
+                        "/feud board display selector",
+                        "Give the Display Selector wand",
+                        NamedTextColor.BLUE,
+                        true));
+
+        Component spawnLine = Component.text("Spawn: ")
+                .append(buttonRunCommand(
+                        "board",
+                        "/feud board display dynamic board1",
+                        "Create a dynamic board from selection",
+                        NamedTextColor.BLUE,
+                        true))
+                .append(Component.space())
+                .append(buttonRunCommand(
+                        "score panels",
+                        "/feud board display dynamic board1",
+                        "Panels spawn with board (uses selection)",
+                        NamedTextColor.BLUE,
+                        true))
+                .append(Component.space())
+                .append(buttonRunCommand(
+                        "timer",
+                        "/feud board display dynamic board1",
+                        "Timer panel (placeholder, uses selection)",
+                        NamedTextColor.BLUE,
+                        true));
+
+        Component buzzLine = Component.text("Buzzer: ")
+                .append(buttonRunCommand(
+                        "bind red", "/feud team buzzer bind red", "Bind red team buzzer", NamedTextColor.RED, true))
+                .append(Component.space())
+                .append(buttonRunCommand(
+                        "bind blue", "/feud team buzzer bind blue", "Bind blue team buzzer", NamedTextColor.BLUE, true))
+                .append(Component.space())
+                .append(buttonRunCommand(
+                        "reset lock", "/feud buzz reset", "Clear current buzz lock", NamedTextColor.GOLD, true));
+
+        return page(header, spacerLine(), selectionLine, selectorLine, spawnLine, buzzLine);
     }
 
     @SuppressWarnings("unused")
@@ -424,5 +529,33 @@ public final class HostBookUiBuilder {
                 : "Award points to " + controllingTeam.name() + " (" + roundPoints + " pts)";
         NamedTextColor color = controllingTeam == TeamControl.NONE ? NamedTextColor.GRAY : NamedTextColor.GOLD;
         return button("Award", "award", hover, color, true);
+    }
+
+    private DisplayBoardSelection selectionFor(Player player) {
+        if (player == null || selectionStore == null) {
+            return null;
+        }
+        return selectionStore.get(player.getUniqueId());
+    }
+
+    private String formatPoint(org.joml.Vector3d point) {
+        if (point == null) {
+            return "?";
+        }
+        return (int) point.x + "," + (int) point.y + "," + (int) point.z;
+    }
+
+    private String formatBounds(DisplayBoardSelection selection) {
+        if (selection == null || selection.cornerA() == null || selection.cornerB() == null) {
+            return "none";
+        }
+        double minX = Math.min(selection.cornerA().x, selection.cornerB().x);
+        double minY = Math.min(selection.cornerA().y, selection.cornerB().y);
+        double minZ = Math.min(selection.cornerA().z, selection.cornerB().z);
+        double maxX = Math.max(selection.cornerA().x, selection.cornerB().x);
+        double maxY = Math.max(selection.cornerA().y, selection.cornerB().y);
+        double maxZ = Math.max(selection.cornerA().z, selection.cornerB().z);
+        return (int) minX + "," + (int) minY + "," + (int) minZ + " -> " + (int) maxX + "," + (int) maxY + ","
+                + (int) maxZ;
     }
 }
