@@ -188,7 +188,27 @@ public final class HostBookUiBuilder {
         pages.add(controlPage(
                 hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
         pages.add(surveyLoadPage(activeSurvey));
+        pages.add(teamsTimerPage());
         return pages;
+    }
+
+    private Component teamsTimerPage() {
+        Component teamsLine = Component.text("Teams: ")
+                .append(buttonRunCommand("info", "/feud team info", "Show team info", NamedTextColor.BLUE, true));
+
+        Component timerLine = Component.text("Timer: ")
+                .append(buttonRunCommand("start", "/feud timer start", "Start timer", NamedTextColor.BLUE, true))
+                .append(Component.space())
+                .append(buttonRunCommand("stop", "/feud timer stop", "Stop timer", NamedTextColor.BLUE, true))
+                .append(Component.space())
+                .append(buttonRunCommand("reset", "/feud timer reset", "Reset timer", NamedTextColor.BLUE, true))
+                .append(Component.space())
+                .append(buttonRunCommand("status", "/feud timer status", "Timer status", NamedTextColor.BLUE, true));
+
+        Component buzzLine = Component.text("Buzz: ")
+                .append(buttonRunCommand("reset", "/feud buzz reset", "Reset buzz lock", NamedTextColor.BLUE, true));
+
+        return page(teamsLine, timerLine, buzzLine);
     }
 
     @SuppressWarnings("unused")
