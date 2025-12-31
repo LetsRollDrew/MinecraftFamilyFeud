@@ -21,9 +21,9 @@ import org.joml.Vector3f;
 
 public final class TimerPanelPresenter {
     private static final float CMD_TIMER_PANEL = 9005.0f;
-    private static final double PANEL_WIDTH_TILES = 3.0;
-    private static final double PANEL_HEIGHT_TILES = 1.5;
-    private static final double MARGIN_ABOVE_TILES = 0.8;
+    private static final double PANEL_WIDTH_BLOCKS = 3.0;
+    private static final double PANEL_HEIGHT_BLOCKS = 2.0;
+    private static final double GAP_ABOVE_BOARD_BLOCKS = 1.0;
     private static final double FORWARD_NUDGE = 0.05;
 
     private final DisplayRegistry displayRegistry;
@@ -43,11 +43,11 @@ public final class TimerPanelPresenter {
 
         removeForBoard(boardId);
 
-        double panelWidth = layout.cellWidth() * PANEL_WIDTH_TILES;
-        double panelHeight = layout.cellHeight() * PANEL_HEIGHT_TILES;
-        double marginAbove = layout.cellHeight() * MARGIN_ABOVE_TILES;
+        double panelWidth = PANEL_WIDTH_BLOCKS;
+        double panelHeight = PANEL_HEIGHT_BLOCKS;
+        double gapAbove = GAP_ABOVE_BOARD_BLOCKS;
 
-        Vector3d center = TimerPanelPlacement.computeCenter(layout, marginAbove, FORWARD_NUDGE);
+        Vector3d center = TimerPanelPlacement.computeCenter(layout, gapAbove, panelHeight, FORWARD_NUDGE);
         spawnBackground(world, center, layout.facing().yaw(), panelWidth, panelHeight, boardId);
     }
 

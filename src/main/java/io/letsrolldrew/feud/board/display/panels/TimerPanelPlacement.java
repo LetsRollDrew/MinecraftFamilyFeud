@@ -8,16 +8,20 @@ import org.joml.Vector3d;
 public final class TimerPanelPlacement {
     private TimerPanelPlacement() {}
 
-    public static Vector3d computeCenter(DynamicBoardLayout layout, double marginAbove, double forwardNudge) {
+    public static Vector3d computeCenter(
+            DynamicBoardLayout layout, double gapAbove, double panelHeight, double forwardNudge) {
         if (layout == null) {
             throw new IllegalArgumentException("layout");
         }
-        if (marginAbove < 0) {
-            throw new IllegalArgumentException("marginAbove");
+        if (gapAbove < 0) {
+            throw new IllegalArgumentException("gapAbove");
+        }
+        if (panelHeight <= 0) {
+            throw new IllegalArgumentException("panelHeight");
         }
 
         double right = layout.totalWidth() / 2.0;
-        double up = marginAbove;
+        double up = gapAbove + (panelHeight / 2.0);
         double forward = layout.forwardOffset() + forwardNudge;
 
         return worldAt(layout, right, up, forward);

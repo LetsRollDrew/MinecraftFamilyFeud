@@ -24,9 +24,9 @@ import org.joml.Vector3f;
 
 public final class ScorePanelPresenter {
     private static final float CMD_SCORE_PANEL = 9005.0f;
-    private static final double PANEL_WIDTH_TILES = 2.0;
-    private static final double PANEL_HEIGHT_TILES = 2.0;
-    private static final double MARGIN_TILES = 0.6;
+    private static final double PANEL_WIDTH_BLOCKS = 3.0;
+    private static final double PANEL_HEIGHT_BLOCKS = 2.0;
+    private static final double GAP_FROM_BOARD_BLOCKS = 1.0;
     private static final double FORWARD_NUDGE = 0.05;
     private static final double TEXT_FORWARD_NUDGE = 0.04;
     private static final int NAME_LINE_WIDTH = 160;
@@ -51,9 +51,9 @@ public final class ScorePanelPresenter {
 
         removeForBoard(boardId);
 
-        double panelWidth = layout.cellWidth() * PANEL_WIDTH_TILES;
-        double panelHeight = layout.cellHeight() * PANEL_HEIGHT_TILES;
-        double margin = layout.cellWidth() * MARGIN_TILES;
+        double panelWidth = PANEL_WIDTH_BLOCKS;
+        double panelHeight = PANEL_HEIGHT_BLOCKS;
+        double margin = GAP_FROM_BOARD_BLOCKS;
 
         var panels = ScorePanelPlacement.compute(layout, panelWidth, panelHeight, margin, FORWARD_NUDGE);
 
