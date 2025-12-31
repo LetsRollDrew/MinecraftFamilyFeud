@@ -130,7 +130,17 @@ public final class PluginBootstrap {
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.displayBoardSelectionListener =
-                new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);
+                new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
+                    var fresh = hostBookUiBuilder.createBook(
+                            gameController.slotHoverTexts(),
+                            gameController.getActiveSurvey(),
+                            gameController.revealedSlots(),
+                            gameController.strikeCount(),
+                            gameController.maxStrikes(),
+                            gameController.roundPoints(),
+                            gameController.controllingTeam());
+                    hostRemoteService.giveOrReplace(player, fresh);
+                });
         this.boardCommands = new DisplayBoardCommands(
                 displayBoardPresenter,
                 "familyfeud.admin",

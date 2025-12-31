@@ -197,7 +197,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud ui strike - add a strike");
         sender.sendMessage("/feud ui clearstrikes - clear strikes");
         sender.sendMessage("/feud ui add <points> - add points to round");
-        sender.sendMessage("/feud board wand - get board setup wand (admin)");
+        sender.sendMessage("/feud board wand - get Display Selector (admin)");
         sender.sendMessage("/feud board initmaps - assign maps to board frames (admin)");
         sender.sendMessage("/feud holo text spawn|set|move|remove ...");
         sender.sendMessage("/feud holo item spawn|move|remove ...");

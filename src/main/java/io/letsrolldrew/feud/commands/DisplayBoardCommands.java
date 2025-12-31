@@ -74,7 +74,7 @@ public final class DisplayBoardCommands {
             case "dynamic" -> handleCreateDynamic(sender, args);
             case "list" -> handleList(sender);
             case "remove", "delete" -> handleRemove(sender, args);
-            case "wand" -> handleWand(sender);
+            case "wand", "selector" -> handleWand(sender);
             case "destroy", "reveal", "hide", "demo" -> sendUsage(sender);
             default -> sendUsage(sender);
         }
@@ -291,10 +291,10 @@ public final class DisplayBoardCommands {
             return;
         }
         selectionListener.giveWand(player);
-        sender.sendMessage("Display board selector given.");
+        sender.sendMessage("Display selector given.");
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Board commands: create/dynamic/list/remove/wand");
+        sender.sendMessage("Board commands: create/dynamic/list/remove/wand (selector)");
     }
 }

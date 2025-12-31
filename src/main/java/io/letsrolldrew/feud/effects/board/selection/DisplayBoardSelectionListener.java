@@ -4,6 +4,7 @@ import io.letsrolldrew.feud.board.display.BoardFacing;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockFace;
@@ -27,12 +28,18 @@ public final class DisplayBoardSelectionListener implements Listener {
     private final Plugin plugin;
     private final NamespacedKey wandKey;
     private final DisplayBoardSelectionStore store;
+    private final Consumer<Player> selectionRefresher;
     private final Map<UUID, Partial> partials = new ConcurrentHashMap<>();
 
-    public DisplayBoardSelectionListener(Plugin plugin, NamespacedKey wandKey, DisplayBoardSelectionStore store) {
+    public DisplayBoardSelectionListener(
+            Plugin plugin,
+            NamespacedKey wandKey,
+            DisplayBoardSelectionStore store,
+            Consumer<Player> selectionRefresher) {
         this.plugin = plugin;
         this.wandKey = wandKey;
         this.store = store;
+        this.selectionRefresher = selectionRefresher;
     }
 
     public ItemStack giveWand(Player player) {
@@ -40,7 +47,7 @@ public final class DisplayBoardSelectionListener implements Listener {
         ItemMeta meta = wand.getItemMeta();
         if (meta != null) {
             meta.displayName(net.kyori.adventure.text.Component.text(
-                    "Display Board Selector", net.kyori.adventure.text.format.NamedTextColor.AQUA));
+                    "Display Selector", net.kyori.adventure.text.format.NamedTextColor.AQUA));
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(wandKey, PersistentDataType.INTEGER, 1);
             wand.setItemMeta(meta);
@@ -124,6 +131,9 @@ public final class DisplayBoardSelectionListener implements Listener {
         double height = Math.abs(first.corner.y - corner.y) + 1;
         player.sendMessage(
                 "Display selection saved: width=" + width + " height=" + height + " facing=" + facing.name());
+        if (selectionRefresher != null) {
+            selectionRefresher.accept(player);
+        }
     }
 
     private boolean isHoldingWand(Player player) {
