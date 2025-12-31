@@ -14,6 +14,7 @@ import io.letsrolldrew.feud.commands.handlers.HoloHandler;
 import io.letsrolldrew.feud.commands.handlers.HostHandler;
 import io.letsrolldrew.feud.commands.handlers.SurveyHandler;
 import io.letsrolldrew.feud.commands.handlers.TeamHandler;
+import io.letsrolldrew.feud.commands.handlers.TimerHandler;
 import io.letsrolldrew.feud.commands.handlers.UiHandler;
 import io.letsrolldrew.feud.commands.handlers.VersionHandler;
 import io.letsrolldrew.feud.commands.tree.CommandNode;
@@ -21,6 +22,7 @@ import io.letsrolldrew.feud.commands.tree.CommandTree;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
@@ -63,6 +65,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
     private final SurveyCommands surveyCommands;
     private final TeamCommands teamCommands;
+    private final TimerCommands timerCommands;
     private final DisplayRegistry displayRegistry;
     private final CommandTree commandTree;
 
@@ -87,6 +90,7 @@ public final class FeudRootCommand implements CommandExecutor {
             io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
             SurveyCommands surveyCommands,
             TeamCommands teamCommands,
+            TimerCommands timerCommands,
             DisplayRegistry displayRegistry) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -108,6 +112,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.displayBoardPresenter = displayBoardPresenter;
         this.surveyCommands = surveyCommands;
         this.teamCommands = teamCommands;
+        this.timerCommands = timerCommands;
         this.displayRegistry = displayRegistry;
         this.uiCommand = new UiCommand(
                 gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
@@ -178,6 +183,7 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud holo list");
         sender.sendMessage("/feud clear all - remove all display entities");
         sender.sendMessage("/feud host book cleanup - cleanup remote");
+        sender.sendMessage("/feud timer start|stop|reset|status");
         return true;
     }
 
@@ -431,6 +437,7 @@ public final class FeudRootCommand implements CommandExecutor {
         var boardHandler = new BoardHandler((ctx, remaining) -> handleBoard(ctx.sender(), prepend("board", remaining)));
         var surveyHandler = new SurveyHandler((ctx, remaining) -> surveyCommands.handle(ctx.sender(), remaining));
         var teamHandler = new TeamHandler((ctx, remaining) -> teamCommands.handle(ctx.sender(), remaining));
+        var timerHandler = new TimerHandler((ctx, remaining) -> timerCommands.handle(ctx.sender(), remaining));
         var hostHandler = new HostHandler(
                 (ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
 
@@ -448,6 +455,7 @@ public final class FeudRootCommand implements CommandExecutor {
         root.addChild(new CommandNode("board", null, false, boardHandler));
         root.addChild(new CommandNode("survey", null, false, surveyHandler));
         root.addChild(new CommandNode("team", null, false, teamHandler));
+        root.addChild(new CommandNode("timer", null, false, timerHandler));
 
         CommandNode host = new CommandNode("host");
         host.addChild(new CommandNode("book", null, false, hostHandler));

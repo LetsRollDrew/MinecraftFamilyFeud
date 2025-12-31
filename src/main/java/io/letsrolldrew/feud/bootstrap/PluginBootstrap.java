@@ -22,6 +22,8 @@ import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListene
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
+import io.letsrolldrew.feud.effects.timer.TimerCommands;
+import io.letsrolldrew.feud.effects.timer.TimerService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
@@ -66,6 +68,8 @@ public final class PluginBootstrap {
     private TeamCommands teamCommands;
     private ScorePanelPresenter scorePanelPresenter;
     private TimerPanelPresenter timerPanelPresenter;
+    private TimerService timerService;
+    private TimerCommands timerCommands;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -93,6 +97,9 @@ public final class PluginBootstrap {
                 new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
+        this.timerService = new TimerService(
+                new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin), System::currentTimeMillis, 20);
+        this.timerCommands = new TimerCommands(timerService, config.hostPermission(), "familyfeud.admin");
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
@@ -164,6 +171,7 @@ public final class PluginBootstrap {
                 displayBoardPresenter,
                 surveyCommands,
                 teamCommands,
+                timerCommands,
                 displayRegistry);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
@@ -252,6 +260,9 @@ public final class PluginBootstrap {
                         .then(literal("team")
                                 .then(greedyArgs("rest", command, "team"))
                                 .executes(ctx -> exec(command, ctx.getSource(), "team")))
+                        .then(literal("timer")
+                                .then(greedyArgs("rest", command, "timer"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "timer")))
                         .then(literal("host")
                                 .then(literal("book")
                                         .requires(src -> src.getSender().hasPermission(config.hostPermission()))
