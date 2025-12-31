@@ -8,4 +8,3 @@ public record BlockRef(UUID worldId, int x, int y, int z) {
         Objects.requireNonNull(worldId, "worldId");
     }
 }
-
