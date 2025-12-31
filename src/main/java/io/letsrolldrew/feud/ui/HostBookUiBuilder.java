@@ -264,56 +264,65 @@ public final class HostBookUiBuilder {
     }
 
     private Component selectorPage(DisplayBoardSelection selection) {
-        Component header = Component.text("Display Selector", NamedTextColor.GOLD);
+        Component header = Component.text("Display Control", NamedTextColor.GOLD);
 
-        Component selectionLine = selection == null
-                ? Component.text("Selection: none (use the Display Selector wand)", NamedTextColor.GRAY)
-                : Component.text(
-                        "Selection: " + formatBounds(selection) + " ("
-                                + selection.facing().name() + ")",
-                        NamedTextColor.YELLOW);
-
-        Component selectorLine = Component.text("Selector: ")
-                .append(buttonRunCommand(
-                        "give selector",
+        Component actions = Component.join(
+                JoinConfiguration.separator(Component.space()),
+                buttonRunCommand(
+                        "View Selection",
                         "/feud board display selector",
-                        "Give the Display Selector wand",
+                        selectionHover(selection),
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        "Give Selector",
+                        "/feud board display selector",
+                        "Gives the Display Selector wand",
                         NamedTextColor.BLUE,
                         true));
 
-        Component spawnLine = Component.text("Spawn: ")
+        Component spawnLabel = Component.text("Spawn on Selection:", NamedTextColor.GRAY)
+                .hoverEvent(HoverEvent.showText(Component.text("Requires an active selection")));
+
+        Component spawnButtons = Component.empty()
                 .append(buttonRunCommand(
-                        "board",
+                        "B", "/feud board display dynamic board1", "Spawn Board", NamedTextColor.BLUE, true))
+                .append(Component.space())
+                .append(buttonRunCommand(
+                        "SPR",
                         "/feud board display dynamic board1",
-                        "Create a dynamic board from selection",
+                        "Spawn Score Panel (Red)",
                         NamedTextColor.BLUE,
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
-                        "score panels",
+                        "SPB",
                         "/feud board display dynamic board1",
-                        "Panels spawn with board (uses selection)",
+                        "Spawn Score Panel (Blue)",
                         NamedTextColor.BLUE,
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
-                        "timer",
-                        "/feud board display dynamic board1",
-                        "Timer panel (placeholder, uses selection)",
+                        "T", "/feud board display dynamic board1", "Spawn Timer Panel", NamedTextColor.BLUE, true));
+
+        Component teamsLabel = Component.text("Buzzer:", NamedTextColor.GRAY);
+
+        Component teamsLine = Component.empty()
+                .append(buttonRunCommand(
+                        "Bind Blue",
+                        "/feud team buzzer bind blue",
+                        "Bind BLUE team buzzer to your next Right-Click on a block",
+                        NamedTextColor.BLUE,
+                        true))
+                .append(Component.space())
+                .append(buttonRunCommand(
+                        "Bind Red",
+                        "/feud team buzzer bind red",
+                        "Bind RED team buzzer to your next Right-Click on a block",
                         NamedTextColor.BLUE,
                         true));
 
-        Component buzzLine = Component.text("Buzzer: ")
-                .append(buttonRunCommand(
-                        "bind red", "/feud team buzzer bind red", "Bind red team buzzer", NamedTextColor.RED, true))
-                .append(Component.space())
-                .append(buttonRunCommand(
-                        "bind blue", "/feud team buzzer bind blue", "Bind blue team buzzer", NamedTextColor.BLUE, true))
-                .append(Component.space())
-                .append(buttonRunCommand(
-                        "reset lock", "/feud buzz reset", "Clear current buzz lock", NamedTextColor.GOLD, true));
-
-        return page(header, spacerLine(), selectionLine, selectorLine, spawnLine, buzzLine);
+        return page(header, spacerLine(), actions, spacerLine(), spawnLabel, spawnButtons, teamsLabel, teamsLine);
     }
 
     @SuppressWarnings("unused")
@@ -557,5 +566,13 @@ public final class HostBookUiBuilder {
         double maxZ = Math.max(selection.cornerA().z, selection.cornerB().z);
         return (int) minX + "," + (int) minY + "," + (int) minZ + " -> " + (int) maxX + "," + (int) maxY + ","
                 + (int) maxZ;
+    }
+
+    private String selectionHover(DisplayBoardSelection selection) {
+        if (selection == null) {
+            return "No selection. Use the selector wand.";
+        }
+        return "Selection: " + formatBounds(selection) + " | Facing: "
+                + selection.facing().name();
     }
 }
