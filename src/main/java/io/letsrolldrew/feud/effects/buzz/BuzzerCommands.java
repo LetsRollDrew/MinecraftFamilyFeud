@@ -78,8 +78,7 @@ public final class BuzzerCommands {
             sender.sendMessage("No buzzer bound for " + team.name() + ".");
             return;
         }
-        sender.sendMessage("Buzzer for " + team.name() + " at "
-                + ref.x() + "," + ref.y() + "," + ref.z() + ".");
+        sender.sendMessage("Buzzer for " + team.name() + " at " + ref.x() + "," + ref.y() + "," + ref.z() + ".");
     }
 
     private boolean isAuthorized(CommandSender sender) {
