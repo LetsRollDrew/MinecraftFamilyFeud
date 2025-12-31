@@ -23,6 +23,8 @@ import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.team.TeamCommands;
+import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -58,6 +60,8 @@ public final class PluginBootstrap {
     private FeudRootCommand feudRootCommand;
     private DisplayBoardSelectionStore displayBoardSelectionStore;
     private DisplayBoardSelectionListener displayBoardSelectionListener;
+    private TeamService teamService;
+    private TeamCommands teamCommands;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -68,7 +72,8 @@ public final class PluginBootstrap {
         this.config = PluginConfig.from(plugin.getConfig());
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
-        // refresher wired later via FeudRootCommand
+        this.teamService = new TeamService();
+        this.teamCommands = new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin");
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
         this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
@@ -151,6 +156,7 @@ public final class PluginBootstrap {
                 hologramService,
                 displayBoardPresenter,
                 surveyCommands,
+                teamCommands,
                 displayRegistry);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
@@ -236,6 +242,9 @@ public final class PluginBootstrap {
                                                         StringArgumentType.getString(ctx, "id"))))
                                         .executes(ctx -> exec(command, ctx.getSource(), "survey", "load")))
                                 .executes(ctx -> exec(command, ctx.getSource(), "survey")))
+                        .then(literal("team")
+                                .then(greedyArgs("rest", command, "team"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "team")))
                         .then(literal("host")
                                 .then(literal("book")
                                         .requires(src -> src.getSender().hasPermission(config.hostPermission()))

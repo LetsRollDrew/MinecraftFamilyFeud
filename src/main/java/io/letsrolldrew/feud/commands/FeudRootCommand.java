@@ -13,6 +13,7 @@ import io.letsrolldrew.feud.commands.handlers.HelpHandler;
 import io.letsrolldrew.feud.commands.handlers.HoloHandler;
 import io.letsrolldrew.feud.commands.handlers.HostHandler;
 import io.letsrolldrew.feud.commands.handlers.SurveyHandler;
+import io.letsrolldrew.feud.commands.handlers.TeamHandler;
 import io.letsrolldrew.feud.commands.handlers.UiHandler;
 import io.letsrolldrew.feud.commands.handlers.VersionHandler;
 import io.letsrolldrew.feud.commands.tree.CommandNode;
@@ -22,6 +23,7 @@ import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.team.TeamCommands;
 import io.letsrolldrew.feud.ui.BookFactory;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
@@ -60,6 +62,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
     private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
     private final SurveyCommands surveyCommands;
+    private final TeamCommands teamCommands;
     private final DisplayRegistry displayRegistry;
     private final CommandTree commandTree;
 
@@ -83,6 +86,7 @@ public final class FeudRootCommand implements CommandExecutor {
             io.letsrolldrew.feud.effects.holo.HologramService hologramService,
             io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
             SurveyCommands surveyCommands,
+            TeamCommands teamCommands,
             DisplayRegistry displayRegistry) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
@@ -103,6 +107,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.hologramService = hologramService;
         this.displayBoardPresenter = displayBoardPresenter;
         this.surveyCommands = surveyCommands;
+        this.teamCommands = teamCommands;
         this.displayRegistry = displayRegistry;
         this.uiCommand = new UiCommand(
                 gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
@@ -158,6 +163,9 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud help - this help");
         sender.sendMessage("/feud version - show version");
         sender.sendMessage("/feud survey ...");
+        sender.sendMessage("/feud team info - show teams");
+        sender.sendMessage("/feud team reset - reset teams");
+        sender.sendMessage("/feud team set <red|blue> name <new-name...>");
         sender.sendMessage("/feud host book - give host remote");
         sender.sendMessage("/feud ui reveal <1-8> - reveal slot");
         sender.sendMessage("/feud ui strike - add a strike");
@@ -422,6 +430,7 @@ public final class FeudRootCommand implements CommandExecutor {
         });
         var boardHandler = new BoardHandler((ctx, remaining) -> handleBoard(ctx.sender(), prepend("board", remaining)));
         var surveyHandler = new SurveyHandler((ctx, remaining) -> surveyCommands.handle(ctx.sender(), remaining));
+        var teamHandler = new TeamHandler((ctx, remaining) -> teamCommands.handle(ctx.sender(), remaining));
         var hostHandler = new HostHandler(
                 (ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
 
@@ -438,6 +447,7 @@ public final class FeudRootCommand implements CommandExecutor {
 
         root.addChild(new CommandNode("board", null, false, boardHandler));
         root.addChild(new CommandNode("survey", null, false, surveyHandler));
+        root.addChild(new CommandNode("team", null, false, teamHandler));
 
         CommandNode host = new CommandNode("host");
         host.addChild(new CommandNode("book", null, false, hostHandler));

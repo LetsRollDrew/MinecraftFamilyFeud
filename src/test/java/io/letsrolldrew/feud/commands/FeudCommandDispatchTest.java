@@ -46,4 +46,15 @@ final class FeudCommandDispatchTest {
         String msg = console.nextMessage().toLowerCase();
         assertTrue(msg.contains("usage: /feud holo"));
     }
+
+    @Test
+    void teamCommandIsReachable() {
+        ConsoleCommandSenderMock console = server.getConsoleSender();
+
+        boolean handled = server.dispatchCommand(console, "feud team info");
+
+        assertTrue(handled);
+        String msg = console.nextMessage().toLowerCase();
+        assertTrue(msg.contains("teams") || msg.contains("host"));
+    }
 }
