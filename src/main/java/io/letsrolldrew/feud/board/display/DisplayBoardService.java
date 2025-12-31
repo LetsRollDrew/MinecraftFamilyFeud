@@ -1,5 +1,7 @@
 package io.letsrolldrew.feud.board.display;
 
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
@@ -72,16 +74,24 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private final DisplayRegistry displayRegistry;
     private final AnimationService animationService;
     private final DynamicBoardStore dynamicStore;
+    private final ScorePanelPresenter scorePanelPresenter;
+    private final TimerPanelPresenter timerPanelPresenter;
 
     public DisplayBoardService(DisplayRegistry displayRegistry, AnimationService animationService) {
-        this(displayRegistry, animationService, null);
+        this(displayRegistry, animationService, null, null, null);
     }
 
     public DisplayBoardService(
-            DisplayRegistry displayRegistry, AnimationService animationService, File dynamicStoreFile) {
+            DisplayRegistry displayRegistry,
+            AnimationService animationService,
+            File dynamicStoreFile,
+            ScorePanelPresenter scorePanelPresenter,
+            TimerPanelPresenter timerPanelPresenter) {
         this.displayRegistry = displayRegistry;
         this.animationService = animationService;
         this.dynamicStore = new DynamicBoardStore(dynamicStoreFile);
+        this.scorePanelPresenter = scorePanelPresenter;
+        this.timerPanelPresenter = timerPanelPresenter;
         loadDynamicBoards();
     }
 
@@ -172,6 +182,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
 
         removeSlotEntities(instance.slots());
+        removePanels(instance.boardId());
         metricsByBoardId.remove(boardId);
 
         if (dynamicIds.remove(boardId)) {
@@ -236,6 +247,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     public void clearAll() {
         for (BoardInstance instance : instances.values()) {
             removeSlotEntities(instance.slots());
+            removePanels(instance.boardId());
         }
         instances.clear();
 
@@ -264,6 +276,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         dynamicStore.saveLayout(boardId, dynamicLayout);
         metricsByBoardId.put(boardId, metricsFromDynamicLayout(dynamicLayout));
+        spawnPanels(boardId, dynamicLayout);
 
         return instance;
     }
@@ -649,13 +662,35 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
             // purge old entities for this group id first
             displayRegistry.removeByGroup("board", boardId);
+            removePanels(boardId);
 
             BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, layout, displayRegistry);
             if (instance != null) {
                 instances.put(instance.boardId(), instance);
                 dynamicIds.add(instance.boardId());
                 metricsByBoardId.put(boardId, metricsFromDynamicLayout(layout));
+                spawnPanels(boardId, layout);
             }
+        }
+    }
+
+    // Keeps score/timer panel lifecycle aligned with each associated dynamic board
+    // probably will revamp later, but for now easiest for rapid testing
+    private void spawnPanels(String boardId, DynamicBoardLayout layout) {
+        if (scorePanelPresenter != null) {
+            scorePanelPresenter.spawnForBoard(boardId, layout);
+        }
+        if (timerPanelPresenter != null) {
+            timerPanelPresenter.spawnForBoard(boardId, layout);
+        }
+    }
+
+    private void removePanels(String boardId) {
+        if (scorePanelPresenter != null) {
+            scorePanelPresenter.removeForBoard(boardId);
+        }
+        if (timerPanelPresenter != null) {
+            timerPanelPresenter.removeForBoard(boardId);
         }
     }
 }

@@ -7,6 +7,8 @@ import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.board.render.MapIdStore;
@@ -62,6 +64,8 @@ public final class PluginBootstrap {
     private DisplayBoardSelectionListener displayBoardSelectionListener;
     private TeamService teamService;
     private TeamCommands teamCommands;
+    private ScorePanelPresenter scorePanelPresenter;
+    private TimerPanelPresenter timerPanelPresenter;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -89,6 +93,8 @@ public final class PluginBootstrap {
                 new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
+        this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
+        this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter =
                 new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
@@ -97,7 +103,8 @@ public final class PluginBootstrap {
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
-        this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService, dynamicBoardsFile);
+        this.displayBoardPresenter = new DisplayBoardService(
+                displayRegistry, animationService, dynamicBoardsFile, scorePanelPresenter, timerPanelPresenter);
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.displayBoardSelectionListener =
