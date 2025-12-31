@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
@@ -26,6 +27,7 @@ import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
+import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.BookFactory;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
@@ -65,6 +67,8 @@ public final class FeudRootCommand implements CommandExecutor {
     private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
     private final SurveyCommands surveyCommands;
     private final TeamCommands teamCommands;
+    private final TeamService teamService;
+    private final ScorePanelPresenter scorePanelPresenter;
     private final TimerCommands timerCommands;
     private final DisplayRegistry displayRegistry;
     private final CommandTree commandTree;
@@ -90,6 +94,8 @@ public final class FeudRootCommand implements CommandExecutor {
             io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
             SurveyCommands surveyCommands,
             TeamCommands teamCommands,
+            TeamService teamService,
+            ScorePanelPresenter scorePanelPresenter,
             TimerCommands timerCommands,
             DisplayRegistry displayRegistry) {
         this.plugin = plugin;
@@ -112,10 +118,18 @@ public final class FeudRootCommand implements CommandExecutor {
         this.displayBoardPresenter = displayBoardPresenter;
         this.surveyCommands = surveyCommands;
         this.teamCommands = teamCommands;
+        this.teamService = teamService;
+        this.scorePanelPresenter = scorePanelPresenter;
         this.timerCommands = timerCommands;
         this.displayRegistry = displayRegistry;
         this.uiCommand = new UiCommand(
-                gameController, hostPermission, player -> giveOrReplaceHostBook(player), this::renderReveal);
+                gameController,
+                hostPermission,
+                player -> giveOrReplaceHostBook(player),
+                this::renderReveal,
+                teamService,
+                scorePanelPresenter,
+                displayBoardPresenter);
         this.commandTree = buildCommandTree();
     }
 

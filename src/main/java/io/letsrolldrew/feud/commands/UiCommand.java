@@ -1,7 +1,11 @@
 package io.letsrolldrew.feud.commands;
 
+import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
+import io.letsrolldrew.feud.team.TeamId;
+import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.function.Consumer;
 import org.bukkit.command.CommandSender;
@@ -12,16 +16,25 @@ public final class UiCommand {
     private final String hostPermission;
     private final Consumer<Player> bookRefresher;
     private final Consumer<Integer> revealCallback;
+    private final TeamService teamService;
+    private final ScorePanelPresenter scorePanelPresenter;
+    private final DisplayBoardPresenter displayBoardPresenter;
 
     public UiCommand(
             GameController controller,
             String hostPermission,
             Consumer<Player> bookRefresher,
-            Consumer<Integer> revealCallback) {
+            Consumer<Integer> revealCallback,
+            TeamService teamService,
+            ScorePanelPresenter scorePanelPresenter,
+            DisplayBoardPresenter displayBoardPresenter) {
         this.controller = controller;
         this.hostPermission = Validation.requireNonBlank(hostPermission, "host-permission");
         this.bookRefresher = bookRefresher;
         this.revealCallback = revealCallback;
+        this.teamService = teamService;
+        this.scorePanelPresenter = scorePanelPresenter;
+        this.displayBoardPresenter = displayBoardPresenter;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -129,6 +142,7 @@ public final class UiCommand {
         controller.awardRoundPoints();
         sender.sendMessage("Awarded " + before + " points to "
                 + controller.controllingTeam().name() + ".");
+        awardToTeam(before, controller.controllingTeam());
         refreshIfPlayer(sender);
     }
 
@@ -145,6 +159,23 @@ public final class UiCommand {
     private void refreshIfPlayer(CommandSender sender) {
         if (bookRefresher != null && sender instanceof Player player) {
             bookRefresher.accept(player);
+        }
+    }
+
+    private void awardToTeam(int points, TeamControl control) {
+        if (points <= 0 || control == null || teamService == null) {
+            return;
+        }
+        TeamId teamId = control == TeamControl.RED ? TeamId.RED : control == TeamControl.BLUE ? TeamId.BLUE : null;
+        if (teamId == null) {
+            return;
+        }
+        teamService.addScore(teamId, points);
+        if (scorePanelPresenter == null || displayBoardPresenter == null) {
+            return;
+        }
+        for (String boardId : displayBoardPresenter.listBoards()) {
+            scorePanelPresenter.updateForBoard(boardId);
         }
     }
 }

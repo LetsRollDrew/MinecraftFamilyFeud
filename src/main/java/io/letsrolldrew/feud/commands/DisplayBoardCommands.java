@@ -2,12 +2,15 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DynamicBoardLayoutBuilder;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.team.TeamId;
+import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import org.bukkit.NamespacedKey;
@@ -24,6 +27,8 @@ public final class DisplayBoardCommands {
     private final HostRemoteService hostRemoteService;
     private final SurveyRepository surveyRepository;
     private final NamespacedKey hostKey;
+    private final TeamService teamService;
+    private final ScorePanelPresenter scorePanelPresenter;
 
     public DisplayBoardCommands(
             DisplayBoardPresenter presenter,
@@ -34,7 +39,9 @@ public final class DisplayBoardCommands {
             String hostPermission,
             HostRemoteService hostRemoteService,
             SurveyRepository surveyRepository,
-            NamespacedKey hostKey) {
+            NamespacedKey hostKey,
+            TeamService teamService,
+            ScorePanelPresenter scorePanelPresenter) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
@@ -44,6 +51,8 @@ public final class DisplayBoardCommands {
         this.hostRemoteService = hostRemoteService;
         this.surveyRepository = surveyRepository;
         this.hostKey = hostKey;
+        this.teamService = teamService;
+        this.scorePanelPresenter = scorePanelPresenter;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -171,6 +180,7 @@ public final class DisplayBoardCommands {
         int before = controller.roundPoints();
         controller.awardRoundPoints();
         sender.sendMessage("Awarded " + before);
+        awardToTeam(before, controller.controllingTeam(), boardId);
         refreshRemote(player, boardId);
     }
 
@@ -192,6 +202,20 @@ public final class DisplayBoardCommands {
         String target = (boardId == null || boardId.isBlank()) && !ids.isEmpty() ? ids.get(0) : boardId;
         hostRemoteService.giveOrReplace(
                 player, DisplayHostRemoteBookBuilder.create(target, ids, surveyRepository, hostKey, controller));
+    }
+
+    private void awardToTeam(int points, TeamControl control, String boardId) {
+        if (points <= 0 || control == null || teamService == null) {
+            return;
+        }
+        TeamId teamId = control == TeamControl.RED ? TeamId.RED : control == TeamControl.BLUE ? TeamId.BLUE : null;
+        if (teamId == null) {
+            return;
+        }
+        teamService.addScore(teamId, points);
+        if (scorePanelPresenter != null && boardId != null && !boardId.isBlank()) {
+            scorePanelPresenter.updateForBoard(boardId);
+        }
     }
 
     private void handleCreate(CommandSender sender, String[] args) {

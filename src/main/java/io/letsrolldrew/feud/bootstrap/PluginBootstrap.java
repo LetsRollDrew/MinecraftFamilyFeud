@@ -125,7 +125,9 @@ public final class PluginBootstrap {
                 config.hostPermission(),
                 hostRemoteService,
                 surveyRepository,
-                hostKey);
+                hostKey,
+                teamService,
+                scorePanelPresenter);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         registerCommands();
@@ -171,6 +173,8 @@ public final class PluginBootstrap {
                 displayBoardPresenter,
                 surveyCommands,
                 teamCommands,
+                teamService,
+                scorePanelPresenter,
                 timerCommands,
                 displayRegistry);
         feud.setExecutor(feudRootCommand);
