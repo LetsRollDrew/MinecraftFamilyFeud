@@ -41,6 +41,10 @@ public final class ScorePanelPresenter {
     }
 
     public void spawnForBoard(String boardId, DynamicBoardLayout layout) {
+        spawnForBoard(boardId, layout, null);
+    }
+
+    public void spawnForBoard(String boardId, DynamicBoardLayout layout, TeamId team) {
         if (boardId == null || boardId.isBlank() || layout == null) {
             return;
         }
@@ -49,7 +53,11 @@ public final class ScorePanelPresenter {
             return;
         }
 
-        removeForBoard(boardId);
+        if (team == null) {
+            removeForBoard(boardId);
+        } else {
+            removeTeamPanels(boardId, team);
+        }
 
         double panelWidth = PANEL_WIDTH_BLOCKS;
         double panelHeight = PANEL_HEIGHT_BLOCKS;
@@ -57,59 +65,63 @@ public final class ScorePanelPresenter {
 
         var panels = ScorePanelPlacement.compute(layout, panelWidth, panelHeight, margin, FORWARD_NUDGE);
 
-        spawnBackground(
-                world,
-                panels.leftCenter(),
-                layout.facing().yaw(),
-                layout,
-                panelWidth,
-                panelHeight,
-                new DisplayKey("team", boardId, "blue-panel", "bg"));
-        spawnText(
-                world,
-                panels.leftCenter(),
-                layout.facing().yaw(),
-                layout,
-                panelWidth,
-                panelHeight,
-                new DisplayKey("team", boardId, "blue-panel", "name"),
-                true);
-        spawnText(
-                world,
-                panels.leftCenter(),
-                layout.facing().yaw(),
-                layout,
-                panelWidth,
-                panelHeight,
-                new DisplayKey("team", boardId, "blue-panel", "score"),
-                false);
+        if (team == null || team == TeamId.BLUE) {
+            spawnBackground(
+                    world,
+                    panels.leftCenter(),
+                    layout.facing().yaw(),
+                    layout,
+                    panelWidth,
+                    panelHeight,
+                    new DisplayKey("team", boardId, "blue-panel", "bg"));
+            spawnText(
+                    world,
+                    panels.leftCenter(),
+                    layout.facing().yaw(),
+                    layout,
+                    panelWidth,
+                    panelHeight,
+                    new DisplayKey("team", boardId, "blue-panel", "name"),
+                    true);
+            spawnText(
+                    world,
+                    panels.leftCenter(),
+                    layout.facing().yaw(),
+                    layout,
+                    panelWidth,
+                    panelHeight,
+                    new DisplayKey("team", boardId, "blue-panel", "score"),
+                    false);
+        }
 
-        spawnBackground(
-                world,
-                panels.rightCenter(),
-                layout.facing().yaw(),
-                layout,
-                panelWidth,
-                panelHeight,
-                new DisplayKey("team", boardId, "red-panel", "bg"));
-        spawnText(
-                world,
-                panels.rightCenter(),
-                layout.facing().yaw(),
-                layout,
-                panelWidth,
-                panelHeight,
-                new DisplayKey("team", boardId, "red-panel", "name"),
-                true);
-        spawnText(
-                world,
-                panels.rightCenter(),
-                layout.facing().yaw(),
-                layout,
-                panelWidth,
-                panelHeight,
-                new DisplayKey("team", boardId, "red-panel", "score"),
-                false);
+        if (team == null || team == TeamId.RED) {
+            spawnBackground(
+                    world,
+                    panels.rightCenter(),
+                    layout.facing().yaw(),
+                    layout,
+                    panelWidth,
+                    panelHeight,
+                    new DisplayKey("team", boardId, "red-panel", "bg"));
+            spawnText(
+                    world,
+                    panels.rightCenter(),
+                    layout.facing().yaw(),
+                    layout,
+                    panelWidth,
+                    panelHeight,
+                    new DisplayKey("team", boardId, "red-panel", "name"),
+                    true);
+            spawnText(
+                    world,
+                    panels.rightCenter(),
+                    layout.facing().yaw(),
+                    layout,
+                    panelWidth,
+                    panelHeight,
+                    new DisplayKey("team", boardId, "red-panel", "score"),
+                    false);
+        }
 
         updateForBoard(boardId);
     }
@@ -141,6 +153,20 @@ public final class ScorePanelPresenter {
         displayRegistry.remove(new DisplayKey("team", boardId, "blue-panel", "score"));
         displayRegistry.remove(new DisplayKey("team", boardId, "red-panel", "name"));
         displayRegistry.remove(new DisplayKey("team", boardId, "red-panel", "score"));
+    }
+
+    private void removeTeamPanels(String boardId, TeamId team) {
+        if (team == TeamId.BLUE) {
+            displayRegistry.remove(new DisplayKey("team", boardId, "blue-panel", "bg"));
+            displayRegistry.remove(new DisplayKey("team", boardId, "blue-panel", "name"));
+            displayRegistry.remove(new DisplayKey("team", boardId, "blue-panel", "score"));
+            return;
+        }
+        if (team == TeamId.RED) {
+            displayRegistry.remove(new DisplayKey("team", boardId, "red-panel", "bg"));
+            displayRegistry.remove(new DisplayKey("team", boardId, "red-panel", "name"));
+            displayRegistry.remove(new DisplayKey("team", boardId, "red-panel", "score"));
+        }
     }
 
     private void spawnBackground(

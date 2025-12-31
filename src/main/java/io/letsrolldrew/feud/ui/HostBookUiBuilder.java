@@ -290,14 +290,14 @@ public final class HostBookUiBuilder {
                 .append(Component.space())
                 .append(buttonRunCommand(
                         "SPR",
-                        "/feud board display selection panels board1",
+                        "/feud board display selection panels board1 red",
                         "Spawn Score Panel (Red)",
                         NamedTextColor.BLUE,
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
                         "SPB",
-                        "/feud board display selection panels board1",
+                        "/feud board display selection panels board1 blue",
                         "Spawn Score Panel (Blue)",
                         NamedTextColor.BLUE,
                         true))

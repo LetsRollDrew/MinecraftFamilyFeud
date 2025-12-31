@@ -276,7 +276,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         dynamicStore.saveLayout(boardId, dynamicLayout);
         metricsByBoardId.put(boardId, metricsFromDynamicLayout(dynamicLayout));
-        spawnPanels(boardId, dynamicLayout);
 
         return instance;
     }
@@ -662,14 +661,12 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
             // purge old entities for this group id first
             displayRegistry.removeByGroup("board", boardId);
-            removePanels(boardId);
 
             BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, layout, displayRegistry);
             if (instance != null) {
                 instances.put(instance.boardId(), instance);
                 dynamicIds.add(instance.boardId());
                 metricsByBoardId.put(boardId, metricsFromDynamicLayout(layout));
-                spawnPanels(boardId, layout);
             }
         }
     }

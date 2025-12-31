@@ -255,13 +255,13 @@ public final class DisplayBoardCommands {
             sender.sendMessage("No selection saved. Use the selector wand first.");
             return;
         }
-        var result = DynamicBoardLayoutBuilder.build(selection);
-        if (!result.success()) {
-            sender.sendMessage("Selection invalid: " + result.error());
+        var boardResult = DynamicBoardLayoutBuilder.build(selection);
+        if (!boardResult.success()) {
+            sender.sendMessage("Selection invalid: " + boardResult.error());
             return;
         }
         String boardId = args[1];
-        if (presenter.createDynamicBoard(boardId, result.layout()) == null) {
+        if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
             sender.sendMessage("Board id already exists or creation failed.");
             return;
         }
@@ -283,7 +283,7 @@ public final class DisplayBoardCommands {
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId>");
+            sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId> [team]");
             return;
         }
         if (selectionStore == null) {
@@ -297,17 +297,16 @@ public final class DisplayBoardCommands {
             return;
         }
 
-        var result = DynamicBoardLayoutBuilder.build(selection);
-        if (!result.success()) {
-            sender.sendMessage("Selection invalid: " + result.error());
-            return;
-        }
-
         String target = args[1].toLowerCase();
         String boardId = args[2];
 
         if (target.equals("board")) {
-            if (presenter.createDynamicBoard(boardId, result.layout()) == null) {
+            var boardResult = DynamicBoardLayoutBuilder.build(selection);
+            if (!boardResult.success()) {
+                sender.sendMessage("Selection invalid: " + boardResult.error());
+                return;
+            }
+            if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
                 sender.sendMessage("Board id already exists or creation failed.");
                 return;
             }
@@ -320,8 +319,25 @@ public final class DisplayBoardCommands {
                 sender.sendMessage("Score panels are not available.");
                 return;
             }
-            scorePanelPresenter.spawnForBoard(boardId, result.layout());
-            sender.sendMessage("Score panels spawned for '" + boardId + "' using selection.");
+            if (args.length < 4) {
+                sender.sendMessage("Usage: /feud board display selection panels <boardId> <red|blue|both>");
+                return;
+            }
+            String teamArg = args[3].toLowerCase();
+            TeamId team = null;
+            if ("red".equals(teamArg)) {
+                team = TeamId.RED;
+            } else if ("blue".equals(teamArg)) {
+                team = TeamId.BLUE;
+            }
+            var layoutResult = DynamicBoardLayoutBuilder.build(selection, true);
+            if (!layoutResult.success()) {
+                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                return;
+            }
+            scorePanelPresenter.spawnForBoard(boardId, layoutResult.layout(), team);
+            String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
+            sender.sendMessage("Spawned " + targetLabel + " for '" + boardId + "' using selection.");
             return;
         }
 
@@ -330,7 +346,12 @@ public final class DisplayBoardCommands {
                 sender.sendMessage("Timer panel is not available.");
                 return;
             }
-            timerPanelPresenter.spawnForBoard(boardId, result.layout());
+            var layoutResult = DynamicBoardLayoutBuilder.build(selection, true);
+            if (!layoutResult.success()) {
+                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                return;
+            }
+            timerPanelPresenter.spawnForBoard(boardId, layoutResult.layout());
             sender.sendMessage("Timer panel spawned for '" + boardId + "' using selection.");
             return;
         }
