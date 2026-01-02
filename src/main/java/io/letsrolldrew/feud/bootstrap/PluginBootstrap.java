@@ -5,7 +5,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
-import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
@@ -60,7 +59,7 @@ public final class PluginBootstrap {
     private HologramService hologramService;
     private HologramCommands hologramCommands;
     private SurveyCommands surveyCommands;
-    private DisplayBoardPresenter displayBoardPresenter;
+    private DisplayBoardService displayBoardPresenter;
     private DisplayBoardCommands boardCommands;
     private DisplayRegistry displayRegistry;
     private io.letsrolldrew.feud.effects.anim.AnimationService animationService;
@@ -129,7 +128,12 @@ public final class PluginBootstrap {
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
         this.displayBoardPresenter = new DisplayBoardService(
-                displayRegistry, animationService, dynamicBoardsFile, scorePanelPresenter, timerPanelPresenter);
+                displayRegistry,
+                animationService,
+                dynamicBoardsFile,
+                displayBoardSelectionStore,
+                scorePanelPresenter,
+                timerPanelPresenter);
         this.displayBoardSelectionListener =
                 new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
                     var fresh = hostBookUiBuilder.createBookFor(
@@ -147,7 +151,6 @@ public final class PluginBootstrap {
                 displayBoardPresenter,
                 "familyfeud.admin",
                 displayBoardSelectionListener,
-                displayBoardSelectionStore,
                 gameController,
                 config.hostPermission(),
                 hostRemoteService,

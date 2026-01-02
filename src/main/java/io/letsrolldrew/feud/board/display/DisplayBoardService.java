@@ -7,6 +7,8 @@ import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.anim.AnimationService;
 import io.letsrolldrew.feud.effects.anim.AnimationStep;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,6 +69,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private final Map<String, BoardInstance> instances = new HashMap<>();
     private final Set<String> dynamicIds = new HashSet<>();
     private final Map<String, LayoutMetrics> metricsByBoardId = new HashMap<>();
+    private final Map<String, DynamicBoardLayout> dynamicLayouts = new HashMap<>();
 
     private final BoardLayout layout = BoardLayout.defaultLayout();
     private final LayoutMetrics staticMetrics = metricsFromStaticLayout();
@@ -74,22 +77,25 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     private final DisplayRegistry displayRegistry;
     private final AnimationService animationService;
     private final DynamicBoardStore dynamicStore;
+    private final DisplayBoardSelectionStore selectionStore;
     private final ScorePanelPresenter scorePanelPresenter;
     private final TimerPanelPresenter timerPanelPresenter;
 
     public DisplayBoardService(DisplayRegistry displayRegistry, AnimationService animationService) {
-        this(displayRegistry, animationService, null, null, null);
+        this(displayRegistry, animationService, null, null, null, null);
     }
 
     public DisplayBoardService(
             DisplayRegistry displayRegistry,
             AnimationService animationService,
             File dynamicStoreFile,
+            DisplayBoardSelectionStore selectionStore,
             ScorePanelPresenter scorePanelPresenter,
             TimerPanelPresenter timerPanelPresenter) {
         this.displayRegistry = displayRegistry;
         this.animationService = animationService;
         this.dynamicStore = new DynamicBoardStore(dynamicStoreFile);
+        this.selectionStore = selectionStore;
         this.scorePanelPresenter = scorePanelPresenter;
         this.timerPanelPresenter = timerPanelPresenter;
         loadDynamicBoards();
@@ -276,6 +282,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
 
         dynamicStore.saveLayout(boardId, dynamicLayout);
         metricsByBoardId.put(boardId, metricsFromDynamicLayout(dynamicLayout));
+        dynamicLayouts.put(boardId, dynamicLayout);
 
         return instance;
     }
@@ -659,7 +666,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
                 continue;
             }
 
-            // purge old entities for this group id first
             displayRegistry.removeByGroup("board", boardId);
 
             BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, layout, displayRegistry);
@@ -667,8 +673,52 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
                 instances.put(instance.boardId(), instance);
                 dynamicIds.add(instance.boardId());
                 metricsByBoardId.put(boardId, metricsFromDynamicLayout(layout));
+                dynamicLayouts.put(boardId, layout);
             }
         }
+    }
+
+    public LayoutResult resolveDynamicLayout(
+            String boardId, Player player, boolean allowSmall, boolean forceFromSelection) {
+        if (boardId == null || boardId.isBlank()) {
+            return new LayoutResult(null, "board id missing");
+        }
+
+        // Prefer the current selection when available so updates reflect the latest selector use.
+        if (selectionStore != null && player != null) {
+            DisplayBoardSelection selection = selectionStore.get(player.getUniqueId());
+            if (selection != null) {
+                DynamicBoardLayoutBuilder.Result result = DynamicBoardLayoutBuilder.build(selection, allowSmall);
+                if (result.success()) {
+                    DynamicBoardLayout layout = result.layout();
+                    dynamicLayouts.put(boardId, layout);
+                    dynamicStore.saveLayout(boardId, layout);
+                    metricsByBoardId.put(boardId, metricsFromDynamicLayout(layout));
+                    return new LayoutResult(layout, null);
+                }
+                if (forceFromSelection) {
+                    return new LayoutResult(null, result.error());
+                }
+            } else if (forceFromSelection) {
+                return new LayoutResult(null, "No selection saved, Use the Display Selector wand first");
+            }
+        }
+
+        if (!forceFromSelection) {
+            DynamicBoardLayout cached = dynamicLayouts.get(boardId);
+            if (cached != null) {
+                return new LayoutResult(cached, null);
+            }
+
+            DynamicBoardLayout storedLayout = dynamicStore.loadLayouts().get(boardId);
+            if (storedLayout != null) {
+                dynamicLayouts.put(boardId, storedLayout);
+                metricsByBoardId.putIfAbsent(boardId, metricsFromDynamicLayout(storedLayout));
+                return new LayoutResult(storedLayout, null);
+            }
+        }
+
+        return new LayoutResult(null, "No layout found for " + boardId + " and no selection available");
     }
 
     // Keeps score/timer panel lifecycle aligned with each associated dynamic board
@@ -688,6 +738,12 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
         if (timerPanelPresenter != null) {
             timerPanelPresenter.removeForBoard(boardId);
+        }
+    }
+
+    public record LayoutResult(DynamicBoardLayout layout, String error) {
+        public boolean success() {
+            return layout != null && error == null;
         }
     }
 }

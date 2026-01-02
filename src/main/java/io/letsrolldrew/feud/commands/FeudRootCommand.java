@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.MapWallBinder;
+import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.MapIdStore;
@@ -66,7 +67,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final HologramCommands hologramCommands;
     private final DisplayBoardCommands boardCommands;
     private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
-    private final io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter;
+    private final DisplayBoardService displayBoardPresenter;
     private final SurveyCommands surveyCommands;
     private final TeamCommands teamCommands;
     private final TeamService teamService;
@@ -94,7 +95,7 @@ public final class FeudRootCommand implements CommandExecutor {
             HologramCommands hologramCommands,
             DisplayBoardCommands boardCommands,
             io.letsrolldrew.feud.effects.holo.HologramService hologramService,
-            io.letsrolldrew.feud.board.display.DisplayBoardPresenter displayBoardPresenter,
+            DisplayBoardService displayBoardPresenter,
             SurveyCommands surveyCommands,
             TeamCommands teamCommands,
             TeamService teamService,

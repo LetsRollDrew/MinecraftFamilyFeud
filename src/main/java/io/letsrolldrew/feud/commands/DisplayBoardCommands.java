@@ -1,12 +1,9 @@
 package io.letsrolldrew.feud.commands;
 
-import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
-import io.letsrolldrew.feud.board.display.DynamicBoardLayoutBuilder;
+import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
-import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
-import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.SurveyRepository;
@@ -19,10 +16,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class DisplayBoardCommands {
-    private final DisplayBoardPresenter presenter;
+    private final DisplayBoardService presenter;
     private final String adminPermission;
     private final DisplayBoardSelectionListener selectionListener;
-    private final DisplayBoardSelectionStore selectionStore;
     private final GameController controller;
     private final String hostPermission;
     private final HostRemoteService hostRemoteService;
@@ -33,10 +29,9 @@ public final class DisplayBoardCommands {
     private final TimerPanelPresenter timerPanelPresenter;
 
     public DisplayBoardCommands(
-            DisplayBoardPresenter presenter,
+            DisplayBoardService presenter,
             String adminPermission,
             DisplayBoardSelectionListener selectionListener,
-            DisplayBoardSelectionStore selectionStore,
             GameController controller,
             String hostPermission,
             HostRemoteService hostRemoteService,
@@ -48,7 +43,6 @@ public final class DisplayBoardCommands {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
-        this.selectionStore = selectionStore;
         this.controller = controller;
         this.hostPermission = hostPermission;
         this.hostRemoteService = hostRemoteService;
@@ -246,16 +240,7 @@ public final class DisplayBoardCommands {
             sender.sendMessage("Usage: /feud board display dynamic <boardId>");
             return;
         }
-        if (selectionStore == null) {
-            sender.sendMessage("No selection available");
-            return;
-        }
-        DisplayBoardSelection selection = selectionStore.get(player.getUniqueId());
-        if (selection == null) {
-            sender.sendMessage("No selection saved. Use the selector wand first.");
-            return;
-        }
-        var boardResult = DynamicBoardLayoutBuilder.build(selection);
+        var boardResult = presenter.resolveDynamicLayout(args[1], player, false, true);
         if (!boardResult.success()) {
             sender.sendMessage("Selection invalid: " + boardResult.error());
             return;
@@ -286,22 +271,11 @@ public final class DisplayBoardCommands {
             sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId> [team]");
             return;
         }
-        if (selectionStore == null) {
-            sender.sendMessage("No selection available");
-            return;
-        }
-
-        DisplayBoardSelection selection = selectionStore.get(player.getUniqueId());
-        if (selection == null) {
-            sender.sendMessage("No selection saved. Use the Display Selector wand first.");
-            return;
-        }
-
         String target = args[1].toLowerCase();
         String boardId = args[2];
 
         if (target.equals("board")) {
-            var boardResult = DynamicBoardLayoutBuilder.build(selection);
+            var boardResult = presenter.resolveDynamicLayout(boardId, player, false, true);
             if (!boardResult.success()) {
                 sender.sendMessage("Selection invalid: " + boardResult.error());
                 return;
@@ -330,7 +304,7 @@ public final class DisplayBoardCommands {
             } else if ("blue".equals(teamArg)) {
                 team = TeamId.BLUE;
             }
-            var layoutResult = DynamicBoardLayoutBuilder.build(selection, true);
+            var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
                 sender.sendMessage("Selection invalid: " + layoutResult.error());
                 return;
@@ -346,7 +320,7 @@ public final class DisplayBoardCommands {
                 sender.sendMessage("Timer panel is not available.");
                 return;
             }
-            var layoutResult = DynamicBoardLayoutBuilder.build(selection, true);
+            var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
                 sender.sendMessage("Selection invalid: " + layoutResult.error());
                 return;
