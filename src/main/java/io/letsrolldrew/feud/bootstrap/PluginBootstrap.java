@@ -140,9 +140,7 @@ public final class PluginBootstrap {
                 displayRegistry,
                 animationService,
                 dynamicBoardsFile,
-                displayBoardSelectionStore,
-                scorePanelPresenter,
-                timerPanelPresenter);
+                displayBoardSelectionStore);
         this.displayBoardSelectionListener =
                 new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
                     var fresh = hostBookUiBuilder.createBookFor(
