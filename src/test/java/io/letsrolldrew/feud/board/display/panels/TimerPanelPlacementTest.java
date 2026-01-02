@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 final class TimerPanelPlacementTest {
 
     @Test
-    void centersAboveBoardFacingEast() {
+    void centersOnSelectionFacingEast() {
         DynamicBoardLayout layout = new DynamicBoardLayout(
                 UUID.randomUUID(),
                 BoardFacing.EAST,
@@ -28,16 +28,20 @@ final class TimerPanelPlacementTest {
                 new Vector3d(),
                 new Vector3d());
 
-        Vector3d center = TimerPanelPlacement.computeCenter(layout, 1.0, 2.0, 0.05);
+        double panelWidth = layout.totalWidth();
+        double panelHeight = layout.totalHeight();
+        double forwardNudge = 0.05;
 
-        // facing EAST: right axis is +Z, forward should be +X
-        assertEquals(10.55, center.x, 1e-6);
-        assertEquals(22.0, center.y, 1e-6);
-        assertEquals(32.0, center.z, 1e-6);
+        Vector3d center = TimerPanelPlacement.computeCenterOnSelection(layout, panelWidth, panelHeight, forwardNudge);
+
+        // Facing EAST: right = +Z, forward = +X
+        assertEquals(10.0 + 0.55, center.x, 1e-6);
+        assertEquals(20.0 - 3.0, center.y, 1e-6);
+        assertEquals(30.0 + 2.0, center.z, 1e-6);
     }
 
     @Test
-    void centersAboveBoardFacingNorth() {
+    void centersOnSelectionFacingNorth() {
         DynamicBoardLayout layout = new DynamicBoardLayout(
                 UUID.randomUUID(),
                 BoardFacing.NORTH,
@@ -54,11 +58,15 @@ final class TimerPanelPlacementTest {
                 new Vector3d(),
                 new Vector3d());
 
-        Vector3d center = TimerPanelPlacement.computeCenter(layout, 1.0, 2.0, 0.1);
+        double panelWidth = layout.totalWidth();
+        double panelHeight = layout.totalHeight();
+        double forwardNudge = 0.1;
 
-        // facing NORTH: right axis is +X, forward should be -Z
-        assertEquals(7.0, center.x, 1e-6);
-        assertEquals(72.0, center.y, 1e-6);
-        assertEquals(4.6, center.z, 1e-6);
+        Vector3d center = TimerPanelPlacement.computeCenterOnSelection(layout, panelWidth, panelHeight, forwardNudge);
+
+        // Facing NORTH: right = +X, forward = -Z
+        assertEquals(5.0 + 2.0, center.x, 1e-6);
+        assertEquals(70.0 - 3.0, center.y, 1e-6);
+        assertEquals(5.0 - 0.4, center.z, 1e-6);
     }
 }
