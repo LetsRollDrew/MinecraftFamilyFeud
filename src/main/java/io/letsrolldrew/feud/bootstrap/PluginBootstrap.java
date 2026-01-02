@@ -7,6 +7,7 @@ import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.DirtyTracker;
@@ -70,6 +71,7 @@ public final class PluginBootstrap {
     private TeamCommands teamCommands;
     private ScorePanelPresenter scorePanelPresenter;
     private TimerPanelPresenter timerPanelPresenter;
+    private ScorePanelStore scorePanelStore;
     private TimerService timerService;
     private TimerCommands timerCommands;
     private BuzzerService buzzerService;
@@ -102,6 +104,8 @@ public final class PluginBootstrap {
         File displayStore = new File(plugin.getDataFolder(), "displays.yml");
         this.displayRegistry =
                 new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
+        File panelStoreFile = new File(plugin.getDataFolder(), "panels.yml");
+        this.scorePanelStore = new ScorePanelStore(panelStoreFile);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.timerService = new TimerService(
@@ -158,10 +162,12 @@ public final class PluginBootstrap {
                 hostKey,
                 teamService,
                 scorePanelPresenter,
-                timerPanelPresenter);
+                timerPanelPresenter,
+                scorePanelStore);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
+        scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
         registerCommands();
     }
 

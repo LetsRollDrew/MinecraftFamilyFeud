@@ -1,7 +1,9 @@
 package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.game.GameController;
@@ -27,6 +29,7 @@ public final class DisplayBoardCommands {
     private final TeamService teamService;
     private final ScorePanelPresenter scorePanelPresenter;
     private final TimerPanelPresenter timerPanelPresenter;
+    private final ScorePanelStore scorePanelStore;
 
     public DisplayBoardCommands(
             DisplayBoardService presenter,
@@ -39,7 +42,8 @@ public final class DisplayBoardCommands {
             NamespacedKey hostKey,
             TeamService teamService,
             ScorePanelPresenter scorePanelPresenter,
-            TimerPanelPresenter timerPanelPresenter) {
+            TimerPanelPresenter timerPanelPresenter,
+            ScorePanelStore scorePanelStore) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
@@ -51,6 +55,7 @@ public final class DisplayBoardCommands {
         this.teamService = teamService;
         this.scorePanelPresenter = scorePanelPresenter;
         this.timerPanelPresenter = timerPanelPresenter;
+        this.scorePanelStore = scorePanelStore;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -289,27 +294,38 @@ public final class DisplayBoardCommands {
         }
 
         if (target.equals("panels")) {
-            if (scorePanelPresenter == null) {
+            if (scorePanelPresenter == null || scorePanelStore == null) {
                 sender.sendMessage("Score panels are not available.");
                 return;
             }
-            if (args.length < 4) {
-                sender.sendMessage("Usage: /feud board display selection panels <boardId> <red|blue|both>");
+            boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
+            int teamIndex = isRemove ? 4 : 3;
+            if (teamIndex >= args.length) {
+                sender.sendMessage("Usage: /feud board display selection panels <boardId> <red|blue|both> [remove]");
+                sender.sendMessage("       /feud board display selection panels <boardId> remove <red|blue|both>");
                 return;
             }
-            String teamArg = args[3].toLowerCase();
+            String teamArg = args[teamIndex].toLowerCase();
             TeamId team = null;
             if ("red".equals(teamArg)) {
                 team = TeamId.RED;
             } else if ("blue".equals(teamArg)) {
                 team = TeamId.BLUE;
             }
+
+            if (isRemove) {
+                removePanels(boardId, team);
+                String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
+                sender.sendMessage("Removed " + targetLabel + " for '" + boardId + "'.");
+                return;
+            }
+
             var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
                 sender.sendMessage("Selection invalid: " + layoutResult.error());
                 return;
             }
-            scorePanelPresenter.spawnForBoard(boardId, layoutResult.layout(), team);
+            spawnPanels(boardId, layoutResult.layout(), team);
             String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
             sender.sendMessage("Spawned " + targetLabel + " for '" + boardId + "' using selection.");
             return;
@@ -357,5 +373,47 @@ public final class DisplayBoardCommands {
 
     private void sendUsage(CommandSender sender) {
         sender.sendMessage("Board commands: create/dynamic/list/remove/wand (selector)");
+    }
+
+    private void spawnPanels(String boardId, DynamicBoardLayout layout, TeamId team) {
+        if (team == null) {
+            spawnPanel(boardId, layout, TeamId.RED);
+            spawnPanel(boardId, layout, TeamId.BLUE);
+            return;
+        }
+        spawnPanel(boardId, layout, team);
+    }
+
+    private void spawnPanel(String boardId, DynamicBoardLayout layout, TeamId team) {
+        if (layout == null || team == null) {
+            return;
+        }
+        String panelId = panelId(boardId, team);
+        scorePanelPresenter.spawnStored(panelId, layout, team);
+        scorePanelStore.savePanel(panelId, team, layout);
+    }
+
+    private void removePanels(String boardId, TeamId team) {
+        if (team == null) {
+            removePanel(boardId, TeamId.RED);
+            removePanel(boardId, TeamId.BLUE);
+            return;
+        }
+        removePanel(boardId, team);
+    }
+
+    private void removePanel(String boardId, TeamId team) {
+        if (team == null) {
+            return;
+        }
+        String panelId = panelId(boardId, team);
+        scorePanelPresenter.removeStored(panelId);
+        scorePanelStore.removePanel(panelId);
+    }
+
+    private static String panelId(String boardId, TeamId team) {
+        String base = boardId == null ? "" : boardId.trim();
+        String suffix = team == null ? "" : team.name().toLowerCase(java.util.Locale.ROOT);
+        return base + ":" + suffix;
     }
 }
