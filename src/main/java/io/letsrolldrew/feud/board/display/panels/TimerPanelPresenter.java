@@ -4,6 +4,7 @@ import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
+import java.util.Map;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -30,11 +31,27 @@ public final class TimerPanelPresenter {
     private static final double TEXT_FORWARD_NUDGE = 0.04;
     private static final int TEXT_LINE_WIDTH = 96;
     private static final double TEXT_SCALE = 0.9;
+    private static final String TIMER_NAMESPACE = "timer";
+    private static final String STORED_TIMER_NAMESPACE = "panel-timer";
+    private static final String TIMER_ID = "top-timer";
 
     private final DisplayRegistry displayRegistry;
 
     public TimerPanelPresenter(DisplayRegistry displayRegistry) {
         this.displayRegistry = Objects.requireNonNull(displayRegistry, "displayRegistry");
+    }
+
+    public void rehydrateStoredPanels(TimerPanelStore store) {
+        if (store == null) {
+            return;
+        }
+        Map<String, StoredTimerPanel> storedPanels = store.loadPanels();
+        for (StoredTimerPanel panel : storedPanels.values()) {
+            if (panel == null || panel.layout() == null) {
+                continue;
+            }
+            spawnStored(panel.id(), panel.layout());
+        }
     }
 
     public void spawnForBoard(String boardId, DynamicBoardLayout layout) {
@@ -53,9 +70,29 @@ public final class TimerPanelPresenter {
         double gapAbove = GAP_ABOVE_BOARD_BLOCKS;
 
         Vector3d center = TimerPanelPlacement.computeCenter(layout, gapAbove, panelHeight, FORWARD_NUDGE);
-        spawnBackground(world, center, layout.facing().yaw(), panelWidth, panelHeight, boardId);
-        spawnText(world, center, layout.facing().yaw(), layout, panelHeight, boardId);
+        spawnBackground(world, center, layout.facing().yaw(), panelWidth, panelHeight, TIMER_NAMESPACE, boardId);
+        spawnText(world, center, layout.facing().yaw(), layout, panelHeight, TIMER_NAMESPACE, boardId);
         updateForBoard(boardId, 0);
+    }
+
+    public void spawnStored(String panelId, DynamicBoardLayout layout) {
+        if (panelId == null || panelId.isBlank() || layout == null) {
+            return;
+        }
+        World world = Bukkit.getWorld(layout.worldId());
+        if (world == null) {
+            return;
+        }
+
+        removeStored(panelId);
+
+        double panelWidth = PANEL_WIDTH_BLOCKS;
+        double panelHeight = PANEL_HEIGHT_BLOCKS;
+        double gapAbove = GAP_ABOVE_BOARD_BLOCKS;
+
+        Vector3d center = TimerPanelPlacement.computeCenter(layout, gapAbove, panelHeight, FORWARD_NUDGE);
+        spawnBackground(world, center, layout.facing().yaw(), panelWidth, panelHeight, STORED_TIMER_NAMESPACE, panelId);
+        spawnText(world, center, layout.facing().yaw(), layout, panelHeight, STORED_TIMER_NAMESPACE, panelId);
     }
 
     public void updateForBoard(String boardId) {
@@ -69,19 +106,31 @@ public final class TimerPanelPresenter {
             return;
         }
         String formatted = formatSeconds(Math.max(0, remainingSeconds));
-        setText(new DisplayKey("timer", boardId, "top-timer", "text"), Component.text(formatted));
+        setText(new DisplayKey(TIMER_NAMESPACE, boardId, TIMER_ID, "text"), Component.text(formatted));
     }
 
     public void removeForBoard(String boardId) {
         if (boardId == null) {
             return;
         }
-        displayRegistry.remove(new DisplayKey("timer", boardId, "top-timer", "bg"));
-        displayRegistry.remove(new DisplayKey("timer", boardId, "top-timer", "text"));
+        removePanelKeys(TIMER_NAMESPACE, boardId);
+    }
+
+    public void removeStored(String panelId) {
+        if (panelId == null || panelId.isBlank()) {
+            return;
+        }
+        removePanelKeys(STORED_TIMER_NAMESPACE, panelId);
     }
 
     private void spawnBackground(
-            World world, Vector3d center, float yaw, double panelWidth, double panelHeight, String boardId) {
+            World world,
+            Vector3d center,
+            float yaw,
+            double panelWidth,
+            double panelHeight,
+            String namespace,
+            String group) {
         Location loc = new Location(world, center.x, center.y, center.z, yaw, 0f);
         ItemStack stack = stackWithCmd(CMD_TIMER_PANEL);
 
@@ -102,13 +151,19 @@ public final class TimerPanelPresenter {
         if (display == null) {
             return;
         }
-        DisplayKey key = new DisplayKey("timer", boardId, "top-timer", "bg");
-        DisplayTags.tag(display, "timer", key.group());
+        DisplayKey key = new DisplayKey(namespace, group, TIMER_ID, "bg");
+        DisplayTags.tag(display, namespace, key.group());
         displayRegistry.register(key, display);
     }
 
     private void spawnText(
-            World world, Vector3d center, float yaw, DynamicBoardLayout layout, double panelHeight, String boardId) {
+            World world,
+            Vector3d center,
+            float yaw,
+            DynamicBoardLayout layout,
+            double panelHeight,
+            String namespace,
+            String group) {
         double verticalOffset = panelHeight * 0.05;
         Location loc = new Location(world, center.x, center.y + verticalOffset, center.z, yaw, 0f);
 
@@ -144,8 +199,8 @@ public final class TimerPanelPresenter {
         if (display == null) {
             return;
         }
-        DisplayKey key = new DisplayKey("timer", boardId, "top-timer", "text");
-        DisplayTags.tag(display, "timer", key.group());
+        DisplayKey key = new DisplayKey(namespace, group, TIMER_ID, "text");
+        DisplayTags.tag(display, namespace, key.group());
         displayRegistry.register(key, display);
     }
 
@@ -164,6 +219,11 @@ public final class TimerPanelPresenter {
             display.text(text == null ? Component.empty() : text);
             display.setTextOpacity((byte) 0xFF);
         });
+    }
+
+    private void removePanelKeys(String namespace, String group) {
+        displayRegistry.remove(new DisplayKey(namespace, group, TIMER_ID, "bg"));
+        displayRegistry.remove(new DisplayKey(namespace, group, TIMER_ID, "text"));
     }
 
     private static String formatSeconds(int remainingSeconds) {
