@@ -3,7 +3,6 @@ package io.letsrolldrew.feud.board.display.panels;
 import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
-import io.letsrolldrew.feud.display.DisplayTags;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -11,33 +10,27 @@ import java.util.Set;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.entity.Display;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.components.CustomModelDataComponent;
-import org.bukkit.util.Transformation;
-import org.joml.AxisAngle4f;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 
 public final class TimerPanelPresenter {
     private static final float CMD_TIMER_PANEL = 9005.0f;
-    private static final double PANEL_WIDTH_BLOCKS = 3.0;
-    private static final double PANEL_HEIGHT_BLOCKS = 2.0;
-    private static final double GAP_ABOVE_BOARD_BLOCKS = 1.0;
-    private static final double FORWARD_NUDGE = 0.05;
+
+    // semantics similar to the board factory
+    private static final double PANEL_FORWARD_NUDGE = 0.05;
     private static final double TEXT_FORWARD_NUDGE = 0.04;
+
     private static final int TEXT_LINE_WIDTH = 96;
-    private static final double TEXT_SCALE = 0.9;
-    private static final String TIMER_NAMESPACE = "timer";
-    private static final String STORED_TIMER_NAMESPACE = "panel-timer";
-    private static final String TIMER_ID = "top-timer";
+
+    // namespaces DisplayKey + display tags
+    private static final String BOARD_NAMESPACE = "timer";
+    private static final String STORED_NAMESPACE = "panel-timer";
+
+    private static final String TIMER_ID = "top-panel";
 
     private final DisplayRegistry displayRegistry;
+
     private final Set<String> storedPanelIds = new HashSet<>();
     private final Set<String> boardPanelIds = new HashSet<>();
 
@@ -62,20 +55,7 @@ public final class TimerPanelPresenter {
         if (boardId == null || boardId.isBlank() || layout == null) {
             return;
         }
-        World world = Bukkit.getWorld(layout.worldId());
-        if (world == null) {
-            return;
-        }
-
-        removeForBoard(boardId);
-
-        double panelWidth = PANEL_WIDTH_BLOCKS;
-        double panelHeight = PANEL_HEIGHT_BLOCKS;
-        double gapAbove = GAP_ABOVE_BOARD_BLOCKS;
-
-        Vector3d center = TimerPanelPlacement.computeCenter(layout, gapAbove, panelHeight, FORWARD_NUDGE);
-        spawnBackground(world, center, layout.facing().yaw(), panelWidth, panelHeight, TIMER_NAMESPACE, boardId);
-        spawnText(world, center, layout.facing().yaw(), layout, panelHeight, TIMER_NAMESPACE, boardId);
+        spawnTimerPanel(BOARD_NAMESPACE, boardId, layout);
         boardPanelIds.add(boardId);
         updateForBoard(boardId, 0);
     }
@@ -84,42 +64,15 @@ public final class TimerPanelPresenter {
         if (panelId == null || panelId.isBlank() || layout == null) {
             return;
         }
-        World world = Bukkit.getWorld(layout.worldId());
-        if (world == null) {
-            return;
-        }
-
-        removeStored(panelId);
-
-        double panelWidth = PANEL_WIDTH_BLOCKS;
-        double panelHeight = PANEL_HEIGHT_BLOCKS;
-        double gapAbove = GAP_ABOVE_BOARD_BLOCKS;
-
-        Vector3d center = TimerPanelPlacement.computeCenter(layout, gapAbove, panelHeight, FORWARD_NUDGE);
-        spawnBackground(world, center, layout.facing().yaw(), panelWidth, panelHeight, STORED_TIMER_NAMESPACE, panelId);
-        spawnText(world, center, layout.facing().yaw(), layout, panelHeight, STORED_TIMER_NAMESPACE, panelId);
+        spawnTimerPanel(STORED_NAMESPACE, panelId, layout);
         storedPanelIds.add(panelId);
     }
 
-    public void updateForBoard(String boardId) {
-        if (boardId == null) {
-            return;
-        }
-    }
-
-    public void updateForBoard(String boardId, int remainingSeconds) {
+    public void removeForBoard(String boardId) {
         if (boardId == null || boardId.isBlank()) {
             return;
         }
-        String formatted = formatSeconds(Math.max(0, remainingSeconds));
-        setText(new DisplayKey(TIMER_NAMESPACE, boardId, TIMER_ID, "text"), Component.text(formatted));
-    }
-
-    public void removeForBoard(String boardId) {
-        if (boardId == null) {
-            return;
-        }
-        removePanelKeys(TIMER_NAMESPACE, boardId);
+        removeTimerKeys(BOARD_NAMESPACE, boardId);
         boardPanelIds.remove(boardId);
     }
 
@@ -127,118 +80,81 @@ public final class TimerPanelPresenter {
         if (panelId == null || panelId.isBlank()) {
             return;
         }
-        removePanelKeys(STORED_TIMER_NAMESPACE, panelId);
+        removeTimerKeys(STORED_NAMESPACE, panelId);
         storedPanelIds.remove(panelId);
     }
 
+    public void updateForBoard(String boardId, int remainingSeconds) {
+        if (boardId == null || boardId.isBlank()) {
+            return;
+        }
+        PanelDisplayHelper.setText(
+                displayRegistry,
+                new DisplayKey(BOARD_NAMESPACE, boardId, TIMER_ID, "text"),
+                Component.text(formatSecondsSafe(remainingSeconds)));
+    }
+
     public void updateAll(int remainingSeconds) {
+        Component text = Component.text(formatSecondsSafe(remainingSeconds));
+
         for (String boardId : boardPanelIds) {
-            setText(new DisplayKey(TIMER_NAMESPACE, boardId, TIMER_ID, "text"), Component.text(formatSecondsSafe(remainingSeconds)));
+            PanelDisplayHelper.setText(
+                    displayRegistry, new DisplayKey(BOARD_NAMESPACE, boardId, TIMER_ID, "text"), text);
         }
         for (String panelId : storedPanelIds) {
-            setText(new DisplayKey(STORED_TIMER_NAMESPACE, panelId, TIMER_ID, "text"), Component.text(formatSecondsSafe(remainingSeconds)));
+            PanelDisplayHelper.setText(
+                    displayRegistry, new DisplayKey(STORED_NAMESPACE, panelId, TIMER_ID, "text"), text);
         }
     }
 
-    private void spawnBackground(
-            World world,
-            Vector3d center,
-            float yaw,
-            double panelWidth,
-            double panelHeight,
-            String namespace,
-            String group) {
-        Location loc = new Location(world, center.x, center.y, center.z, yaw, 0f);
-        ItemStack stack = stackWithCmd(CMD_TIMER_PANEL);
-
-        ItemDisplay display = world.spawn(loc, ItemDisplay.class, entity -> {
-            entity.setItemStack(stack);
-            entity.setBillboard(Display.Billboard.FIXED);
-            entity.setRotation(yaw, 0f);
-            try {
-                entity.setTransformation(new Transformation(
-                        new Vector3f(0, 0, 0),
-                        new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f((float) panelWidth, (float) panelHeight, 0.01f),
-                        new AxisAngle4f(0, 0, 0, 0)));
-            } catch (Throwable ignored) {
-            }
-        });
-
-        if (display == null) {
+    private void spawnTimerPanel(String namespace, String group, DynamicBoardLayout layout) {
+        World world = Bukkit.getWorld(layout.worldId());
+        if (world == null) {
             return;
         }
-        DisplayKey key = new DisplayKey(namespace, group, TIMER_ID, "bg");
-        DisplayTags.tag(display, namespace, key.group());
-        displayRegistry.register(key, display);
-    }
 
-    private void spawnText(
-            World world,
-            Vector3d center,
-            float yaw,
-            DynamicBoardLayout layout,
-            double panelHeight,
-            String namespace,
-            String group) {
-        double verticalOffset = panelHeight * 0.05;
-        Location loc = new Location(world, center.x, center.y + verticalOffset, center.z, yaw, 0f);
+        // replace existing
+        removeTimerKeys(namespace, group);
 
-        Location spawnLoc = loc.clone()
-                .add(
-                        layout.facing().forwardX() * TEXT_FORWARD_NUDGE,
-                        0,
-                        layout.facing().forwardZ() * TEXT_FORWARD_NUDGE);
-
-        TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
-            entity.setBillboard(Display.Billboard.FIXED);
-            entity.setRotation(yaw, 0f);
-            entity.setShadowed(true);
-            entity.setSeeThrough(false);
-            entity.setBackgroundColor(org.bukkit.Color.fromARGB(0));
-            entity.setBrightness(new Display.Brightness(15, 15));
-            entity.setViewRange(48f);
-            entity.setAlignment(TextDisplay.TextAlignment.CENTER);
-            entity.setLineWidth(TEXT_LINE_WIDTH);
-            entity.text(Component.empty());
-            entity.setTextOpacity((byte) 0);
-            try {
-                double scale = TEXT_SCALE * layout.cellHeight();
-                entity.setTransformation(new Transformation(
-                        new Vector3f(0, 0, 0),
-                        new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f((float) scale, (float) scale, (float) scale),
-                        new AxisAngle4f(0, 0, 0, 0)));
-            } catch (Throwable ignored) {
-            }
-        });
-
-        if (display == null) {
+        double panelWidth = layout.totalWidth();
+        double panelHeight = layout.totalHeight();
+        if (panelWidth <= 0.0 || panelHeight <= 0.0) {
             return;
         }
-        DisplayKey key = new DisplayKey(namespace, group, TIMER_ID, "text");
-        DisplayTags.tag(display, namespace, key.group());
-        displayRegistry.register(key, display);
+
+        float yaw = layout.facing().yaw();
+        ItemStack panelStack = PanelDisplayHelper.stackWithCmd(CMD_TIMER_PANEL);
+
+        // center INSIDE the selected rectangle (no more hardcoded dims)
+        Vector3d center =
+                TimerPanelPlacement.computeCenterOnSelection(layout, panelWidth, panelHeight, PANEL_FORWARD_NUDGE);
+        Location centerLoc = PanelDisplayHelper.toLocation(world, center, yaw);
+
+        DisplayKey bgKey = new DisplayKey(namespace, group, TIMER_ID, "bg");
+        DisplayKey textKey = new DisplayKey(namespace, group, TIMER_ID, "text");
+
+        PanelDisplayHelper.spawnBackground(
+                displayRegistry, bgKey, world, centerLoc, yaw, panelWidth, panelHeight, panelStack, namespace);
+
+        double verticalNudge = panelHeight * 0.05;
+        double textScale = PanelDisplayHelper.clamp(panelHeight * 0.55, 0.6, 12.0);
+
+        PanelDisplayHelper.spawnText(
+                displayRegistry,
+                textKey,
+                world,
+                centerLoc,
+                yaw,
+                layout,
+                TEXT_LINE_WIDTH,
+                textScale,
+                verticalNudge,
+                TEXT_FORWARD_NUDGE,
+                namespace,
+                true);
     }
 
-    private static ItemStack stackWithCmd(float cmd) {
-        ItemStack stack = new ItemStack(Material.PAPER);
-        ItemMeta meta = stack.getItemMeta();
-        CustomModelDataComponent cmdComponent = meta.getCustomModelDataComponent();
-        cmdComponent.setFloats(java.util.List.of(cmd));
-        meta.setCustomModelDataComponent(cmdComponent);
-        stack.setItemMeta(meta);
-        return stack;
-    }
-
-    private void setText(DisplayKey key, Component text) {
-        displayRegistry.resolveText(key).ifPresent(display -> {
-            display.text(text == null ? Component.empty() : text);
-            display.setTextOpacity((byte) 0xFF);
-        });
-    }
-
-    private void removePanelKeys(String namespace, String group) {
+    private void removeTimerKeys(String namespace, String group) {
         displayRegistry.remove(new DisplayKey(namespace, group, TIMER_ID, "bg"));
         displayRegistry.remove(new DisplayKey(namespace, group, TIMER_ID, "text"));
     }

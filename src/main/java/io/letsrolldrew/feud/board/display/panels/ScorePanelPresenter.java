@@ -3,26 +3,16 @@ package io.letsrolldrew.feud.board.display.panels;
 import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
-import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import java.util.Map;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.entity.Display;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.components.CustomModelDataComponent;
-import org.bukkit.util.Transformation;
-import org.joml.AxisAngle4f;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 
 public final class ScorePanelPresenter {
     private static final float CMD_SCORE_PANEL = 9005.0f;
@@ -102,17 +92,21 @@ public final class ScorePanelPresenter {
             return;
         }
 
-        setText(
+        PanelDisplayHelper.setText(
+                displayRegistry,
                 new DisplayKey(TEAM_NAMESPACE, boardId, BLUE_PREFIX, "name"),
                 Component.text(teamService.getName(TeamId.BLUE)));
-        setText(
+        PanelDisplayHelper.setText(
+                displayRegistry,
                 new DisplayKey(TEAM_NAMESPACE, boardId, BLUE_PREFIX, "score"),
                 Component.text(Integer.toString(teamService.getScore(TeamId.BLUE))));
 
-        setText(
+        PanelDisplayHelper.setText(
+                displayRegistry,
                 new DisplayKey(TEAM_NAMESPACE, boardId, RED_PREFIX, "name"),
                 Component.text(teamService.getName(TeamId.RED)));
-        setText(
+        PanelDisplayHelper.setText(
+                displayRegistry,
                 new DisplayKey(TEAM_NAMESPACE, boardId, RED_PREFIX, "score"),
                 Component.text(Integer.toString(teamService.getScore(TeamId.RED))));
     }
@@ -155,154 +149,74 @@ public final class ScorePanelPresenter {
         displayRegistry.remove(new DisplayKey(PANEL_NAMESPACE, panelId, teamPrefix(TeamId.RED), "score"));
     }
 
-    private static Location toLocation(World world, Vector3d center, float yaw) {
-        return new Location(world, center.x, center.y, center.z, yaw, 0f);
-    }
-
-    private void spawnBackground(
-            DisplayKey key,
-            World world,
-            Location centerLoc,
-            float yaw,
-            double panelWidth,
-            double panelHeight,
-            ItemStack stack) {
-
-        ItemDisplay display = world.spawn(centerLoc, ItemDisplay.class, entity -> {
-            entity.setItemStack(stack);
-            entity.setBillboard(Display.Billboard.FIXED);
-            entity.setRotation(yaw, 0f);
-            try {
-                entity.setTransformation(new Transformation(
-                        new Vector3f(0, 0, 0),
-                        new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f((float) panelWidth, (float) panelHeight, 0.01f),
-                        new AxisAngle4f(0, 0, 0, 0)));
-            } catch (Throwable ignored) {
-            }
-        });
-
-        if (display == null) {
-            return;
-        }
-        DisplayTags.tag(display, "team", key.group());
-        displayRegistry.register(key, display);
-    }
-
-    private void spawnText(
-            DisplayKey key,
-            World world,
-            Location centerLoc,
-            float yaw,
-            DynamicBoardLayout layout,
-            int lineWidth,
-            double textScale,
-            double verticalNudge) {
-
-        Location spawnLoc = centerLoc.clone();
-        spawnLoc.add(
-                layout.facing().forwardX() * TEXT_FORWARD_NUDGE,
-                0,
-                layout.facing().forwardZ() * TEXT_FORWARD_NUDGE);
-
-        TextDisplay display = world.spawn(spawnLoc, TextDisplay.class, entity -> {
-            entity.setBillboard(Display.Billboard.FIXED);
-            entity.setRotation(yaw, 0f);
-            entity.setShadowed(true);
-            entity.setSeeThrough(false);
-            try {
-                entity.setBackgroundColor(Color.fromARGB(0));
-            } catch (Throwable ignored) {
-            }
-            try {
-                entity.setBrightness(new Display.Brightness(15, 15));
-            } catch (Throwable ignored) {
-            }
-
-            entity.setViewRange(48f);
-            entity.setAlignment(TextDisplay.TextAlignment.CENTER);
-            entity.setLineWidth(lineWidth);
-            entity.text(Component.empty());
-            entity.setTextOpacity((byte) 0xFF);
-
-            try {
-                entity.setTransformation(new Transformation(
-                        new Vector3f(0, (float) verticalNudge, 0),
-                        new AxisAngle4f(0, 0, 0, 0),
-                        new Vector3f((float) textScale, (float) textScale, (float) textScale),
-                        new AxisAngle4f(0, 0, 0, 0)));
-            } catch (Throwable ignored) {
-            }
-        });
-
-        if (display == null) {
-            return;
-        }
-        DisplayTags.tag(display, "team", key.group());
-        displayRegistry.register(key, display);
-    }
-
-    private static ItemStack stackWithCmd(float cmd) {
-        ItemStack stack = new ItemStack(Material.PAPER);
-        org.bukkit.inventory.meta.ItemMeta meta = stack.getItemMeta();
-        CustomModelDataComponent cmdComponent = meta.getCustomModelDataComponent();
-        cmdComponent.setFloats(java.util.List.of(cmd));
-        meta.setCustomModelDataComponent(cmdComponent);
-        stack.setItemMeta(meta);
-        return stack;
-    }
-
-    private void setText(DisplayKey key, Component text) {
-        displayRegistry.resolveText(key).ifPresent(display -> {
-            display.text(text == null ? Component.empty() : text);
-            display.setTextOpacity((byte) 0xFF);
-        });
-    }
-
-    private static double clamp(double v, double min, double max) {
-        return Math.max(min, Math.min(max, v));
-    }
-
     private void spawnTeamPanel(
             String namespace, String group, String idPrefix, DynamicBoardLayout layout, TeamId team) {
-
         World world = Bukkit.getWorld(layout.worldId());
         if (world == null) {
             return;
         }
 
-        double panelWidth = layout.totalWidth();
-        double panelHeight = layout.totalHeight();
-        if (panelWidth <= 0.0 || panelHeight <= 0.0) {
+        // replace existing
+        removePanelKeys(namespace, group, idPrefix);
+
+        PanelDimensions dims = panelDimensions(layout);
+        if (dims.width() <= 0.0 || dims.height() <= 0.0) {
             return;
         }
 
-        removePanelKeys(namespace, group, idPrefix);
-
         float yaw = layout.facing().yaw();
-        ItemStack panelStack = stackWithCmd(CMD_SCORE_PANEL);
+        ItemStack panelStack = PanelDisplayHelper.stackWithCmd(CMD_SCORE_PANEL);
 
-        Vector3d center = ScorePanelPlacement.computeCenter(layout, panelWidth, panelHeight, PANEL_FORWARD_NUDGE, team);
-        Location centerLoc = toLocation(world, center, yaw);
+        Vector3d center =
+                ScorePanelPlacement.computeCenter(layout, dims.width(), dims.height(), PANEL_FORWARD_NUDGE, team);
+
+        Location centerLoc = PanelDisplayHelper.toLocation(world, center, yaw);
 
         DisplayKey bgKey = new DisplayKey(namespace, group, idPrefix, "bg");
         DisplayKey nameKey = new DisplayKey(namespace, group, idPrefix, "name");
         DisplayKey scoreKey = new DisplayKey(namespace, group, idPrefix, "score");
 
-        spawnBackground(bgKey, world, centerLoc, yaw, panelWidth, panelHeight, panelStack);
+        PanelDisplayHelper.spawnBackground(
+                displayRegistry, bgKey, world, centerLoc, yaw, dims.width(), dims.height(), panelStack, namespace);
 
-        double nameVerticalNudge = panelHeight * 0.10;
-        double scoreVerticalNudge = -panelHeight * 0.10;
+        double nameVerticalNudge = dims.height() * 0.10;
+        double scoreVerticalNudge = -dims.height() * 0.10;
 
-        double nameScale = clamp(panelHeight * 0.30, 0.8, 10.0);
-        double scoreScale = clamp(panelHeight * 0.38, 0.8, 12.0);
+        double nameScale = PanelDisplayHelper.clamp(dims.height() * 0.30, 0.8, 10.0);
+        double scoreScale = PanelDisplayHelper.clamp(dims.height() * 0.38, 0.8, 12.0);
 
-        spawnText(nameKey, world, centerLoc, yaw, layout, NAME_LINE_WIDTH, nameScale, nameVerticalNudge);
-        spawnText(scoreKey, world, centerLoc, yaw, layout, SCORE_LINE_WIDTH, scoreScale, scoreVerticalNudge);
+        PanelDisplayHelper.spawnText(
+                displayRegistry,
+                nameKey,
+                world,
+                centerLoc,
+                yaw,
+                layout,
+                NAME_LINE_WIDTH,
+                nameScale,
+                nameVerticalNudge,
+                TEXT_FORWARD_NUDGE,
+                namespace,
+                true);
+
+        PanelDisplayHelper.spawnText(
+                displayRegistry,
+                scoreKey,
+                world,
+                centerLoc,
+                yaw,
+                layout,
+                SCORE_LINE_WIDTH,
+                scoreScale,
+                scoreVerticalNudge,
+                TEXT_FORWARD_NUDGE,
+                namespace,
+                true);
 
         // use live team data for stored and board panels
-        setText(nameKey, Component.text(teamService.getName(team)));
-        setText(scoreKey, Component.text(Integer.toString(teamService.getScore(team))));
+        PanelDisplayHelper.setText(displayRegistry, nameKey, Component.text(teamService.getName(team)));
+        PanelDisplayHelper.setText(
+                displayRegistry, scoreKey, Component.text(Integer.toString(teamService.getScore(team))));
     }
 
     private void removePanelKeys(String namespace, String group, String idPrefix) {
@@ -311,7 +225,15 @@ public final class ScorePanelPresenter {
         displayRegistry.remove(new DisplayKey(namespace, group, idPrefix, "score"));
     }
 
+    private PanelDimensions panelDimensions(DynamicBoardLayout layout) {
+        double width = layout.totalWidth();
+        double height = layout.totalHeight();
+        return new PanelDimensions(width, height);
+    }
+
     private static String teamPrefix(TeamId team) {
         return team == TeamId.RED ? RED_PREFIX : BLUE_PREFIX;
     }
+
+    private record PanelDimensions(double width, double height) {}
 }
