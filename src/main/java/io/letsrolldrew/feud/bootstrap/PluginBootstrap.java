@@ -137,10 +137,7 @@ public final class PluginBootstrap {
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
         this.displayBoardPresenter = new DisplayBoardService(
-                displayRegistry,
-                animationService,
-                dynamicBoardsFile,
-                displayBoardSelectionStore);
+                displayRegistry, animationService, dynamicBoardsFile, displayBoardSelectionStore);
         this.displayBoardSelectionListener =
                 new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
                     var fresh = hostBookUiBuilder.createBookFor(

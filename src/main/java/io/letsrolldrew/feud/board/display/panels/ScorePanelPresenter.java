@@ -110,6 +110,27 @@ public final class ScorePanelPresenter {
                 Component.text(Integer.toString(teamService.getScore(TeamId.RED))));
     }
 
+    public void updateStoredPanels(String boardId) {
+        if (boardId == null || boardId.isBlank()) {
+            return;
+        }
+        updateStoredPanel(boardId, TeamId.BLUE);
+        updateStoredPanel(boardId, TeamId.RED);
+    }
+
+    public void updateStoredPanels(ScorePanelStore store) {
+        if (store == null) {
+            return;
+        }
+        Map<String, StoredScorePanel> storedPanels = store.loadPanels();
+        for (StoredScorePanel panel : storedPanels.values()) {
+            if (panel == null || panel.team() == null || panel.id() == null) {
+                continue;
+            }
+            updateStoredPanelByPanelId(panel.id(), panel.team());
+        }
+    }
+
     public void removeForBoard(String boardId) {
         if (boardId == null) {
             return;
@@ -178,8 +199,8 @@ public final class ScorePanelPresenter {
                 displayRegistry, bgKey, world, centerLoc, yaw, dims.width(), dims.height(), panelStack, namespace);
 
         // text size and position, note: ocasionally tweak vertical nudge if upscaling
-        double scoreVerticalNudge = -dims.height() * 0.12;
-        double scoreScale = PanelDisplayHelper.clamp((layout.totalHeight()) * 1.75, 1.0, 200.0);
+        double scoreVerticalNudge = -dims.height() * 0.18;
+        double scoreScale = PanelDisplayHelper.clamp((layout.totalHeight()) * 2.0, 1.0, 225.0);
 
         PanelDisplayHelper.spawnText(
                 displayRegistry,
@@ -212,6 +233,24 @@ public final class ScorePanelPresenter {
 
     private static String teamPrefix(TeamId team) {
         return team == TeamId.RED ? RED_PREFIX : BLUE_PREFIX;
+    }
+
+    private void updateStoredPanel(String boardId, TeamId team) {
+        String panelId = boardId + ":" + team.name().toLowerCase(java.util.Locale.ROOT);
+        PanelDisplayHelper.setText(
+                displayRegistry,
+                new DisplayKey(PANEL_NAMESPACE, panelId, teamPrefix(team), "score"),
+                Component.text(Integer.toString(teamService.getScore(team))));
+    }
+
+    private void updateStoredPanelByPanelId(String panelId, TeamId team) {
+        if (panelId == null || panelId.isBlank() || team == null) {
+            return;
+        }
+        PanelDisplayHelper.setText(
+                displayRegistry,
+                new DisplayKey(PANEL_NAMESPACE, panelId, teamPrefix(team), "score"),
+                Component.text(Integer.toString(teamService.getScore(team))));
     }
 
     private record PanelDimensions(double width, double height) {}

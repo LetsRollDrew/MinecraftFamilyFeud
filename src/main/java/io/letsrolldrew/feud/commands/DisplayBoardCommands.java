@@ -233,9 +233,11 @@ public final class DisplayBoardCommands {
             return;
         }
         teamService.addScore(teamId, points);
-        if (scorePanelPresenter != null && boardId != null && !boardId.isBlank()) {
-            scorePanelPresenter.updateForBoard(boardId);
+        if (scorePanelPresenter == null || boardId == null || boardId.isBlank()) {
+            return;
         }
+        scorePanelPresenter.updateForBoard(boardId);
+        scorePanelPresenter.updateStoredPanels(boardId);
     }
 
     private void handleCreate(CommandSender sender, String[] args) {

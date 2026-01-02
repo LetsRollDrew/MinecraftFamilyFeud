@@ -143,6 +143,7 @@ public final class FeudRootCommand implements CommandExecutor {
                 this::renderReveal,
                 teamService,
                 scorePanelPresenter,
+                scorePanelStore,
                 displayBoardPresenter);
         this.commandTree = buildCommandTree();
     }

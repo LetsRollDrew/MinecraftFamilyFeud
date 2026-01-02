@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.team.TeamId;
@@ -18,6 +19,7 @@ public final class UiCommand {
     private final Consumer<Integer> revealCallback;
     private final TeamService teamService;
     private final ScorePanelPresenter scorePanelPresenter;
+    private final ScorePanelStore scorePanelStore;
     private final DisplayBoardPresenter displayBoardPresenter;
 
     public UiCommand(
@@ -27,6 +29,7 @@ public final class UiCommand {
             Consumer<Integer> revealCallback,
             TeamService teamService,
             ScorePanelPresenter scorePanelPresenter,
+            ScorePanelStore scorePanelStore,
             DisplayBoardPresenter displayBoardPresenter) {
         this.controller = controller;
         this.hostPermission = Validation.requireNonBlank(hostPermission, "host-permission");
@@ -34,6 +37,7 @@ public final class UiCommand {
         this.revealCallback = revealCallback;
         this.teamService = teamService;
         this.scorePanelPresenter = scorePanelPresenter;
+        this.scorePanelStore = scorePanelStore;
         this.displayBoardPresenter = displayBoardPresenter;
     }
 
@@ -177,5 +181,6 @@ public final class UiCommand {
         for (String boardId : displayBoardPresenter.listBoards()) {
             scorePanelPresenter.updateForBoard(boardId);
         }
+        scorePanelPresenter.updateStoredPanels(scorePanelStore);
     }
 }
