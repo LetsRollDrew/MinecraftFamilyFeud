@@ -9,6 +9,7 @@ import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.board.render.MapIdStore;
@@ -72,6 +73,7 @@ public final class PluginBootstrap {
     private ScorePanelPresenter scorePanelPresenter;
     private TimerPanelPresenter timerPanelPresenter;
     private ScorePanelStore scorePanelStore;
+    private TimerPanelStore timerPanelStore;
     private TimerService timerService;
     private TimerCommands timerCommands;
     private BuzzerService buzzerService;
@@ -106,6 +108,8 @@ public final class PluginBootstrap {
                 new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
         File panelStoreFile = new File(plugin.getDataFolder(), "panels.yml");
         this.scorePanelStore = new ScorePanelStore(panelStoreFile);
+        File timerPanelStoreFile = new File(plugin.getDataFolder(), "timer-panels.yml");
+        this.timerPanelStore = new TimerPanelStore(timerPanelStoreFile);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.timerService = new TimerService(
@@ -163,11 +167,13 @@ public final class PluginBootstrap {
                 teamService,
                 scorePanelPresenter,
                 timerPanelPresenter,
-                scorePanelStore);
+                scorePanelStore,
+                timerPanelStore);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
         scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
+        timerPanelPresenter.rehydrateStoredPanels(timerPanelStore);
         registerCommands();
     }
 
@@ -216,7 +222,8 @@ public final class PluginBootstrap {
                 timerCommands,
                 buzzerCommands,
                 displayRegistry,
-                scorePanelStore);
+                scorePanelStore,
+                timerPanelStore);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
     }

@@ -6,6 +6,7 @@ import io.letsrolldrew.feud.board.MapWallBinder;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
@@ -77,6 +78,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final BuzzerCommands buzzerCommands;
     private final DisplayRegistry displayRegistry;
     private final ScorePanelStore scorePanelStore;
+    private final TimerPanelStore timerPanelStore;
     private final CommandTree commandTree;
 
     public FeudRootCommand(
@@ -105,7 +107,8 @@ public final class FeudRootCommand implements CommandExecutor {
             TimerCommands timerCommands,
             BuzzerCommands buzzerCommands,
             DisplayRegistry displayRegistry,
-            ScorePanelStore scorePanelStore) {
+            ScorePanelStore scorePanelStore,
+            TimerPanelStore timerPanelStore) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.hostBookUiBuilder = hostBookUiBuilder;
@@ -132,6 +135,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.buzzerCommands = buzzerCommands;
         this.displayRegistry = displayRegistry;
         this.scorePanelStore = scorePanelStore;
+        this.timerPanelStore = timerPanelStore;
         this.uiCommand = new UiCommand(
                 gameController,
                 hostPermission,
@@ -362,6 +366,9 @@ public final class FeudRootCommand implements CommandExecutor {
         hologramService.clearAll();
         if (scorePanelStore != null) {
             scorePanelStore.clear();
+        }
+        if (timerPanelStore != null) {
+            timerPanelStore.clear();
         }
 
         sender.sendMessage("Cleared " + removed + " displays");

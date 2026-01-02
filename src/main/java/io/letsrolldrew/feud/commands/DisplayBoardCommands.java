@@ -5,6 +5,7 @@ import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
@@ -30,6 +31,7 @@ public final class DisplayBoardCommands {
     private final ScorePanelPresenter scorePanelPresenter;
     private final TimerPanelPresenter timerPanelPresenter;
     private final ScorePanelStore scorePanelStore;
+    private final TimerPanelStore timerPanelStore;
 
     public DisplayBoardCommands(
             DisplayBoardService presenter,
@@ -43,7 +45,8 @@ public final class DisplayBoardCommands {
             TeamService teamService,
             ScorePanelPresenter scorePanelPresenter,
             TimerPanelPresenter timerPanelPresenter,
-            ScorePanelStore scorePanelStore) {
+            ScorePanelStore scorePanelStore,
+            TimerPanelStore timerPanelStore) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
@@ -56,6 +59,7 @@ public final class DisplayBoardCommands {
         this.scorePanelPresenter = scorePanelPresenter;
         this.timerPanelPresenter = timerPanelPresenter;
         this.scorePanelStore = scorePanelStore;
+        this.timerPanelStore = timerPanelStore;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -203,7 +207,12 @@ public final class DisplayBoardCommands {
         }
         java.util.List<String> ids = new java.util.ArrayList<>(presenter.listBoards());
         java.util.Collections.sort(ids);
-        String target = (boardId == null || boardId.isBlank()) && !ids.isEmpty() ? ids.get(0) : boardId;
+
+        String target = boardId;
+        if ((target == null || target.isBlank()) && !ids.isEmpty()) {
+            target = ids.get(0);
+        }
+
         hostRemoteService.giveOrReplace(
                 player, DisplayHostRemoteBookBuilder.create(target, ids, surveyRepository, hostKey, controller));
     }
@@ -212,7 +221,14 @@ public final class DisplayBoardCommands {
         if (points <= 0 || control == null || teamService == null) {
             return;
         }
-        TeamId teamId = control == TeamControl.RED ? TeamId.RED : control == TeamControl.BLUE ? TeamId.BLUE : null;
+
+        TeamId teamId = null;
+        if (control == TeamControl.RED) {
+            teamId = TeamId.RED;
+        } else if (control == TeamControl.BLUE) {
+            teamId = TeamId.BLUE;
+        }
+
         if (teamId == null) {
             return;
         }
@@ -326,14 +342,20 @@ public final class DisplayBoardCommands {
                 return;
             }
             spawnPanels(boardId, layoutResult.layout(), team);
-            String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
+            String targetLabel = panelLabel(team);
             sender.sendMessage("Spawned " + targetLabel + " for '" + boardId + "' using selection.");
             return;
         }
 
         if (target.equals("timer")) {
-            if (timerPanelPresenter == null) {
+            if (timerPanelPresenter == null || timerPanelStore == null) {
                 sender.sendMessage("Timer panel is not available.");
+                return;
+            }
+            boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
+            if (isRemove) {
+                removeTimerPanel(boardId);
+                sender.sendMessage("Removed timer panel for '" + boardId + "'.");
                 return;
             }
             var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
@@ -341,7 +363,7 @@ public final class DisplayBoardCommands {
                 sender.sendMessage("Selection invalid: " + layoutResult.error());
                 return;
             }
-            timerPanelPresenter.spawnForBoard(boardId, layoutResult.layout());
+            spawnTimerPanel(boardId, layoutResult.layout());
             sender.sendMessage("Timer panel spawned for '" + boardId + "' using selection.");
             return;
         }
@@ -411,9 +433,39 @@ public final class DisplayBoardCommands {
         scorePanelStore.removePanel(panelId);
     }
 
+    private void spawnTimerPanel(String boardId, DynamicBoardLayout layout) {
+        if (layout == null) {
+            return;
+        }
+        String panelId = timerPanelId(boardId);
+        timerPanelPresenter.spawnStored(panelId, layout);
+        timerPanelStore.savePanel(panelId, layout);
+    }
+
+    private void removeTimerPanel(String boardId) {
+        String panelId = timerPanelId(boardId);
+        timerPanelPresenter.removeStored(panelId);
+        timerPanelStore.removePanel(panelId);
+    }
+
     private static String panelId(String boardId, TeamId team) {
         String base = boardId == null ? "" : boardId.trim();
         String suffix = team == null ? "" : team.name().toLowerCase(java.util.Locale.ROOT);
         return base + ":" + suffix;
+    }
+
+    private static String timerPanelId(String boardId) {
+        String base = boardId == null ? "" : boardId.trim();
+        return base + ":timer";
+    }
+
+    private static String panelLabel(TeamId team) {
+        if (team == null) {
+            return "both panels";
+        }
+        if (team == TeamId.RED) {
+            return "red panel";
+        }
+        return "blue panel";
     }
 }
