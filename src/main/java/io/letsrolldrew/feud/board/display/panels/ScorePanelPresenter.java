@@ -177,8 +177,9 @@ public final class ScorePanelPresenter {
         PanelDisplayHelper.spawnBackground(
                 displayRegistry, bgKey, world, centerLoc, yaw, dims.width(), dims.height(), panelStack, namespace);
 
-        double scoreVerticalNudge = -dims.height() * 0.10;
-        double scoreScale = PanelDisplayHelper.clamp(dims.height() * 0.80, 0.8, 20.0);
+        // text size and position, note: ocasionally tweak vertical nudge if upscaling
+        double scoreVerticalNudge = -dims.height() * 0.12;
+        double scoreScale = PanelDisplayHelper.clamp((layout.totalHeight()) * 1.75, 1.0, 200.0);
 
         PanelDisplayHelper.spawnText(
                 displayRegistry,
