@@ -20,7 +20,6 @@ public final class ScorePanelPresenter {
     // semantics similar to the board factory
     private static final double PANEL_FORWARD_NUDGE = 0.05;
     private static final double TEXT_FORWARD_NUDGE = 0.04;
-    private static final int NAME_LINE_WIDTH = 160;
     private static final int SCORE_LINE_WIDTH = 64;
 
     private static final String PANEL_NAMESPACE = "panel";
@@ -173,31 +172,13 @@ public final class ScorePanelPresenter {
         Location centerLoc = PanelDisplayHelper.toLocation(world, center, yaw);
 
         DisplayKey bgKey = new DisplayKey(namespace, group, idPrefix, "bg");
-        DisplayKey nameKey = new DisplayKey(namespace, group, idPrefix, "name");
         DisplayKey scoreKey = new DisplayKey(namespace, group, idPrefix, "score");
 
         PanelDisplayHelper.spawnBackground(
                 displayRegistry, bgKey, world, centerLoc, yaw, dims.width(), dims.height(), panelStack, namespace);
 
-        double nameVerticalNudge = dims.height() * 0.10;
         double scoreVerticalNudge = -dims.height() * 0.10;
-
-        double nameScale = PanelDisplayHelper.clamp(dims.height() * 0.30, 0.8, 10.0);
-        double scoreScale = PanelDisplayHelper.clamp(dims.height() * 0.38, 0.8, 12.0);
-
-        PanelDisplayHelper.spawnText(
-                displayRegistry,
-                nameKey,
-                world,
-                centerLoc,
-                yaw,
-                layout,
-                NAME_LINE_WIDTH,
-                nameScale,
-                nameVerticalNudge,
-                TEXT_FORWARD_NUDGE,
-                namespace,
-                true);
+        double scoreScale = PanelDisplayHelper.clamp(dims.height() * 0.80, 0.8, 20.0);
 
         PanelDisplayHelper.spawnText(
                 displayRegistry,
@@ -213,15 +194,12 @@ public final class ScorePanelPresenter {
                 namespace,
                 true);
 
-        // use live team data for stored and board panels
-        PanelDisplayHelper.setText(displayRegistry, nameKey, Component.text(teamService.getName(team)));
         PanelDisplayHelper.setText(
                 displayRegistry, scoreKey, Component.text(Integer.toString(teamService.getScore(team))));
     }
 
     private void removePanelKeys(String namespace, String group, String idPrefix) {
         displayRegistry.remove(new DisplayKey(namespace, group, idPrefix, "bg"));
-        displayRegistry.remove(new DisplayKey(namespace, group, idPrefix, "name"));
         displayRegistry.remove(new DisplayKey(namespace, group, idPrefix, "score"));
     }
 

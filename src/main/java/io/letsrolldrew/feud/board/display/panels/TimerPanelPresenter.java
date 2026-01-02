@@ -21,6 +21,7 @@ public final class TimerPanelPresenter {
     private static final double PANEL_FORWARD_NUDGE = 0.05;
     private static final double TEXT_FORWARD_NUDGE = 0.04;
 
+    // this is a fallback base; we compute a dynamic width per panel so it never wraps
     private static final int TEXT_LINE_WIDTH = 96;
 
     // namespaces DisplayKey + display tags
@@ -136,8 +137,11 @@ public final class TimerPanelPresenter {
         PanelDisplayHelper.spawnBackground(
                 displayRegistry, bgKey, world, centerLoc, yaw, panelWidth, panelHeight, panelStack, namespace);
 
-        double verticalNudge = panelHeight * 0.05;
-        double textScale = PanelDisplayHelper.clamp(panelHeight * 0.55, 0.6, 12.0);
+        // text size and position, note: ocasionally tweak vertical nudge if upscaling
+        double verticalNudge = -panelHeight * 0.12;
+        double textScale = PanelDisplayHelper.clamp(panelHeight * 1.75, 1.0, 200.0);
+
+        int lineWidth = Math.max(TEXT_LINE_WIDTH, (int) (panelWidth * 120.0));
 
         PanelDisplayHelper.spawnText(
                 displayRegistry,
@@ -146,7 +150,7 @@ public final class TimerPanelPresenter {
                 centerLoc,
                 yaw,
                 layout,
-                TEXT_LINE_WIDTH,
+                lineWidth,
                 textScale,
                 verticalNudge,
                 TEXT_FORWARD_NUDGE,
@@ -162,8 +166,10 @@ public final class TimerPanelPresenter {
     private static String formatSeconds(int remainingSeconds) {
         int mins = remainingSeconds / 60;
         int secs = remainingSeconds % 60;
+
+        // helps format as 09 08 07 so double digits stays aligned
         if (mins == 0) {
-            return Integer.toString(secs);
+            return String.format("%02d", secs);
         }
         return String.format("%d:%02d", mins, secs);
     }
