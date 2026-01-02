@@ -8,23 +8,47 @@ import org.joml.Vector3d;
 public final class TimerPanelPlacement {
     private TimerPanelPlacement() {}
 
-    public static Vector3d computeCenter(
-            DynamicBoardLayout layout, double gapAbove, double panelHeight, double forwardNudge) {
-        if (layout == null) {
-            throw new IllegalArgumentException("layout");
+    public static Vector3d computeCenterOnSelection(
+            DynamicBoardLayout layout, double panelWidth, double panelHeight, double forwardNudgeBlocks) {
+
+        Objects.requireNonNull(layout, "layout");
+
+        if (panelWidth <= 0.0) {
+            throw new IllegalArgumentException("panelWidth");
         }
-        if (gapAbove < 0) {
-            throw new IllegalArgumentException("gapAbove");
-        }
-        if (panelHeight <= 0) {
+        if (panelHeight <= 0.0) {
             throw new IllegalArgumentException("panelHeight");
         }
 
-        double right = layout.totalWidth() / 2.0;
+        double totalW = layout.totalWidth();
+        double totalH = layout.totalHeight();
+
+        double rightFromAnchor = totalW / 2.0;
+
+        double downFromTop = -(totalH / 2.0);
+
+        double forward = layout.forwardOffset() + forwardNudgeBlocks;
+
+        return worldAt(layout, rightFromAnchor, downFromTop, forward);
+    }
+
+    public static Vector3d computeCenter(
+            DynamicBoardLayout layout, double gapAbove, double panelHeight, double forwardNudge) {
+
+        Objects.requireNonNull(layout, "layout");
+
+        if (panelHeight <= 0.0) {
+            throw new IllegalArgumentException("panelHeight");
+        }
+        if (gapAbove < 0.0) {
+            throw new IllegalArgumentException("gapAbove");
+        }
+
+        double rightFromAnchor = layout.totalWidth() / 2.0;
         double up = gapAbove + (panelHeight / 2.0);
         double forward = layout.forwardOffset() + forwardNudge;
 
-        return worldAt(layout, right, up, forward);
+        return worldAt(layout, rightFromAnchor, up, forward);
     }
 
     private static Vector3d worldAt(DynamicBoardLayout layout, double right, double up, double forward) {
