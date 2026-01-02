@@ -215,7 +215,8 @@ public final class PluginBootstrap {
                 scorePanelPresenter,
                 timerCommands,
                 buzzerCommands,
-                displayRegistry);
+                displayRegistry,
+                scorePanelStore);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
     }
