@@ -241,6 +241,7 @@ public final class HostBookUiBuilder {
         pages.add(surveyLoadPage(activeSurvey));
         pages.add(selectorPage(selection));
         pages.add(teamsTimerPage());
+        pages.add(fastMoneyPage());
         return pages;
     }
 
@@ -261,6 +262,48 @@ public final class HostBookUiBuilder {
                 .append(buttonRunCommand("reset", "/feud buzz reset", "Reset buzz lock", NamedTextColor.BLUE, true));
 
         return page(teamsLine, timerLine, buzzLine);
+    }
+
+    private Component fastMoneyPage() {
+        List<Component> rows = new ArrayList<>();
+        rows.add(Component.text("Fast Money Controller", NamedTextColor.GOLD));
+        rows.add(spacerLine());
+        rows.add(Component.text("Load Survey Set", NamedTextColor.GRAY));
+        rows.add(Component.join(
+                JoinConfiguration.separator(Component.space()),
+                buttonRunCommand("S1", "/feud fastmoney set s1", "Load survey set S1", NamedTextColor.BLUE, true),
+                buttonRunCommand("S2", "/feud fastmoney set s2", "Load survey set S2", NamedTextColor.BLUE, true),
+                buttonRunCommand("S3", "/feud fastmoney set s3", "Load survey set S3", NamedTextColor.BLUE, true),
+                buttonRunCommand("S4", "/feud fastmoney set s4", "Load survey set S4", NamedTextColor.BLUE, true)));
+        rows.add(spacerLine());
+        rows.add(Component.text("Bind Players", NamedTextColor.GRAY));
+        rows.add(Component.join(
+                JoinConfiguration.separator(Component.space()),
+                buttonRunCommand("Bind P1", "/feud fastmoney bind p1", "Bind Player 1", NamedTextColor.BLUE, true),
+                buttonRunCommand("Bind P2", "/feud fastmoney bind p2", "Bind Player 2", NamedTextColor.BLUE, true),
+                buttonRunCommand("Clear", "/feud fastmoney bind clear", "Clear bindings", NamedTextColor.BLUE, true)));
+        rows.add(spacerLine());
+        rows.add(Component.text("Run", NamedTextColor.GRAY));
+        rows.add(Component.join(
+                JoinConfiguration.separator(Component.space()),
+                buttonRunCommand("Start", "/feud fastmoney start", "Start Fast Money", NamedTextColor.BLUE, true),
+                buttonRunCommand("Stop", "/feud fastmoney stop", "Stop Fast Money", NamedTextColor.BLUE, true),
+                buttonRunCommand("Status", "/feud fastmoney status", "Show status", NamedTextColor.BLUE, true)));
+        rows.add(spacerLine());
+        for (int q = 1; q <= 5; q++) {
+            rows.add(Component.text("Q" + q + " | P1 | P2", NamedTextColor.GRAY));
+            rows.add(buildFastMoneyRow(q));
+        }
+        return page(rows.toArray(new Component[0]));
+    }
+
+    private Component buildFastMoneyRow(int questionIndex) {
+        List<Component> buttons = new ArrayList<>();
+        for (int slot = 1; slot <= 8; slot++) {
+            String cmd = "/feud fastmoney reveal " + questionIndex + " " + slot;
+            buttons.add(buttonRunCommand(String.valueOf(slot), cmd, "Reveal slot " + slot, NamedTextColor.BLUE, true));
+        }
+        return Component.join(JoinConfiguration.separator(Component.space()), buttons);
     }
 
     private Component selectorPage(DisplayBoardSelection selection) {
