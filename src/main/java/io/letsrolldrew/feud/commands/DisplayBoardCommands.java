@@ -1,13 +1,17 @@
 package io.letsrolldrew.feud.commands;
 
-import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
-import io.letsrolldrew.feud.board.display.DynamicBoardLayoutBuilder;
-import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
+import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
-import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.team.TeamId;
+import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import org.bukkit.NamespacedKey;
@@ -15,35 +19,47 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class DisplayBoardCommands {
-    private final DisplayBoardPresenter presenter;
+    private final DisplayBoardService presenter;
     private final String adminPermission;
     private final DisplayBoardSelectionListener selectionListener;
-    private final DisplayBoardSelectionStore selectionStore;
     private final GameController controller;
     private final String hostPermission;
     private final HostRemoteService hostRemoteService;
     private final SurveyRepository surveyRepository;
     private final NamespacedKey hostKey;
+    private final TeamService teamService;
+    private final ScorePanelPresenter scorePanelPresenter;
+    private final TimerPanelPresenter timerPanelPresenter;
+    private final ScorePanelStore scorePanelStore;
+    private final TimerPanelStore timerPanelStore;
 
     public DisplayBoardCommands(
-            DisplayBoardPresenter presenter,
+            DisplayBoardService presenter,
             String adminPermission,
             DisplayBoardSelectionListener selectionListener,
-            DisplayBoardSelectionStore selectionStore,
             GameController controller,
             String hostPermission,
             HostRemoteService hostRemoteService,
             SurveyRepository surveyRepository,
-            NamespacedKey hostKey) {
+            NamespacedKey hostKey,
+            TeamService teamService,
+            ScorePanelPresenter scorePanelPresenter,
+            TimerPanelPresenter timerPanelPresenter,
+            ScorePanelStore scorePanelStore,
+            TimerPanelStore timerPanelStore) {
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
-        this.selectionStore = selectionStore;
         this.controller = controller;
         this.hostPermission = hostPermission;
         this.hostRemoteService = hostRemoteService;
         this.surveyRepository = surveyRepository;
         this.hostKey = hostKey;
+        this.teamService = teamService;
+        this.scorePanelPresenter = scorePanelPresenter;
+        this.timerPanelPresenter = timerPanelPresenter;
+        this.scorePanelStore = scorePanelStore;
+        this.timerPanelStore = timerPanelStore;
     }
 
     public boolean handle(CommandSender sender, String[] args) {
@@ -63,9 +79,10 @@ public final class DisplayBoardCommands {
         switch (action) {
             case "create" -> handleCreate(sender, args);
             case "dynamic" -> handleCreateDynamic(sender, args);
+            case "selection" -> handleSelectionSpawn(sender, args);
             case "list" -> handleList(sender);
             case "remove", "delete" -> handleRemove(sender, args);
-            case "wand" -> handleWand(sender);
+            case "wand", "selector" -> handleWand(sender);
             case "destroy", "reveal", "hide", "demo" -> sendUsage(sender);
             default -> sendUsage(sender);
         }
@@ -171,6 +188,7 @@ public final class DisplayBoardCommands {
         int before = controller.roundPoints();
         controller.awardRoundPoints();
         sender.sendMessage("Awarded " + before);
+        awardToTeam(before, controller.controllingTeam(), boardId);
         refreshRemote(player, boardId);
     }
 
@@ -189,9 +207,37 @@ public final class DisplayBoardCommands {
         }
         java.util.List<String> ids = new java.util.ArrayList<>(presenter.listBoards());
         java.util.Collections.sort(ids);
-        String target = (boardId == null || boardId.isBlank()) && !ids.isEmpty() ? ids.get(0) : boardId;
+
+        String target = boardId;
+        if ((target == null || target.isBlank()) && !ids.isEmpty()) {
+            target = ids.get(0);
+        }
+
         hostRemoteService.giveOrReplace(
                 player, DisplayHostRemoteBookBuilder.create(target, ids, surveyRepository, hostKey, controller));
+    }
+
+    private void awardToTeam(int points, TeamControl control, String boardId) {
+        if (points <= 0 || control == null || teamService == null) {
+            return;
+        }
+
+        TeamId teamId = null;
+        if (control == TeamControl.RED) {
+            teamId = TeamId.RED;
+        } else if (control == TeamControl.BLUE) {
+            teamId = TeamId.BLUE;
+        }
+
+        if (teamId == null) {
+            return;
+        }
+        teamService.addScore(teamId, points);
+        if (scorePanelPresenter == null || boardId == null || boardId.isBlank()) {
+            return;
+        }
+        scorePanelPresenter.updateForBoard(boardId);
+        scorePanelPresenter.updateStoredPanels(boardId);
     }
 
     private void handleCreate(CommandSender sender, String[] args) {
@@ -217,22 +263,13 @@ public final class DisplayBoardCommands {
             sender.sendMessage("Usage: /feud board display dynamic <boardId>");
             return;
         }
-        if (selectionStore == null) {
-            sender.sendMessage("No selection available");
-            return;
-        }
-        DisplayBoardSelection selection = selectionStore.get(player.getUniqueId());
-        if (selection == null) {
-            sender.sendMessage("No selection saved. Use the selector wand first.");
-            return;
-        }
-        var result = DynamicBoardLayoutBuilder.build(selection);
-        if (!result.success()) {
-            sender.sendMessage("Selection invalid: " + result.error());
+        var boardResult = presenter.resolveDynamicLayout(args[1], player, false, true);
+        if (!boardResult.success()) {
+            sender.sendMessage("Selection invalid: " + boardResult.error());
             return;
         }
         String boardId = args[1];
-        if (presenter.createDynamicBoard(boardId, result.layout()) == null) {
+        if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
             sender.sendMessage("Board id already exists or creation failed.");
             return;
         }
@@ -246,6 +283,94 @@ public final class DisplayBoardCommands {
         }
         presenter.destroyBoard(args[1]);
         sender.sendMessage("Board '" + args[1] + "' removed.");
+    }
+
+    private void handleSelectionSpawn(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can spawn from a selection");
+            return;
+        }
+        if (args.length < 3) {
+            sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId> [team]");
+            return;
+        }
+        String target = args[1].toLowerCase();
+        String boardId = args[2];
+
+        if (target.equals("board")) {
+            var boardResult = presenter.resolveDynamicLayout(boardId, player, false, true);
+            if (!boardResult.success()) {
+                sender.sendMessage("Selection invalid: " + boardResult.error());
+                return;
+            }
+            if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
+                sender.sendMessage("Board id already exists or creation failed.");
+                return;
+            }
+            sender.sendMessage("Dynamic board '" + boardId + "' created from selection.");
+            return;
+        }
+
+        if (target.equals("panels")) {
+            if (scorePanelPresenter == null || scorePanelStore == null) {
+                sender.sendMessage("Score panels are not available.");
+                return;
+            }
+            boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
+            int teamIndex = isRemove ? 4 : 3;
+            if (teamIndex >= args.length) {
+                sender.sendMessage("Usage: /feud board display selection panels <boardId> <red|blue|both> [remove]");
+                sender.sendMessage("       /feud board display selection panels <boardId> remove <red|blue|both>");
+                return;
+            }
+            String teamArg = args[teamIndex].toLowerCase();
+            TeamId team = null;
+            if ("red".equals(teamArg)) {
+                team = TeamId.RED;
+            } else if ("blue".equals(teamArg)) {
+                team = TeamId.BLUE;
+            }
+
+            if (isRemove) {
+                removePanels(boardId, team);
+                String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
+                sender.sendMessage("Removed " + targetLabel + " for '" + boardId + "'.");
+                return;
+            }
+
+            var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
+            if (!layoutResult.success()) {
+                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                return;
+            }
+            spawnPanels(boardId, layoutResult.layout(), team);
+            String targetLabel = panelLabel(team);
+            sender.sendMessage("Spawned " + targetLabel + " for '" + boardId + "' using selection.");
+            return;
+        }
+
+        if (target.equals("timer")) {
+            if (timerPanelPresenter == null || timerPanelStore == null) {
+                sender.sendMessage("Timer panel is not available.");
+                return;
+            }
+            boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
+            if (isRemove) {
+                removeTimerPanel(boardId);
+                sender.sendMessage("Removed timer panel for '" + boardId + "'.");
+                return;
+            }
+            var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
+            if (!layoutResult.success()) {
+                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                return;
+            }
+            spawnTimerPanel(boardId, layoutResult.layout());
+            sender.sendMessage("Timer panel spawned for '" + boardId + "' using selection.");
+            return;
+        }
+
+        sender.sendMessage("Unknown selection target. Use board/panels/timer.");
     }
 
     private void handleList(CommandSender sender) {
@@ -267,10 +392,82 @@ public final class DisplayBoardCommands {
             return;
         }
         selectionListener.giveWand(player);
-        sender.sendMessage("Display board selector given.");
+        sender.sendMessage("Display selector given.");
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Board commands: create/dynamic/list/remove/wand");
+        sender.sendMessage("Board commands: create/dynamic/list/remove/wand (selector)");
+    }
+
+    private void spawnPanels(String boardId, DynamicBoardLayout layout, TeamId team) {
+        if (team == null) {
+            spawnPanel(boardId, layout, TeamId.RED);
+            spawnPanel(boardId, layout, TeamId.BLUE);
+            return;
+        }
+        spawnPanel(boardId, layout, team);
+    }
+
+    private void spawnPanel(String boardId, DynamicBoardLayout layout, TeamId team) {
+        if (layout == null || team == null) {
+            return;
+        }
+        String panelId = panelId(boardId, team);
+        scorePanelPresenter.spawnStored(panelId, layout, team);
+        scorePanelStore.savePanel(panelId, team, layout);
+    }
+
+    private void removePanels(String boardId, TeamId team) {
+        if (team == null) {
+            removePanel(boardId, TeamId.RED);
+            removePanel(boardId, TeamId.BLUE);
+            return;
+        }
+        removePanel(boardId, team);
+    }
+
+    private void removePanel(String boardId, TeamId team) {
+        if (team == null) {
+            return;
+        }
+        String panelId = panelId(boardId, team);
+        scorePanelPresenter.removeStored(panelId);
+        scorePanelStore.removePanel(panelId);
+    }
+
+    private void spawnTimerPanel(String boardId, DynamicBoardLayout layout) {
+        if (layout == null) {
+            return;
+        }
+        String panelId = timerPanelId(boardId);
+        timerPanelPresenter.spawnStored(panelId, layout);
+        timerPanelStore.savePanel(panelId, layout);
+    }
+
+    private void removeTimerPanel(String boardId) {
+        String panelId = timerPanelId(boardId);
+        timerPanelPresenter.removeStored(panelId);
+        timerPanelStore.removePanel(panelId);
+    }
+
+    private static String panelId(String boardId, TeamId team) {
+        String base = boardId == null ? "" : boardId.trim();
+        String suffix = team == null ? "" : team.name().toLowerCase(java.util.Locale.ROOT);
+        return base + ":" + suffix;
+    }
+
+    private static String timerPanelId(String boardId) {
+        String base = boardId == null ? "" : boardId.trim();
+        return base + ":timer";
+    }
+
+    private static String panelLabel(TeamId team) {
+        if (team == null) {
+            return "both panels";
+        }
+        if (team == TeamId.RED) {
+            return "red panel";
+        }
+        return "blue panel";
     }
 }

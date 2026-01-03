@@ -16,6 +16,10 @@ public final class DynamicBoardLayoutBuilder {
     private DynamicBoardLayoutBuilder() {}
 
     public static Result build(DisplayBoardSelection selection) {
+        return build(selection, false);
+    }
+
+    public static Result build(DisplayBoardSelection selection, boolean allowSmallSelection) {
         if (selection == null || selection.isInvalid()) {
             return new Result(null, "selection invalid");
         }
@@ -37,11 +41,13 @@ public final class DynamicBoardLayoutBuilder {
             width = Math.abs(a.z - b.z) + 1.0;
         }
 
-        if (width < MIN_WIDTH) {
-            return new Result(null, "selection too narrow");
-        }
-        if (height < MIN_HEIGHT) {
-            return new Result(null, "selection too short");
+        if (!allowSmallSelection) {
+            if (width < MIN_WIDTH) {
+                return new Result(null, "selection too narrow");
+            }
+            if (height < MIN_HEIGHT) {
+                return new Result(null, "selection too short");
+            }
         }
 
         double cellWidth = width / 2.0;

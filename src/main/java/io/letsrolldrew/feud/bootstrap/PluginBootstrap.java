@@ -5,8 +5,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
-import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
+import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.DirtyTracker;
 import io.letsrolldrew.feud.board.render.MapIdStore;
@@ -18,11 +21,18 @@ import io.letsrolldrew.feud.config.PluginConfig;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
+import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
+import io.letsrolldrew.feud.effects.buzz.BuzzerListener;
+import io.letsrolldrew.feud.effects.buzz.BuzzerService;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
+import io.letsrolldrew.feud.effects.timer.TimerCommands;
+import io.letsrolldrew.feud.effects.timer.TimerService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.team.TeamCommands;
+import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -51,13 +61,24 @@ public final class PluginBootstrap {
     private HologramService hologramService;
     private HologramCommands hologramCommands;
     private SurveyCommands surveyCommands;
-    private DisplayBoardPresenter displayBoardPresenter;
+    private DisplayBoardService displayBoardPresenter;
     private DisplayBoardCommands boardCommands;
     private DisplayRegistry displayRegistry;
     private io.letsrolldrew.feud.effects.anim.AnimationService animationService;
     private FeudRootCommand feudRootCommand;
     private DisplayBoardSelectionStore displayBoardSelectionStore;
     private DisplayBoardSelectionListener displayBoardSelectionListener;
+    private TeamService teamService;
+    private TeamCommands teamCommands;
+    private ScorePanelPresenter scorePanelPresenter;
+    private TimerPanelPresenter timerPanelPresenter;
+    private ScorePanelStore scorePanelStore;
+    private TimerPanelStore timerPanelStore;
+    private TimerService timerService;
+    private TimerCommands timerCommands;
+    private BuzzerService buzzerService;
+    private BuzzerCommands buzzerCommands;
+    private BuzzerListener buzzerListener;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -68,9 +89,12 @@ public final class PluginBootstrap {
         this.config = PluginConfig.from(plugin.getConfig());
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
-        // refresher wired later via FeudRootCommand
+        this.teamService = new TeamService();
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
-        this.hostBookUiBuilder = new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey);
+        this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
+        NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
+        this.hostBookUiBuilder =
+                new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey, displayBoardSelectionStore);
         this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
@@ -82,8 +106,28 @@ public final class PluginBootstrap {
         File displayStore = new File(plugin.getDataFolder(), "displays.yml");
         this.displayRegistry =
                 new DisplayRegistry(new io.letsrolldrew.feud.display.lookup.BukkitEntityLookup(), displayStore);
+        File panelStoreFile = new File(plugin.getDataFolder(), "panels.yml");
+        this.scorePanelStore = new ScorePanelStore(panelStoreFile);
+        File timerPanelStoreFile = new File(plugin.getDataFolder(), "timer-panels.yml");
+        this.timerPanelStore = new TimerPanelStore(timerPanelStoreFile);
         this.animationService = new io.letsrolldrew.feud.effects.anim.AnimationService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
+        this.timerService = new TimerService(
+                new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin), System::currentTimeMillis, 20);
+        this.timerCommands = new TimerCommands(timerService, config.hostPermission(), "familyfeud.admin");
+        this.buzzerService = new BuzzerService(
+                new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin),
+                System::currentTimeMillis,
+                teamService,
+                12_000L,
+                1_000L);
+        this.buzzerCommands =
+                new BuzzerCommands(buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
+        this.teamCommands = new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
+        this.buzzerListener = new BuzzerListener(buzzerService, teamService);
+        this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
+        this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
+        this.timerService.setOnTick(seconds -> timerPanelPresenter.updateAll(seconds));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter =
                 new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
@@ -92,23 +136,40 @@ public final class PluginBootstrap {
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
-        this.displayBoardPresenter = new DisplayBoardService(displayRegistry, animationService, dynamicBoardsFile);
-        this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
-        NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
+        this.displayBoardPresenter = new DisplayBoardService(
+                displayRegistry, animationService, dynamicBoardsFile, displayBoardSelectionStore);
         this.displayBoardSelectionListener =
-                new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore);
+                new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
+                    var fresh = hostBookUiBuilder.createBookFor(
+                            player,
+                            gameController.slotHoverTexts(),
+                            gameController.getActiveSurvey(),
+                            gameController.revealedSlots(),
+                            gameController.strikeCount(),
+                            gameController.maxStrikes(),
+                            gameController.roundPoints(),
+                            gameController.controllingTeam());
+                    hostRemoteService.giveOrReplace(player, fresh);
+                });
         this.boardCommands = new DisplayBoardCommands(
                 displayBoardPresenter,
                 "familyfeud.admin",
                 displayBoardSelectionListener,
-                displayBoardSelectionStore,
                 gameController,
                 config.hostPermission(),
                 hostRemoteService,
                 surveyRepository,
-                hostKey);
+                hostKey,
+                teamService,
+                scorePanelPresenter,
+                timerPanelPresenter,
+                scorePanelStore,
+                timerPanelStore);
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
+        plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
+        scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
+        timerPanelPresenter.rehydrateStoredPanels(timerPanelStore);
         registerCommands();
     }
 
@@ -151,7 +212,14 @@ public final class PluginBootstrap {
                 hologramService,
                 displayBoardPresenter,
                 surveyCommands,
-                displayRegistry);
+                teamCommands,
+                teamService,
+                scorePanelPresenter,
+                timerCommands,
+                buzzerCommands,
+                displayRegistry,
+                scorePanelStore,
+                timerPanelStore);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
     }
@@ -236,6 +304,15 @@ public final class PluginBootstrap {
                                                         StringArgumentType.getString(ctx, "id"))))
                                         .executes(ctx -> exec(command, ctx.getSource(), "survey", "load")))
                                 .executes(ctx -> exec(command, ctx.getSource(), "survey")))
+                        .then(literal("team")
+                                .then(greedyArgs("rest", command, "team"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "team")))
+                        .then(literal("buzz")
+                                .then(greedyArgs("rest", command, "buzz"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "buzz")))
+                        .then(literal("timer")
+                                .then(greedyArgs("rest", command, "timer"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "timer")))
                         .then(literal("host")
                                 .then(literal("book")
                                         .requires(src -> src.getSender().hasPermission(config.hostPermission()))

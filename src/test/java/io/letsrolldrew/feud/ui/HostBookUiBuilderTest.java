@@ -25,7 +25,8 @@ class HostBookUiBuilderTest {
                 0, // strikeCount
                 3, // maxStrikes
                 0, // roundPoints
-                io.letsrolldrew.feud.game.TeamControl.NONE);
+                io.letsrolldrew.feud.game.TeamControl.NONE,
+                null);
 
         List<String> commands = collectCommands(pages.get(0));
         assertTrue(commands.contains("/feud ui reveal 1"));
