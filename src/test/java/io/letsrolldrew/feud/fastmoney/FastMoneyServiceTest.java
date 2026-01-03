@@ -118,6 +118,35 @@ final class FastMoneyServiceTest {
         assertEquals(0, state.activeQuestionIndex());
     }
 
+    @Test
+    void awardPlayer1SetsSlotForActiveQuestion() {
+        startPlayer1Turn();
+
+        service.awardPlayer1(1, 3);
+
+        FastMoneyQuestionState question = service.state().questions().get(0);
+        assertEquals(3, question.player1AwardedSlot());
+    }
+
+    @Test
+    void awardRejectsInvalidQuestionIndexOrInactiveQuestion() {
+        startPlayer1Turn();
+
+        assertThrows(IllegalArgumentException.class, () -> service.awardPlayer1(0, 1));
+        assertThrows(IllegalArgumentException.class, () -> service.awardPlayer1(6, 1));
+        assertThrows(IllegalStateException.class, () -> service.awardPlayer1(2, 1));
+    }
+
+    @Test
+    void awardPlayer2RejectsPlayer1Slot() {
+        startPlayer1Turn();
+        service.awardPlayer1(1, 2);
+        advanceToLastQuestion();
+        service.beginPlayer2Turn();
+
+        assertThrows(IllegalStateException.class, () -> service.awardPlayer2(1, 2));
+    }
+
     private void startPlayer1Turn() {
         service.loadSurveySet("s1", SURVEY_IDS);
         service.bindPlayer1(player1Id, "P1");

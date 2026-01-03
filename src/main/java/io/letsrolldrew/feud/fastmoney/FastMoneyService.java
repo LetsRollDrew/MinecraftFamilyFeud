@@ -5,6 +5,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+// in this iteration I'm focusing on trying to streamline the game flow for the host
+// maybe later will drop guard-rails of phases but currently necessary for
+// collecting answers and awarding points for players without confusion
+
+// revisting if this feels too invasive later
+
 public final class FastMoneyService {
     private FastMoneyRoundState state = FastMoneyRoundState.idle();
 
@@ -13,7 +19,6 @@ public final class FastMoneyService {
     }
 
     public void loadSurveySet(String surveySetId, List<String> surveyIds) {
-        // disables change survey set mid round
         requireNotRunning();
         state = FastMoneyRoundState.readyRound(surveySetId, surveyIds);
     }
@@ -27,9 +32,7 @@ public final class FastMoneyService {
     }
 
     public void startRound() {
-        // "ready to start" is the idea
         requireReadyPhase();
-        // makes sure both players are bound by host
         requireBound(state.player1(), "player1");
         requireBound(state.player2(), "player2");
         state = new FastMoneyRoundState(
@@ -45,8 +48,6 @@ public final class FastMoneyService {
         state = FastMoneyRoundState.idle();
     }
 
-    // for capturing answers during player turns so host
-    // can view onhover in their book UI
     public void submitAnswer(UUID playerId, String rawAnswer) {
         FastMoneyPhase phase = state.phase();
         if (phase != FastMoneyPhase.PLAYER1_TURN && phase != FastMoneyPhase.PLAYER2_TURN) {
@@ -64,7 +65,6 @@ public final class FastMoneyService {
             throw new IllegalArgumentException("Answer submitted by the wrong player");
         }
 
-        // update only the current question
         int questionIndex = currentQuestionIndexOrThrow();
         FastMoneyQuestionState current = state.questions().get(questionIndex - 1);
         FastMoneyQuestionState updated;
@@ -74,10 +74,7 @@ public final class FastMoneyService {
             updated = withPlayer2Answer(current, rawAnswer);
         }
 
-        List<FastMoneyQuestionState> questions = new ArrayList<>(state.questions());
-        questions.set(questionIndex - 1, updated);
-        state = new FastMoneyRoundState(
-                phase, state.surveySetId(), state.player1(), state.player2(), state.activeQuestionIndex(), questions);
+        updateQuestion(questionIndex, updated);
     }
 
     public void advanceQuestion() {
@@ -99,7 +96,6 @@ public final class FastMoneyService {
         if (state.activeQuestionIndex() != state.questions().size()) {
             throw new IllegalStateException("Player 1 must complete all questions before Player 2 begins");
         }
-        // reset question index when swapping to player 2
         state = new FastMoneyRoundState(
                 FastMoneyPhase.PLAYER2_TURN,
                 state.surveySetId(),
@@ -113,10 +109,10 @@ public final class FastMoneyService {
         if (state.phase() != FastMoneyPhase.PLAYER2_TURN) {
             throw new IllegalStateException("Round can only complete after Player 2 turn");
         }
+
         if (state.activeQuestionIndex() != state.questions().size()) {
             throw new IllegalStateException("Player 2 must complete all questions before finishing");
         }
-        // end of phases mark complete
         state = new FastMoneyRoundState(
                 FastMoneyPhase.COMPLETE,
                 state.surveySetId(),
@@ -124,6 +120,24 @@ public final class FastMoneyService {
                 state.player2(),
                 state.activeQuestionIndex(),
                 state.questions());
+    }
+
+    public void awardPlayer1(int questionIndex, int slot) {
+        // kinda helps streamline the UI flow for the host, might revisit later
+        ensurePhase(FastMoneyPhase.PLAYER1_TURN, "Player 1 awards require Player 1 turn");
+        ensureActiveQuestion(questionIndex);
+        FastMoneyQuestionState question = questionAt(questionIndex);
+        updateQuestion(questionIndex, withPlayer1Award(question, slot));
+    }
+
+    public void awardPlayer2(int questionIndex, int slot) {
+        ensurePhase(FastMoneyPhase.PLAYER2_TURN, "Player 2 awards require Player 2 turn");
+        ensureActiveQuestion(questionIndex);
+        FastMoneyQuestionState question = questionAt(questionIndex);
+        if (question.isPlayer1Awarded() && question.player1AwardedSlot() == slot) {
+            throw new IllegalStateException("Player 2 cannot reuse Player 1 awarded slot");
+        }
+        updateQuestion(questionIndex, withPlayer2Award(question, slot));
     }
 
     private void bindPlayer(boolean isPlayer1, UUID playerId, String playerName) {
@@ -165,6 +179,12 @@ public final class FastMoneyService {
         }
     }
 
+    private void ensurePhase(FastMoneyPhase expected, String message) {
+        if (state.phase() != expected) {
+            throw new IllegalStateException(message);
+        }
+    }
+
     private void requireBound(FastMoneyRoundState.BoundPlayer player, String label) {
         if (player == null || !player.isBound()) {
             throw new IllegalStateException(label + " must be bound");
@@ -177,6 +197,39 @@ public final class FastMoneyService {
             throw new IllegalStateException("Active question is not set");
         }
         return index;
+    }
+
+    private int ensureActiveQuestion(int questionIndex) {
+        int normalized = requireQuestionIndex(questionIndex);
+        if (state.activeQuestionIndex() != normalized) {
+            throw new IllegalStateException("Question index must match the active question");
+        }
+        return normalized;
+    }
+
+    private int requireQuestionIndex(int questionIndex) {
+        int totalQuestions = state.questions().size();
+        if (questionIndex < 1 || questionIndex > totalQuestions) {
+            throw new IllegalArgumentException("questionIndex must be between 1 and " + totalQuestions);
+        }
+        return questionIndex;
+    }
+
+    private FastMoneyQuestionState questionAt(int questionIndex) {
+        int normalized = requireQuestionIndex(questionIndex);
+        return state.questions().get(normalized - 1);
+    }
+
+    private void updateQuestion(int questionIndex, FastMoneyQuestionState updated) {
+        List<FastMoneyQuestionState> questions = new ArrayList<>(state.questions());
+        questions.set(questionIndex - 1, updated);
+        state = new FastMoneyRoundState(
+                state.phase(),
+                state.surveySetId(),
+                state.player1(),
+                state.player2(),
+                state.activeQuestionIndex(),
+                questions);
     }
 
     private static FastMoneyQuestionState withPlayer1Answer(FastMoneyQuestionState current, String rawAnswer) {
@@ -197,5 +250,25 @@ public final class FastMoneyService {
                 current.player1AwardedSlot(),
                 rawAnswer.trim(),
                 current.player2AwardedSlot());
+    }
+
+    private static FastMoneyQuestionState withPlayer1Award(FastMoneyQuestionState current, int slot) {
+        return new FastMoneyQuestionState(
+                current.questionIndex(),
+                current.surveyId(),
+                current.player1RawAnswer(),
+                slot,
+                current.player2RawAnswer(),
+                current.player2AwardedSlot());
+    }
+
+    private static FastMoneyQuestionState withPlayer2Award(FastMoneyQuestionState current, int slot) {
+        return new FastMoneyQuestionState(
+                current.questionIndex(),
+                current.surveyId(),
+                current.player1RawAnswer(),
+                current.player1AwardedSlot(),
+                current.player2RawAnswer(),
+                slot);
     }
 }
