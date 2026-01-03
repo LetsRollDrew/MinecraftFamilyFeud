@@ -14,6 +14,7 @@ import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.commands.handlers.BoardHandler;
 import io.letsrolldrew.feud.commands.handlers.BuzzHandler;
 import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
+import io.letsrolldrew.feud.commands.handlers.FastMoneyHandler;
 import io.letsrolldrew.feud.commands.handlers.HelpHandler;
 import io.letsrolldrew.feud.commands.handlers.HoloHandler;
 import io.letsrolldrew.feud.commands.handlers.HostHandler;
@@ -29,6 +30,7 @@ import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
+import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
@@ -76,6 +78,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final ScorePanelPresenter scorePanelPresenter;
     private final TimerCommands timerCommands;
     private final BuzzerCommands buzzerCommands;
+    private final FastMoneyCommands fastMoneyCommands;
     private final DisplayRegistry displayRegistry;
     private final ScorePanelStore scorePanelStore;
     private final TimerPanelStore timerPanelStore;
@@ -106,6 +109,7 @@ public final class FeudRootCommand implements CommandExecutor {
             ScorePanelPresenter scorePanelPresenter,
             TimerCommands timerCommands,
             BuzzerCommands buzzerCommands,
+            FastMoneyCommands fastMoneyCommands,
             DisplayRegistry displayRegistry,
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore) {
@@ -133,6 +137,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.scorePanelPresenter = scorePanelPresenter;
         this.timerCommands = timerCommands;
         this.buzzerCommands = buzzerCommands;
+        this.fastMoneyCommands = fastMoneyCommands;
         this.displayRegistry = displayRegistry;
         this.scorePanelStore = scorePanelStore;
         this.timerPanelStore = timerPanelStore;
@@ -491,6 +496,8 @@ public final class FeudRootCommand implements CommandExecutor {
         var buzzHandler = new BuzzHandler((ctx, remaining) -> buzzerCommands.handleBuzzReset(ctx.sender()));
         var hostHandler = new HostHandler(
                 (ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
+        var fastMoneyHandler =
+                new FastMoneyHandler((ctx, remaining) -> fastMoneyCommands.handle(ctx.sender(), remaining));
 
         CommandNode root = new CommandNode("root", null, false, versionHandler);
 
@@ -508,6 +515,7 @@ public final class FeudRootCommand implements CommandExecutor {
         root.addChild(new CommandNode("team", null, false, teamHandler));
         root.addChild(new CommandNode("buzz", null, false, buzzHandler));
         root.addChild(new CommandNode("timer", null, false, timerHandler));
+        root.addChild(new CommandNode("fastmoney", null, false, fastMoneyHandler));
 
         CommandNode host = new CommandNode("host");
         host.addChild(new CommandNode("book", null, false, hostHandler));
