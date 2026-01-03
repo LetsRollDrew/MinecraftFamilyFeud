@@ -1,5 +1,6 @@
 package io.letsrolldrew.feud.fastmoney;
 
+import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
 import java.util.Locale;
@@ -11,16 +12,19 @@ import org.bukkit.entity.Player;
 public final class FastMoneyCommands {
     private final FastMoneyService service;
     private final FastMoneySurveySetStore surveySetStore;
+    private final FastMoneyPlayerBindService bindService;
     private final String hostPermission;
     private final String adminPermission;
 
     public FastMoneyCommands(
             FastMoneyService service,
             FastMoneySurveySetStore surveySetStore,
+            FastMoneyPlayerBindService bindService,
             String hostPermission,
             String adminPermission) {
         this.service = Objects.requireNonNull(service, "service");
         this.surveySetStore = Objects.requireNonNull(surveySetStore, "surveySetStore");
+        this.bindService = Objects.requireNonNull(bindService, "bindService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
     }
@@ -99,7 +103,31 @@ public final class FastMoneyCommands {
             return true;
         }
 
-        sender.sendMessage("Bind commands will be available after binding service is added");
+        String target = args[1].toLowerCase(Locale.ROOT);
+        if (target.equals("clear")) {
+            bindService.clear();
+            sender.sendMessage("Fast Money bindings cleared");
+            return true;
+        }
+
+        if (!(sender instanceof Player host)) {
+            sender.sendMessage("Only players can arm binding");
+            return true;
+        }
+
+        if (target.equals("p1")) {
+            bindService.armPlayer1(host.getUniqueId());
+            sender.sendMessage("Fast Money: bind P1 armed. Right-click a player.");
+            return true;
+        }
+
+        if (target.equals("p2")) {
+            bindService.armPlayer2(host.getUniqueId());
+            sender.sendMessage("Fast Money: bind P2 armed. Right-click a player.");
+            return true;
+        }
+
+        sender.sendMessage("Usage: /feud fastmoney bind <p1|p2|clear>");
         return true;
     }
 

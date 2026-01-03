@@ -24,6 +24,8 @@ import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.buzz.BuzzerListener;
 import io.letsrolldrew.feud.effects.buzz.BuzzerService;
+import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindListener;
+import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
@@ -86,6 +88,7 @@ public final class PluginBootstrap {
     private BuzzerService buzzerService;
     private BuzzerCommands buzzerCommands;
     private BuzzerListener buzzerListener;
+    private FastMoneyPlayerBindService fastMoneyPlayerBindService;
     private FastMoneyService fastMoneyService;
     private FastMoneySurveySetStore fastMoneySurveySetStore;
     private FastMoneyCommands fastMoneyCommands;
@@ -146,12 +149,17 @@ public final class PluginBootstrap {
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         this.fastMoneyService = new FastMoneyService();
+        this.fastMoneyPlayerBindService = new FastMoneyPlayerBindService(fastMoneyService);
         File fastMoneyFile = new File(plugin.getDataFolder(), "fast-money.yml");
         ensureFastMoneyFile(fastMoneyFile);
         this.fastMoneySurveySetStore =
                 FastMoneySurveySetStore.load(YamlConfiguration.loadConfiguration(fastMoneyFile), surveyRepository);
         this.fastMoneyCommands = new FastMoneyCommands(
-                fastMoneyService, fastMoneySurveySetStore, config.hostPermission(), "familyfeud.admin");
+                fastMoneyService,
+                fastMoneySurveySetStore,
+                fastMoneyPlayerBindService,
+                config.hostPermission(),
+                "familyfeud.admin");
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
         this.displayBoardPresenter = new DisplayBoardService(
                 displayRegistry, animationService, dynamicBoardsFile, displayBoardSelectionStore);
@@ -185,6 +193,9 @@ public final class PluginBootstrap {
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
+        plugin.getServer()
+                .getPluginManager()
+                .registerEvents(new FastMoneyPlayerBindListener(fastMoneyPlayerBindService), plugin);
         scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
         timerPanelPresenter.rehydrateStoredPanels(timerPanelStore);
         registerCommands();

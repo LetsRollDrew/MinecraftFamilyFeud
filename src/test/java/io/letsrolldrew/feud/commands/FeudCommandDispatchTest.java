@@ -95,6 +95,17 @@ final class FeudCommandDispatchTest {
         assertTrue(msg.contains("fast money"));
     }
 
+    @Test
+    void fastMoneyBindP1IsReachableForPlayer() {
+        ConsoleCommandSenderMock console = server.getConsoleSender();
+
+        boolean handled = server.dispatchCommand(console, "feud fastmoney bind p1");
+
+        assertTrue(handled);
+        String msg = console.nextMessage().toLowerCase();
+        assertTrue(msg.contains("only players"));
+    }
+
     private void writeFastMoneyConfig() {
         try {
             File dataDir = new File(server.getPluginsFolder(), "FamilyFeud");
