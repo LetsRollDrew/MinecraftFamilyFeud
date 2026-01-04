@@ -9,6 +9,8 @@ import static io.letsrolldrew.feud.ui.BookTextFormatter.unrevealedLabel;
 
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
+import io.letsrolldrew.feud.fastmoney.FastMoneyQuestionState;
+import io.letsrolldrew.feud.fastmoney.FastMoneyService;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
@@ -38,6 +40,7 @@ public final class HostBookUiBuilder {
     private final NamespacedKey hostKey;
     private final DisplayBoardSelectionStore selectionStore;
     private boolean openBookEnabled;
+    private FastMoneyService fastMoneyService;
 
     public HostBookUiBuilder(String commandPrefix) {
         this(commandPrefix, null, null, null, null);
@@ -215,6 +218,10 @@ public final class HostBookUiBuilder {
         this.openBookEnabled = openBookEnabled;
     }
 
+    public void setFastMoneyService(FastMoneyService fastMoneyService) {
+        this.fastMoneyService = fastMoneyService;
+    }
+
     List<Component> buildPages() {
         return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0, TeamControl.NONE, null);
     }
@@ -296,7 +303,7 @@ public final class HostBookUiBuilder {
         for (int slot = 1; slot <= 8; slot++) {
             String cmd = "/feud fastmoney reveal " + questionIndex + " " + slot;
             buttons.add(buttonRunCommandBare(
-                    String.valueOf(slot), cmd, "Answer for slot " + slot, NamedTextColor.BLUE, true));
+                    String.valueOf(slot), cmd, fastMoneyHover(questionIndex, slot), NamedTextColor.BLUE, true));
         }
         return Component.join(JoinConfiguration.separator(Component.space()), buttons);
     }
@@ -410,6 +417,34 @@ public final class HostBookUiBuilder {
         return Component.text(shown, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
                 .clickEvent(ClickEvent.runCommand(fullCommand));
+    }
+
+    private String fastMoneyHover(int questionIndex, int slot) {
+        String fallback = "Answer for slot " + slot;
+        if (fastMoneyService == null || surveyRepository == null) {
+            return fallback;
+        }
+
+        var state = fastMoneyService.state();
+        if (state.questions() == null
+                || questionIndex < 1
+                || questionIndex > state.questions().size()) {
+            return fallback;
+        }
+
+        FastMoneyQuestionState question = state.questions().get(questionIndex - 1);
+        var surveyOpt = surveyRepository.findById(question.surveyId());
+        if (surveyOpt.isEmpty()) {
+            return fallback;
+        }
+
+        Survey survey = surveyOpt.get();
+        if (slot < 1 || slot > survey.answers().size()) {
+            return fallback;
+        }
+
+        AnswerOption ans = survey.answers().get(slot - 1);
+        return ans.text() + " (" + ans.points() + ")";
     }
 
     private Component buttonForSlot(int slot, List<String> hovers, Survey activeSurvey, Set<Integer> revealedSlots) {

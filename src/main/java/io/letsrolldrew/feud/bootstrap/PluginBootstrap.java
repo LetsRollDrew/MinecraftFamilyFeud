@@ -156,6 +156,7 @@ public final class PluginBootstrap {
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
         this.fastMoneyService = new FastMoneyService();
         this.fastMoneyPlayerBindService = new FastMoneyPlayerBindService(fastMoneyService);
+        this.hostBookUiBuilder.setFastMoneyService(fastMoneyService);
         File fastMoneyFile = new File(plugin.getDataFolder(), "fast-money.yml");
         ensureFastMoneyFile(fastMoneyFile);
         this.fastMoneySurveySetStore =
