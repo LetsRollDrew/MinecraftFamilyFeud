@@ -38,6 +38,33 @@ class HostBookUiBuilderTest {
         assertTrue(commands.contains("/feud ui reset"));
     }
 
+    @Test
+    void fastMoneyPageContainsCommands() {
+        HostBookUiBuilder builder = new HostBookUiBuilder("/feud");
+        List<Component> pages = builder.buildPages(
+                Collections.nCopies(8, "Reveal"),
+                null,
+                Set.of(),
+                0,
+                3,
+                0,
+                io.letsrolldrew.feud.game.TeamControl.NONE,
+                null);
+
+        Component fastMoneyPage = pages.get(4);
+        List<String> commands = collectCommands(fastMoneyPage);
+
+        assertTrue(commands.contains("/feud fastmoney set s1"));
+        assertTrue(commands.contains("/feud fastmoney bind p1"));
+        assertTrue(commands.contains("/feud fastmoney bind p2"));
+        assertTrue(commands.contains("/feud fastmoney bind clear"));
+        assertTrue(commands.contains("/feud fastmoney start"));
+        assertTrue(commands.contains("/feud fastmoney stop"));
+        assertTrue(commands.contains("/feud fastmoney status"));
+        assertTrue(commands.contains("/feud fastmoney reveal 1 1"));
+        assertTrue(commands.contains("/feud fastmoney reveal 5 8"));
+    }
+
     private List<String> collectCommands(Component component) {
         List<String> commands = new ArrayList<>();
 

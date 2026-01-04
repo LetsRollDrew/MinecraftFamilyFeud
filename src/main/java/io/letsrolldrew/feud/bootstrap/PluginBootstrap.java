@@ -6,6 +6,9 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPlacement;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
@@ -24,10 +27,15 @@ import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.buzz.BuzzerListener;
 import io.letsrolldrew.feud.effects.buzz.BuzzerService;
+import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindListener;
+import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.effects.timer.TimerService;
+import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
+import io.letsrolldrew.feud.fastmoney.FastMoneyService;
+import io.letsrolldrew.feud.fastmoney.FastMoneySurveySetStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.SimpleGameController;
 import io.letsrolldrew.feud.survey.SurveyRepository;
@@ -39,8 +47,12 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PluginBootstrap {
@@ -79,6 +91,13 @@ public final class PluginBootstrap {
     private BuzzerService buzzerService;
     private BuzzerCommands buzzerCommands;
     private BuzzerListener buzzerListener;
+    private FastMoneyPlayerBindService fastMoneyPlayerBindService;
+    private FastMoneyService fastMoneyService;
+    private FastMoneySurveySetStore fastMoneySurveySetStore;
+    private FastMoneyCommands fastMoneyCommands;
+    private FastMoneyBoardPlacement fastMoneyBoardPlacement;
+    private FastMoneyBoardPresenter fastMoneyBoardPresenter;
+    private FastMoneyBackdropPresenter fastMoneyBackdropPresenter;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -135,9 +154,28 @@ public final class PluginBootstrap {
         this.hologramService = new HologramService(displayRegistry, hologramStore);
         this.hologramCommands = new HologramCommands(hologramService);
         this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
+        this.fastMoneyService = new FastMoneyService();
+        this.fastMoneyPlayerBindService = new FastMoneyPlayerBindService(fastMoneyService);
+        this.hostBookUiBuilder.setFastMoneyService(fastMoneyService);
+        File fastMoneyFile = new File(plugin.getDataFolder(), "fast-money.yml");
+        ensureFastMoneyFile(fastMoneyFile);
+        this.fastMoneySurveySetStore =
+                FastMoneySurveySetStore.load(YamlConfiguration.loadConfiguration(fastMoneyFile), surveyRepository);
         File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
         this.displayBoardPresenter = new DisplayBoardService(
                 displayRegistry, animationService, dynamicBoardsFile, displayBoardSelectionStore);
+        this.fastMoneyBoardPlacement = new FastMoneyBoardPlacement();
+        this.fastMoneyBoardPresenter = new FastMoneyBoardPresenter(displayRegistry, fastMoneyBoardPlacement);
+        this.fastMoneyBackdropPresenter = new FastMoneyBackdropPresenter(displayRegistry);
+        this.fastMoneyCommands = new FastMoneyCommands(
+                fastMoneyService,
+                fastMoneySurveySetStore,
+                fastMoneyPlayerBindService,
+                displayBoardPresenter,
+                fastMoneyBoardPresenter,
+                fastMoneyBackdropPresenter,
+                config.hostPermission(),
+                "familyfeud.admin");
         this.displayBoardSelectionListener =
                 new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
                     var fresh = hostBookUiBuilder.createBookFor(
@@ -168,6 +206,9 @@ public final class PluginBootstrap {
         plugin.getServer().getPluginManager().registerEvents(boardWandService, plugin);
         plugin.getServer().getPluginManager().registerEvents(displayBoardSelectionListener, plugin);
         plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
+        plugin.getServer()
+                .getPluginManager()
+                .registerEvents(new FastMoneyPlayerBindListener(fastMoneyPlayerBindService), plugin);
         scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
         timerPanelPresenter.rehydrateStoredPanels(timerPanelStore);
         registerCommands();
@@ -217,6 +258,7 @@ public final class PluginBootstrap {
                 scorePanelPresenter,
                 timerCommands,
                 buzzerCommands,
+                fastMoneyCommands,
                 displayRegistry,
                 scorePanelStore,
                 timerPanelStore);
@@ -310,6 +352,9 @@ public final class PluginBootstrap {
                         .then(literal("buzz")
                                 .then(greedyArgs("rest", command, "buzz"))
                                 .executes(ctx -> exec(command, ctx.getSource(), "buzz")))
+                        .then(literal("fastmoney")
+                                .then(greedyArgs("rest", command, "fastmoney"))
+                                .executes(ctx -> exec(command, ctx.getSource(), "fastmoney")))
                         .then(literal("timer")
                                 .then(greedyArgs("rest", command, "timer"))
                                 .executes(ctx -> exec(command, ctx.getSource(), "timer")))
@@ -379,5 +424,26 @@ public final class PluginBootstrap {
         System.arraycopy(head, 0, combined, 0, head.length);
         System.arraycopy(tail, 0, combined, head.length, tail.length);
         return combined;
+    }
+
+    private void ensureFastMoneyFile(File fastMoneyFile) {
+        if (fastMoneyFile.exists()) {
+            return;
+        }
+        try {
+            fastMoneyFile.getParentFile().mkdirs();
+            String contents = """
+                    fastMoney:
+                      packs:
+                        s1:
+                          targetScore: 200
+                          player1Seconds: 20
+                          player2Seconds: 25
+                          surveys: ["example_animals", "example_breakfast", "block_taste", "suspicious_animal", "build_materials"]
+                    """;
+            Files.writeString(fastMoneyFile.toPath(), contents, StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            plugin.getLogger().warning("Could not create fast-money.yml: " + ex.getMessage());
+        }
     }
 }

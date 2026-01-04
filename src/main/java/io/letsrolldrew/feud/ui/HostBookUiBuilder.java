@@ -9,6 +9,8 @@ import static io.letsrolldrew.feud.ui.BookTextFormatter.unrevealedLabel;
 
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
+import io.letsrolldrew.feud.fastmoney.FastMoneyQuestionState;
+import io.letsrolldrew.feud.fastmoney.FastMoneyService;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
@@ -38,6 +40,7 @@ public final class HostBookUiBuilder {
     private final NamespacedKey hostKey;
     private final DisplayBoardSelectionStore selectionStore;
     private boolean openBookEnabled;
+    private FastMoneyService fastMoneyService;
 
     public HostBookUiBuilder(String commandPrefix) {
         this(commandPrefix, null, null, null, null);
@@ -215,6 +218,10 @@ public final class HostBookUiBuilder {
         this.openBookEnabled = openBookEnabled;
     }
 
+    public void setFastMoneyService(FastMoneyService fastMoneyService) {
+        this.fastMoneyService = fastMoneyService;
+    }
+
     List<Component> buildPages() {
         return buildPages(resolveHoverTexts(), null, Collections.emptySet(), 0, 3, 0, TeamControl.NONE, null);
     }
@@ -241,6 +248,7 @@ public final class HostBookUiBuilder {
         pages.add(surveyLoadPage(activeSurvey));
         pages.add(selectorPage(selection));
         pages.add(teamsTimerPage());
+        pages.add(fastMoneyPage());
         return pages;
     }
 
@@ -261,6 +269,43 @@ public final class HostBookUiBuilder {
                 .append(buttonRunCommand("reset", "/feud buzz reset", "Reset buzz lock", NamedTextColor.BLUE, true));
 
         return page(teamsLine, timerLine, buzzLine);
+    }
+
+    private Component fastMoneyPage() {
+        List<Component> rows = new ArrayList<>();
+        rows.add(Component.text("Fast Money Controller", NamedTextColor.GOLD));
+        rows.add(Component.text("Load Survey Set", NamedTextColor.GRAY));
+        rows.add(Component.join(
+                JoinConfiguration.separator(Component.space()),
+                buttonRunCommand("S1", "/feud fastmoney set s1", "Load survey set S1", NamedTextColor.BLUE, true),
+                buttonRunCommand("S2", "/feud fastmoney set s2", "Load survey set S2", NamedTextColor.BLUE, true),
+                buttonRunCommand("S3", "/feud fastmoney set s3", "Load survey set S3", NamedTextColor.BLUE, true),
+                buttonRunCommand("S4", "/feud fastmoney set s4", "Load survey set S4", NamedTextColor.BLUE, true)));
+        rows.add(Component.text("Bind / Run", NamedTextColor.GRAY));
+        rows.add(Component.join(
+                JoinConfiguration.separator(Component.space()),
+                buttonRunCommand("P1", "/feud fastmoney bind p1", "Bind Player 1", NamedTextColor.BLUE, true),
+                buttonRunCommand("P2", "/feud fastmoney bind p2", "Bind Player 2", NamedTextColor.BLUE, true),
+                buttonRunCommand("X", "/feud fastmoney bind clear", "Clear bindings", NamedTextColor.BLUE, true),
+                Component.text("|", NamedTextColor.GRAY),
+                buttonRunCommand("S", "/feud fastmoney start", "Start", NamedTextColor.BLUE, true),
+                buttonRunCommand("ST", "/feud fastmoney stop", "Stop", NamedTextColor.BLUE, true),
+                buttonRunCommand("N", "/feud fastmoney status", "Next", NamedTextColor.BLUE, true)));
+        for (int q = 1; q <= 5; q++) {
+            rows.add(Component.text("Q" + q + " | P1 | P2", NamedTextColor.GRAY));
+            rows.add(buildFastMoneyRow(q));
+        }
+        return page(rows.toArray(new Component[0]));
+    }
+
+    private Component buildFastMoneyRow(int questionIndex) {
+        List<Component> buttons = new ArrayList<>();
+        for (int slot = 1; slot <= 8; slot++) {
+            String cmd = "/feud fastmoney reveal " + questionIndex + " " + slot;
+            buttons.add(buttonRunCommandBare(
+                    String.valueOf(slot), cmd, fastMoneyHover(questionIndex, slot), NamedTextColor.BLUE, true));
+        }
+        return Component.join(JoinConfiguration.separator(Component.space()), buttons);
     }
 
     private Component selectorPage(DisplayBoardSelection selection) {
@@ -364,6 +409,42 @@ public final class HostBookUiBuilder {
         return Component.text(stableLabel, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
                 .clickEvent(ClickEvent.runCommand(fullCommand));
+    }
+
+    private Component buttonRunCommandBare(
+            String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+        String shown = noBreak ? toNoBreak(label) : label;
+        return Component.text(shown, color)
+                .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
+                .clickEvent(ClickEvent.runCommand(fullCommand));
+    }
+
+    private String fastMoneyHover(int questionIndex, int slot) {
+        String fallback = "Answer for slot " + slot;
+        if (fastMoneyService == null || surveyRepository == null) {
+            return fallback;
+        }
+
+        var state = fastMoneyService.state();
+        if (state.questions() == null
+                || questionIndex < 1
+                || questionIndex > state.questions().size()) {
+            return fallback;
+        }
+
+        FastMoneyQuestionState question = state.questions().get(questionIndex - 1);
+        var surveyOpt = surveyRepository.findById(question.surveyId());
+        if (surveyOpt.isEmpty()) {
+            return fallback;
+        }
+
+        Survey survey = surveyOpt.get();
+        if (slot < 1 || slot > survey.answers().size()) {
+            return fallback;
+        }
+
+        AnswerOption ans = survey.answers().get(slot - 1);
+        return ans.text() + " (" + ans.points() + ")";
     }
 
     private Component buttonForSlot(int slot, List<String> hovers, Survey activeSurvey, Set<Integer> revealedSlots) {
