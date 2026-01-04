@@ -159,6 +159,7 @@ public final class PluginBootstrap {
         this.fastMoneyService = new FastMoneyService();
         this.fastMoneyPlayerBindService = new FastMoneyPlayerBindService(fastMoneyService);
         this.hostBookUiBuilder.setFastMoneyService(fastMoneyService);
+        this.hostBookUiBuilder.setHostBookAnchorStore(hostBookAnchorStore);
         File fastMoneyFile = new File(plugin.getDataFolder(), "fast-money.yml");
         ensureFastMoneyFile(fastMoneyFile);
         this.fastMoneySurveySetStore =

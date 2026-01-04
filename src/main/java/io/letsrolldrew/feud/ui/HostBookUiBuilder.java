@@ -33,6 +33,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 public final class HostBookUiBuilder {
+    private static final List<HostBookPage> PAGE_ORDER = List.of(
+            HostBookPage.CONTROL,
+            HostBookPage.SURVEYS,
+            HostBookPage.SELECTOR,
+            HostBookPage.FAST_MONEY_CONFIG,
+            HostBookPage.FAST_MONEY);
 
     private final String commandPrefix;
     private final SurveyRepository surveyRepository;
@@ -41,6 +47,7 @@ public final class HostBookUiBuilder {
     private final DisplayBoardSelectionStore selectionStore;
     private boolean openBookEnabled;
     private FastMoneyService fastMoneyService;
+    private HostBookAnchorStore hostBookAnchorStore;
 
     public HostBookUiBuilder(String commandPrefix) {
         this(commandPrefix, null, null, null, null);
@@ -139,6 +146,7 @@ public final class HostBookUiBuilder {
         DisplayBoardSelection selection = selectionFor(player);
         List<Component> pages = buildPages(
                 hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam, selection);
+        rotatePagesForPlayer(player, pages);
         Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
@@ -220,6 +228,10 @@ public final class HostBookUiBuilder {
 
     public void setFastMoneyService(FastMoneyService fastMoneyService) {
         this.fastMoneyService = fastMoneyService;
+    }
+
+    public void setHostBookAnchorStore(HostBookAnchorStore hostBookAnchorStore) {
+        this.hostBookAnchorStore = hostBookAnchorStore;
     }
 
     List<Component> buildPages() {
@@ -476,6 +488,30 @@ public final class HostBookUiBuilder {
 
     private Component page(Component... components) {
         return Component.join(JoinConfiguration.separator(Component.newline()), components);
+    }
+
+    private void rotatePagesForPlayer(Player player, List<Component> pages) {
+        // rotate so the last clicked page becomes index 0 for this player
+        if (player == null || hostBookAnchorStore == null || pages == null || pages.isEmpty()) {
+            return;
+        }
+
+        HostBookPage anchor = hostBookAnchorStore.get(player.getUniqueId());
+        if (anchor == null) {
+            return;
+        }
+
+        int anchorIndex = PAGE_ORDER.indexOf(anchor);
+        if (anchorIndex <= 0) {
+            return;
+        }
+
+        List<Component> rotated = new ArrayList<>(pages.size());
+        rotated.addAll(pages.subList(anchorIndex, pages.size()));
+        rotated.addAll(pages.subList(0, anchorIndex));
+
+        pages.clear();
+        pages.addAll(rotated);
     }
 
     private List<String> resolveHoverTexts() {
