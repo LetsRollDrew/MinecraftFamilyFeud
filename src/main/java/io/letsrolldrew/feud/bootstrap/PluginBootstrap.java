@@ -98,6 +98,7 @@ public final class PluginBootstrap {
     private FastMoneyBoardPlacement fastMoneyBoardPlacement;
     private FastMoneyBoardPresenter fastMoneyBoardPresenter;
     private FastMoneyBackdropPresenter fastMoneyBackdropPresenter;
+    private io.letsrolldrew.feud.ui.HostBookAnchorStore hostBookAnchorStore;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -112,6 +113,7 @@ public final class PluginBootstrap {
         NamespacedKey hostKey = new NamespacedKey(plugin, "host_remote");
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
+        this.hostBookAnchorStore = new io.letsrolldrew.feud.ui.HostBookAnchorStore();
         this.hostBookUiBuilder =
                 new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey, displayBoardSelectionStore);
         this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
@@ -261,7 +263,8 @@ public final class PluginBootstrap {
                 fastMoneyCommands,
                 displayRegistry,
                 scorePanelStore,
-                timerPanelStore);
+                timerPanelStore,
+                hostBookAnchorStore);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand);
     }
