@@ -267,7 +267,6 @@ public final class HostBookUiBuilder {
     private Component fastMoneyPage() {
         List<Component> rows = new ArrayList<>();
         rows.add(Component.text("Fast Money Controller", NamedTextColor.GOLD));
-        rows.add(spacerLine());
         rows.add(Component.text("Load Survey Set", NamedTextColor.GRAY));
         rows.add(Component.join(
                 JoinConfiguration.separator(Component.space()),
@@ -275,21 +274,16 @@ public final class HostBookUiBuilder {
                 buttonRunCommand("S2", "/feud fastmoney set s2", "Load survey set S2", NamedTextColor.BLUE, true),
                 buttonRunCommand("S3", "/feud fastmoney set s3", "Load survey set S3", NamedTextColor.BLUE, true),
                 buttonRunCommand("S4", "/feud fastmoney set s4", "Load survey set S4", NamedTextColor.BLUE, true)));
-        rows.add(spacerLine());
-        rows.add(Component.text("Bind Players", NamedTextColor.GRAY));
+        rows.add(Component.text("Bind / Run", NamedTextColor.GRAY));
         rows.add(Component.join(
                 JoinConfiguration.separator(Component.space()),
-                buttonRunCommand("Bind P1", "/feud fastmoney bind p1", "Bind Player 1", NamedTextColor.BLUE, true),
-                buttonRunCommand("Bind P2", "/feud fastmoney bind p2", "Bind Player 2", NamedTextColor.BLUE, true),
-                buttonRunCommand("Clear", "/feud fastmoney bind clear", "Clear bindings", NamedTextColor.BLUE, true)));
-        rows.add(spacerLine());
-        rows.add(Component.text("Run", NamedTextColor.GRAY));
-        rows.add(Component.join(
-                JoinConfiguration.separator(Component.space()),
-                buttonRunCommand("Start", "/feud fastmoney start", "Start Fast Money", NamedTextColor.BLUE, true),
-                buttonRunCommand("Stop", "/feud fastmoney stop", "Stop Fast Money", NamedTextColor.BLUE, true),
-                buttonRunCommand("Status", "/feud fastmoney status", "Show status", NamedTextColor.BLUE, true)));
-        rows.add(spacerLine());
+                buttonRunCommand("P1", "/feud fastmoney bind p1", "Bind Player 1", NamedTextColor.BLUE, true),
+                buttonRunCommand("P2", "/feud fastmoney bind p2", "Bind Player 2", NamedTextColor.BLUE, true),
+                buttonRunCommand("X", "/feud fastmoney bind clear", "Clear bindings", NamedTextColor.BLUE, true),
+                Component.text("|", NamedTextColor.GRAY),
+                buttonRunCommand("S", "/feud fastmoney start", "Start", NamedTextColor.BLUE, true),
+                buttonRunCommand("ST", "/feud fastmoney stop", "Stop", NamedTextColor.BLUE, true),
+                buttonRunCommand("N", "/feud fastmoney status", "Next", NamedTextColor.BLUE, true)));
         for (int q = 1; q <= 5; q++) {
             rows.add(Component.text("Q" + q + " | P1 | P2", NamedTextColor.GRAY));
             rows.add(buildFastMoneyRow(q));
@@ -301,7 +295,8 @@ public final class HostBookUiBuilder {
         List<Component> buttons = new ArrayList<>();
         for (int slot = 1; slot <= 8; slot++) {
             String cmd = "/feud fastmoney reveal " + questionIndex + " " + slot;
-            buttons.add(buttonRunCommand(String.valueOf(slot), cmd, "Reveal slot " + slot, NamedTextColor.BLUE, true));
+            buttons.add(buttonRunCommandBare(
+                    String.valueOf(slot), cmd, "Answer for slot " + slot, NamedTextColor.BLUE, true));
         }
         return Component.join(JoinConfiguration.separator(Component.space()), buttons);
     }
@@ -405,6 +400,14 @@ public final class HostBookUiBuilder {
         String stableLabel = "[" + shown + "]";
 
         return Component.text(stableLabel, color)
+                .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
+                .clickEvent(ClickEvent.runCommand(fullCommand));
+    }
+
+    private Component buttonRunCommandBare(
+            String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+        String shown = noBreak ? toNoBreak(label) : label;
+        return Component.text(shown, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
                 .clickEvent(ClickEvent.runCommand(fullCommand));
     }
