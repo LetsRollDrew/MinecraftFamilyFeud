@@ -266,19 +266,55 @@ public final class HostBookUiBuilder {
 
     private Component teamsTimerPage() {
         Component teamsLine = Component.text("Teams: ")
-                .append(buttonRunCommand("info", "/feud team info", "Show team info", NamedTextColor.BLUE, true));
+                .append(buttonRunCommand(
+                        HostBookPage.FAST_MONEY_CONFIG,
+                        "info",
+                        "/feud team info",
+                        "Show team info",
+                        NamedTextColor.BLUE,
+                        true));
 
         Component timerLine = Component.text("Timer: ")
-                .append(buttonRunCommand("start", "/feud timer start", "Start timer", NamedTextColor.BLUE, true))
+                .append(buttonRunCommand(
+                        HostBookPage.FAST_MONEY_CONFIG,
+                        "start",
+                        "/feud timer start",
+                        "Start timer",
+                        NamedTextColor.BLUE,
+                        true))
                 .append(Component.space())
-                .append(buttonRunCommand("stop", "/feud timer stop", "Stop timer", NamedTextColor.BLUE, true))
+                .append(buttonRunCommand(
+                        HostBookPage.FAST_MONEY_CONFIG,
+                        "stop",
+                        "/feud timer stop",
+                        "Stop timer",
+                        NamedTextColor.BLUE,
+                        true))
                 .append(Component.space())
-                .append(buttonRunCommand("reset", "/feud timer reset", "Reset timer", NamedTextColor.BLUE, true))
+                .append(buttonRunCommand(
+                        HostBookPage.FAST_MONEY_CONFIG,
+                        "reset",
+                        "/feud timer reset",
+                        "Reset timer",
+                        NamedTextColor.BLUE,
+                        true))
                 .append(Component.space())
-                .append(buttonRunCommand("status", "/feud timer status", "Timer status", NamedTextColor.BLUE, true));
+                .append(buttonRunCommand(
+                        HostBookPage.FAST_MONEY_CONFIG,
+                        "status",
+                        "/feud timer status",
+                        "Timer status",
+                        NamedTextColor.BLUE,
+                        true));
 
         Component buzzLine = Component.text("Buzz: ")
-                .append(buttonRunCommand("reset", "/feud buzz reset", "Reset buzz lock", NamedTextColor.BLUE, true));
+                .append(buttonRunCommand(
+                        HostBookPage.FAST_MONEY_CONFIG,
+                        "reset",
+                        "/feud buzz reset",
+                        "Reset buzz lock",
+                        NamedTextColor.BLUE,
+                        true));
 
         return page(teamsLine, timerLine, buzzLine);
     }
@@ -289,20 +325,80 @@ public final class HostBookUiBuilder {
         rows.add(Component.text("Load Survey Set", NamedTextColor.GRAY));
         rows.add(Component.join(
                 JoinConfiguration.separator(Component.space()),
-                buttonRunCommand("S1", "/feud fastmoney set s1", "Load survey set S1", NamedTextColor.BLUE, true),
-                buttonRunCommand("S2", "/feud fastmoney set s2", "Load survey set S2", NamedTextColor.BLUE, true),
-                buttonRunCommand("S3", "/feud fastmoney set s3", "Load survey set S3", NamedTextColor.BLUE, true),
-                buttonRunCommand("S4", "/feud fastmoney set s4", "Load survey set S4", NamedTextColor.BLUE, true)));
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "S1",
+                        "/feud fastmoney set s1",
+                        "Load survey set S1",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "S2",
+                        "/feud fastmoney set s2",
+                        "Load survey set S2",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "S3",
+                        "/feud fastmoney set s3",
+                        "Load survey set S3",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "S4",
+                        "/feud fastmoney set s4",
+                        "Load survey set S4",
+                        NamedTextColor.BLUE,
+                        true)));
         rows.add(Component.text("Bind / Run", NamedTextColor.GRAY));
         rows.add(Component.join(
                 JoinConfiguration.separator(Component.space()),
-                buttonRunCommand("P1", "/feud fastmoney bind p1", "Bind Player 1", NamedTextColor.BLUE, true),
-                buttonRunCommand("P2", "/feud fastmoney bind p2", "Bind Player 2", NamedTextColor.BLUE, true),
-                buttonRunCommand("X", "/feud fastmoney bind clear", "Clear bindings", NamedTextColor.BLUE, true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "P1",
+                        "/feud fastmoney bind p1",
+                        "Bind Player 1",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "P2",
+                        "/feud fastmoney bind p2",
+                        "Bind Player 2",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "X",
+                        "/feud fastmoney bind clear",
+                        "Clear bindings",
+                        NamedTextColor.BLUE,
+                        true),
                 Component.text("|", NamedTextColor.GRAY),
-                buttonRunCommand("S", "/feud fastmoney start", "Start", NamedTextColor.BLUE, true),
-                buttonRunCommand("ST", "/feud fastmoney stop", "Stop", NamedTextColor.BLUE, true),
-                buttonRunCommand("N", "/feud fastmoney status", "Next", NamedTextColor.BLUE, true)));
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "S",
+                        "/feud fastmoney start",
+                        "Start",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "ST",
+                        "/feud fastmoney stop",
+                        "Stop",
+                        NamedTextColor.BLUE,
+                        true),
+                buttonRunCommand(
+                        HostBookPage.FAST_MONEY,
+                        "N",
+                        "/feud fastmoney status",
+                        "Next",
+                        NamedTextColor.BLUE,
+                        true)));
         for (int q = 1; q <= 5; q++) {
             rows.add(Component.text("Q" + q + " | P1 | P2", NamedTextColor.GRAY));
             rows.add(buildFastMoneyRow(q));
@@ -315,7 +411,12 @@ public final class HostBookUiBuilder {
         for (int slot = 1; slot <= 8; slot++) {
             String cmd = "/feud fastmoney reveal " + questionIndex + " " + slot;
             buttons.add(buttonRunCommandBare(
-                    String.valueOf(slot), cmd, fastMoneyHover(questionIndex, slot), NamedTextColor.BLUE, true));
+                    HostBookPage.FAST_MONEY,
+                    String.valueOf(slot),
+                    cmd,
+                    fastMoneyHover(questionIndex, slot),
+                    NamedTextColor.BLUE,
+                    true));
         }
         return Component.join(JoinConfiguration.separator(Component.space()), buttons);
     }
@@ -326,12 +427,14 @@ public final class HostBookUiBuilder {
         Component actions = Component.join(
                 JoinConfiguration.separator(Component.space()),
                 buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "View Selection",
                         "/feud board display selector",
                         selectionHover(selection),
                         NamedTextColor.BLUE,
                         true),
                 buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "Give Selector",
                         "/feud board display selector",
                         "Gives the Display Selector wand",
@@ -343,9 +446,11 @@ public final class HostBookUiBuilder {
 
         Component spawnButtons = Component.empty()
                 .append(buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "B", "/feud board display selection board board1", "Spawn Board", NamedTextColor.BLUE, true))
                 .append(Component.space())
                 .append(buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "SPR",
                         "/feud board display selection panels board1 red",
                         "Spawn Score Panel (Red)",
@@ -353,6 +458,7 @@ public final class HostBookUiBuilder {
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "SPB",
                         "/feud board display selection panels board1 blue",
                         "Spawn Score Panel (Blue)",
@@ -360,6 +466,7 @@ public final class HostBookUiBuilder {
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "T",
                         "/feud board display selection timer board1",
                         "Spawn Timer Panel",
@@ -370,6 +477,7 @@ public final class HostBookUiBuilder {
 
         Component teamsLine = Component.empty()
                 .append(buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "Bind Blue",
                         "/feud team buzzer bind blue",
                         "Bind BLUE team buzzer to your next Right-Click on a block",
@@ -377,6 +485,7 @@ public final class HostBookUiBuilder {
                         true))
                 .append(Component.space())
                 .append(buttonRunCommand(
+                        HostBookPage.SELECTOR,
                         "Bind Red",
                         "/feud team buzzer bind red",
                         "Bind RED team buzzer to your next Right-Click on a block",
@@ -387,21 +496,23 @@ public final class HostBookUiBuilder {
     }
 
     @SuppressWarnings("unused")
-    private Component button(String label, String action) {
-        return button(label, action, "Click to run " + commandPrefix + " " + action, NamedTextColor.BLUE, true);
+    private Component button(HostBookPage page, String label, String action) {
+        return button(page, label, action, "Click to run " + commandPrefix + " " + action, NamedTextColor.BLUE, true);
     }
 
     @SuppressWarnings("unused")
-    private Component button(String label, String action, String hoverText) {
-        return button(label, action, hoverText, NamedTextColor.BLUE, true);
+    private Component button(HostBookPage page, String label, String action, String hoverText) {
+        return button(page, label, action, hoverText, NamedTextColor.BLUE, true);
     }
 
-    private Component button(String label, String action, String hoverText, NamedTextColor color) {
-        return button(label, action, hoverText, color, true);
+    private Component button(
+            HostBookPage page, String label, String action, String hoverText, NamedTextColor color) {
+        return button(page, label, action, hoverText, color, true);
     }
 
-    private Component button(String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
-        String command = commandPrefix + " " + action;
+    private Component button(
+            HostBookPage page, String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
+        String command = commandPrefix + " click " + page.token() + " " + action;
 
         Component hover = hoverText != null ? Component.text(hoverText) : Component.text("Click to run " + command);
 
@@ -414,21 +525,25 @@ public final class HostBookUiBuilder {
     }
 
     private Component buttonRunCommand(
-            String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+            HostBookPage page, String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
         String shown = noBreak ? toNoBreak(label) : label;
         String stableLabel = "[" + shown + "]";
+        String remainder = stripFeudPrefix(fullCommand);
+        String command = commandPrefix + " click " + page.token() + " " + remainder;
 
         return Component.text(stableLabel, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
-                .clickEvent(ClickEvent.runCommand(fullCommand));
+                .clickEvent(ClickEvent.runCommand(command));
     }
 
     private Component buttonRunCommandBare(
-            String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+            HostBookPage page, String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
         String shown = noBreak ? toNoBreak(label) : label;
+        String remainder = stripFeudPrefix(fullCommand);
+        String command = commandPrefix + " click " + page.token() + " " + remainder;
         return Component.text(shown, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
-                .clickEvent(ClickEvent.runCommand(fullCommand));
+                .clickEvent(ClickEvent.runCommand(command));
     }
 
     private String fastMoneyHover(int questionIndex, int slot) {
@@ -459,7 +574,8 @@ public final class HostBookUiBuilder {
         return ans.text() + " (" + ans.points() + ")";
     }
 
-    private Component buttonForSlot(int slot, List<String> hovers, Survey activeSurvey, Set<Integer> revealedSlots) {
+    private Component buttonForSlot(
+            HostBookPage page, int slot, List<String> hovers, Survey activeSurvey, Set<Integer> revealedSlots) {
         boolean revealed = revealedSlots.contains(slot);
 
         if (revealed
@@ -471,11 +587,11 @@ public final class HostBookUiBuilder {
             String label = formatRevealedLabel(ans.text(), ans.points());
 
             String hover = "Slot " + slot + ": " + ans.text() + " (" + ans.points() + ")";
-            return button(label, "reveal " + slot, hover, NamedTextColor.DARK_AQUA);
+            return button(page, label, "reveal " + slot, hover, NamedTextColor.DARK_AQUA);
         }
 
         String label = unrevealedLabel(slot);
-        return button(label, "reveal " + slot, hovers.get(slot - 1), NamedTextColor.BLUE);
+        return button(page, label, "reveal " + slot, hovers.get(slot - 1), NamedTextColor.BLUE);
     }
 
     private Component row(Component left, Component right) {
@@ -484,6 +600,20 @@ public final class HostBookUiBuilder {
 
     private Component spacerLine() {
         return Component.text(" ");
+    }
+
+    private String stripFeudPrefix(String fullCommand) {
+        if (fullCommand == null) {
+            return "";
+        }
+        String trimmed = fullCommand.trim();
+        if (trimmed.startsWith("/")) {
+            trimmed = trimmed.substring(1);
+        }
+        if (trimmed.startsWith("feud ")) {
+            return trimmed.substring("feud ".length()).trim();
+        }
+        return trimmed;
     }
 
     private Component page(Component... components) {
@@ -571,30 +701,36 @@ public final class HostBookUiBuilder {
         rows.add(Component.text("In Control: " + controllingTeam.name(), controlColor));
         rows.add(spacerLine());
         rows.add(row(
-                buttonForSlot(1, hovers, activeSurvey, revealedSlots),
-                buttonForSlot(5, hovers, activeSurvey, revealedSlots)));
+                buttonForSlot(HostBookPage.CONTROL, 1, hovers, activeSurvey, revealedSlots),
+                buttonForSlot(HostBookPage.CONTROL, 5, hovers, activeSurvey, revealedSlots)));
         rows.add(row(
-                buttonForSlot(2, hovers, activeSurvey, revealedSlots),
-                buttonForSlot(6, hovers, activeSurvey, revealedSlots)));
+                buttonForSlot(HostBookPage.CONTROL, 2, hovers, activeSurvey, revealedSlots),
+                buttonForSlot(HostBookPage.CONTROL, 6, hovers, activeSurvey, revealedSlots)));
         rows.add(row(
-                buttonForSlot(3, hovers, activeSurvey, revealedSlots),
-                buttonForSlot(7, hovers, activeSurvey, revealedSlots)));
+                buttonForSlot(HostBookPage.CONTROL, 3, hovers, activeSurvey, revealedSlots),
+                buttonForSlot(HostBookPage.CONTROL, 7, hovers, activeSurvey, revealedSlots)));
         rows.add(row(
-                buttonForSlot(4, hovers, activeSurvey, revealedSlots),
-                buttonForSlot(8, hovers, activeSurvey, revealedSlots)));
+                buttonForSlot(HostBookPage.CONTROL, 4, hovers, activeSurvey, revealedSlots),
+                buttonForSlot(HostBookPage.CONTROL, 8, hovers, activeSurvey, revealedSlots)));
 
         rows.add(spacerLine());
         rows.add(row(
-                controlButton("Ctrl RED", "control red", controllingTeam, TeamControl.RED),
-                controlButton("Ctrl BLUE", "control blue", controllingTeam, TeamControl.BLUE)));
+                controlButton(HostBookPage.CONTROL, "Ctrl RED", "control red", controllingTeam, TeamControl.RED),
+                controlButton(HostBookPage.CONTROL, "Ctrl BLUE", "control blue", controllingTeam, TeamControl.BLUE)));
         rows.add(row3(
-                button("Strike", "strike", "Add a strike", NamedTextColor.BLUE, true),
+                button(HostBookPage.CONTROL, "Strike", "strike", "Add a strike", NamedTextColor.BLUE, true),
                 rowSpacer(),
-                button("Clear", "clearstrikes", "Clear all strikes", NamedTextColor.BLUE, true)));
+                button(HostBookPage.CONTROL, "Clear", "clearstrikes", "Clear all strikes", NamedTextColor.BLUE, true)));
         rows.add(row3(
-                button("Reset", "reset", "Reset round (clear strikes, points, reveals)", NamedTextColor.GRAY, true),
+                button(
+                        HostBookPage.CONTROL,
+                        "Reset",
+                        "reset",
+                        "Reset round (clear strikes, points, reveals)",
+                        NamedTextColor.GRAY,
+                        true),
                 rowSpacer(),
-                awardButton(controllingTeam, roundPoints)));
+                awardButton(HostBookPage.CONTROL, controllingTeam, roundPoints)));
 
         return page(rows.toArray(new Component[0]));
     }
@@ -637,7 +773,7 @@ public final class HostBookUiBuilder {
                 ? NamedTextColor.GREEN
                 : NamedTextColor.BLUE;
 
-        return buttonRunCommand(label, command, survey.question(), color, false);
+        return buttonRunCommand(HostBookPage.SURVEYS, label, command, survey.question(), color, false);
     }
 
     private Component row3(Component a, Component b, Component c) {
@@ -648,17 +784,18 @@ public final class HostBookUiBuilder {
         return Component.text("      ");
     }
 
-    private Component controlButton(String label, String action, TeamControl current, TeamControl target) {
+    private Component controlButton(
+            HostBookPage page, String label, String action, TeamControl current, TeamControl target) {
         NamedTextColor color = target == TeamControl.RED ? NamedTextColor.RED : NamedTextColor.BLUE;
-        return button(label, action, "Give control to " + target.name(), color, true);
+        return button(page, label, action, "Give control to " + target.name(), color, true);
     }
 
-    private Component awardButton(TeamControl controllingTeam, int roundPoints) {
+    private Component awardButton(HostBookPage page, TeamControl controllingTeam, int roundPoints) {
         String hover = controllingTeam == TeamControl.NONE
                 ? "Set control before awarding"
                 : "Award points to " + controllingTeam.name() + " (" + roundPoints + " pts)";
         NamedTextColor color = controllingTeam == TeamControl.NONE ? NamedTextColor.GRAY : NamedTextColor.GOLD;
-        return button("Award", "award", hover, color, true);
+        return button(page, "Award", "award", hover, color, true);
     }
 
     private DisplayBoardSelection selectionFor(Player player) {
