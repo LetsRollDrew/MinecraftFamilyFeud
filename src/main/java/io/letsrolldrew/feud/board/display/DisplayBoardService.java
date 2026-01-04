@@ -1,5 +1,7 @@
 package io.letsrolldrew.feud.board.display;
 
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
@@ -713,6 +715,36 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
     public record LayoutResult(DynamicBoardLayout layout, String error) {
         public boolean success() {
             return layout != null && error == null;
+        }
+    }
+
+    public DynamicBoardLayout resolveLayoutOrNull(String boardId) {
+        LayoutResult result = resolveDynamicLayout(boardId, null, true, false);
+        return result.success() ? result.layout() : null;
+    }
+
+    public void showFastMoneyBoard(
+            String boardId,
+            DynamicBoardLayout layout,
+            FastMoneyBoardPresenter boardPresenter,
+            FastMoneyBackdropPresenter backdropPresenter) {
+        if (boardPresenter == null || backdropPresenter == null || layout == null) {
+            return;
+        }
+        String group = boardId == null || boardId.isBlank() ? "board1" : boardId;
+        displayRegistry.removeByGroup("fastmoney", group);
+        displayRegistry.removeByGroup("board", group);
+        backdropPresenter.spawn(group, layout);
+        boardPresenter.spawn(group, layout);
+    }
+
+    public void hideFastMoneyBoard(String boardId) {
+        String group = boardId == null || boardId.isBlank() ? "board1" : boardId;
+        displayRegistry.removeByGroup("fastmoney", group);
+        DynamicBoardLayout layout = resolveLayoutOrNull(group);
+        if (layout != null) {
+            displayRegistry.removeByGroup("board", group);
+            createDynamicBoard(group, layout);
         }
     }
 }

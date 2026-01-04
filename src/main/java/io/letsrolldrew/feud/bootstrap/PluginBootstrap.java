@@ -6,6 +6,9 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPlacement;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
@@ -92,6 +95,9 @@ public final class PluginBootstrap {
     private FastMoneyService fastMoneyService;
     private FastMoneySurveySetStore fastMoneySurveySetStore;
     private FastMoneyCommands fastMoneyCommands;
+    private FastMoneyBoardPlacement fastMoneyBoardPlacement;
+    private FastMoneyBoardPresenter fastMoneyBoardPresenter;
+    private FastMoneyBackdropPresenter fastMoneyBackdropPresenter;
 
     public PluginBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -154,15 +160,21 @@ public final class PluginBootstrap {
         ensureFastMoneyFile(fastMoneyFile);
         this.fastMoneySurveySetStore =
                 FastMoneySurveySetStore.load(YamlConfiguration.loadConfiguration(fastMoneyFile), surveyRepository);
+        File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
+        this.displayBoardPresenter = new DisplayBoardService(
+                displayRegistry, animationService, dynamicBoardsFile, displayBoardSelectionStore);
+        this.fastMoneyBoardPlacement = new FastMoneyBoardPlacement();
+        this.fastMoneyBoardPresenter = new FastMoneyBoardPresenter(displayRegistry, fastMoneyBoardPlacement);
+        this.fastMoneyBackdropPresenter = new FastMoneyBackdropPresenter(displayRegistry);
         this.fastMoneyCommands = new FastMoneyCommands(
                 fastMoneyService,
                 fastMoneySurveySetStore,
                 fastMoneyPlayerBindService,
+                displayBoardPresenter,
+                fastMoneyBoardPresenter,
+                fastMoneyBackdropPresenter,
                 config.hostPermission(),
                 "familyfeud.admin");
-        File dynamicBoardsFile = new File(plugin.getDataFolder(), "dynamic-boards.yml");
-        this.displayBoardPresenter = new DisplayBoardService(
-                displayRegistry, animationService, dynamicBoardsFile, displayBoardSelectionStore);
         this.displayBoardSelectionListener =
                 new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
                     var fresh = hostBookUiBuilder.createBookFor(

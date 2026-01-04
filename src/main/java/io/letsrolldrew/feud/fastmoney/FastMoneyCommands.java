@@ -1,5 +1,9 @@
 package io.letsrolldrew.feud.fastmoney;
 
+import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
+import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
@@ -10,9 +14,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class FastMoneyCommands {
+    private static final String DEFAULT_BOARD_ID = "board1";
+
     private final FastMoneyService service;
     private final FastMoneySurveySetStore surveySetStore;
     private final FastMoneyPlayerBindService bindService;
+    private final DisplayBoardService displayBoardService;
+    private final FastMoneyBoardPresenter boardPresenter;
+    private final FastMoneyBackdropPresenter backdropPresenter;
     private final String hostPermission;
     private final String adminPermission;
 
@@ -20,11 +29,17 @@ public final class FastMoneyCommands {
             FastMoneyService service,
             FastMoneySurveySetStore surveySetStore,
             FastMoneyPlayerBindService bindService,
+            DisplayBoardService displayBoardService,
+            FastMoneyBoardPresenter boardPresenter,
+            FastMoneyBackdropPresenter backdropPresenter,
             String hostPermission,
             String adminPermission) {
         this.service = Objects.requireNonNull(service, "service");
         this.surveySetStore = Objects.requireNonNull(surveySetStore, "surveySetStore");
         this.bindService = Objects.requireNonNull(bindService, "bindService");
+        this.displayBoardService = Objects.requireNonNull(displayBoardService, "displayBoardService");
+        this.boardPresenter = Objects.requireNonNull(boardPresenter, "boardPresenter");
+        this.backdropPresenter = Objects.requireNonNull(backdropPresenter, "backdropPresenter");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
     }
@@ -42,11 +57,12 @@ public final class FastMoneyCommands {
         String sub = args[0].toLowerCase(Locale.ROOT);
         return switch (sub) {
             case "set" -> set(sender, args);
-            case "start" -> start(sender);
-            case "stop" -> stop(sender);
+            case "start" -> start(sender, args);
+            case "stop" -> stop(sender, args);
             case "status" -> status(sender);
             case "bind" -> bind(sender, args);
             case "answer" -> answer(sender, args);
+            case "board" -> board(sender, args);
             default -> usage(sender);
         };
     }
@@ -71,9 +87,11 @@ public final class FastMoneyCommands {
         return true;
     }
 
-    private boolean start(CommandSender sender) {
+    private boolean start(CommandSender sender, String[] args) {
+        String boardId = boardIdOrDefault(args, 1);
         try {
             service.startRound();
+            showBoard(sender, boardId);
             sender.sendMessage("Fast Money: Player 1 turn started");
         } catch (IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
@@ -82,8 +100,10 @@ public final class FastMoneyCommands {
         return true;
     }
 
-    private boolean stop(CommandSender sender) {
+    private boolean stop(CommandSender sender, String[] args) {
+        String boardId = boardIdOrDefault(args, 1);
         service.stop();
+        hideBoard(sender, boardId);
         sender.sendMessage("Fast Money stopped");
 
         return true;
@@ -154,8 +174,47 @@ public final class FastMoneyCommands {
         return true;
     }
 
+    private boolean board(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("Usage: /feud fastmoney board <show|hide> [boardId]");
+            return true;
+        }
+
+        String action = args[1].toLowerCase(Locale.ROOT);
+        String boardId = boardIdOrDefault(args, 2);
+
+        if (action.equals("show")) {
+            showBoard(sender, boardId);
+            return true;
+        }
+
+        if (action.equals("hide")) {
+            hideBoard(sender, boardId);
+            return true;
+        }
+
+        sender.sendMessage("Usage: /feud fastmoney board <show|hide> [boardId]");
+        return true;
+    }
+
+    private void showBoard(CommandSender sender, String boardId) {
+        DynamicBoardLayout layout = displayBoardService.resolveLayoutOrNull(boardId);
+        if (layout == null) {
+            sender.sendMessage("Fast Money board not spawned: no layout for " + boardId);
+            return;
+        }
+
+        displayBoardService.showFastMoneyBoard(boardId, layout, boardPresenter, backdropPresenter);
+        sender.sendMessage("Fast Money board shown on " + boardId);
+    }
+
+    private void hideBoard(CommandSender sender, String boardId) {
+        displayBoardService.hideFastMoneyBoard(boardId);
+        sender.sendMessage("Fast Money board cleared on " + boardId);
+    }
+
     private boolean usage(CommandSender sender) {
-        sender.sendMessage("Fast Money: set|start|stop|status|bind|answer");
+        sender.sendMessage("Fast Money: set|start|stop|status|bind|answer|board");
         return true;
     }
 
@@ -169,5 +228,15 @@ public final class FastMoneyCommands {
         }
 
         return sender.hasPermission(adminPermission);
+    }
+
+    private String boardIdOrDefault(String[] args, int index) {
+        if (args != null && args.length > index) {
+            String candidate = args[index];
+            if (candidate != null && !candidate.isBlank()) {
+                return candidate;
+            }
+        }
+        return DEFAULT_BOARD_ID;
     }
 }
