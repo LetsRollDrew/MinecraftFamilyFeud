@@ -145,24 +145,8 @@ public final class HostBookUiBuilder {
             int maxStrikes,
             int roundPoints,
             TeamControl controllingTeam) {
-        DisplayBoardSelection selection = selectionFor(player);
-        List<Component> pages = buildPages(
-                hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam, selection);
-        rotatePagesForPlayer(player, pages);
-        Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
-        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
-        BookMeta meta = (BookMeta) book.getItemMeta();
-        BookTagger.tagHostRemote(meta, hostKey);
-        try {
-            meta.title(titleComponent());
-            meta.author(authorComponent());
-        } catch (Throwable ignored) {
-            meta.setTitle(titleString());
-            meta.setAuthor("Family Feud");
-        }
-        meta.pages(adventureBook.pages());
-        book.setItemMeta(meta);
-        return book;
+        return createBookInternal(
+                player, hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam);
     }
 
     public ItemStack createBook(
@@ -186,6 +170,39 @@ public final class HostBookUiBuilder {
                 maxStrikes,
                 roundPoints,
                 controllingTeam);
+    }
+
+    private ItemStack createBookInternal(
+            Player player,
+            List<String> hovers,
+            Survey activeSurvey,
+            Set<Integer> revealedSlots,
+            int strikeCount,
+            int maxStrikes,
+            int roundPoints,
+            TeamControl controllingTeam) {
+        DisplayBoardSelection selection = selectionFor(player);
+        List<Component> pages = buildPages(
+                hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam, selection);
+        rotatePagesForPlayer(player, pages);
+        return toWrittenBook(pages);
+    }
+
+    private ItemStack toWrittenBook(List<Component> pages) {
+        Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        BookTagger.tagHostRemote(meta, hostKey);
+        try {
+            meta.title(titleComponent());
+            meta.author(authorComponent());
+        } catch (Throwable ignored) {
+            meta.setTitle(titleString());
+            meta.setAuthor("Family Feud");
+        }
+        meta.pages(adventureBook.pages());
+        book.setItemMeta(meta);
+        return book;
     }
 
     public Component titleComponent() {
