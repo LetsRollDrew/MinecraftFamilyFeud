@@ -313,6 +313,17 @@ public final class PluginBootstrap {
                                         .executes(ctx -> exec(command, ctx.getSource(), "ui", "control")))
                                 .then(literal("award").executes(ctx -> exec(command, ctx.getSource(), "ui", "award")))
                                 .then(literal("reset").executes(ctx -> exec(command, ctx.getSource(), "ui", "reset")))
+                                .then(literal("click")
+                                        .then(wordArg("page")
+                                                .then(greedyStringArg("cmd")
+                                                        .executes(ctx -> exec(
+                                                                command,
+                                                                ctx.getSource(),
+                                                                "ui",
+                                                                "click",
+                                                                StringArgumentType.getString(ctx, "page"),
+                                                                StringArgumentType.getString(ctx, "cmd")))))
+                                        .executes(ctx -> exec(command, ctx.getSource(), "ui", "click")))
                                 .executes(ctx -> exec(command, ctx.getSource(), "ui")))
                         .then(literal("holo")
                                 .requires(src -> src.getSender().hasPermission(adminPermission))

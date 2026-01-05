@@ -484,8 +484,10 @@ public final class FeudRootCommand implements CommandExecutor {
         var versionHandler = new VersionHandler(ctx -> handleVersion(ctx.sender()));
         var clearAllHandler = new ClearAllHandler(ctx -> handleClearAll(ctx.sender()));
 
-        var uiHandler =
-                new UiHandler((ctx, remaining) -> uiCommand.handle(ctx.sender(), remaining), hostBookAnchorStore);
+        var uiHandler = new UiHandler(
+                (ctx, remaining) -> uiCommand.handle(ctx.sender(), remaining),
+                hostBookAnchorStore,
+                player -> giveOrReplaceHostBook(player));
         var holoHandler = new HoloHandler((ctx, remaining) -> {
             if (!ctx.sender().hasPermission(adminPermission)) {
                 ctx.sender().sendMessage("Admin only");

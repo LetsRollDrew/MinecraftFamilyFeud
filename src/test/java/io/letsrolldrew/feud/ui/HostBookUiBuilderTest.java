@@ -29,13 +29,13 @@ class HostBookUiBuilderTest {
                 null);
 
         List<String> commands = collectCommands(pages.get(0));
-        assertTrue(commands.contains("/feud ui reveal 1"));
-        assertTrue(commands.contains("/feud ui strike"));
-        assertTrue(commands.contains("/feud ui clearstrikes"));
-        assertTrue(commands.contains("/feud ui control red"));
-        assertTrue(commands.contains("/feud ui control blue"));
-        assertTrue(commands.contains("/feud ui award"));
-        assertTrue(commands.contains("/feud ui reset"));
+        assertTrue(commands.contains("feud ui click control ui reveal 1"));
+        assertTrue(commands.contains("feud ui click control ui strike"));
+        assertTrue(commands.contains("feud ui click control ui clearstrikes"));
+        assertTrue(commands.contains("feud ui click control ui control red"));
+        assertTrue(commands.contains("feud ui click control ui control blue"));
+        assertTrue(commands.contains("feud ui click control ui award"));
+        assertTrue(commands.contains("feud ui click control ui reset"));
     }
 
     @Test
@@ -54,15 +54,15 @@ class HostBookUiBuilderTest {
         Component fastMoneyPage = pages.get(4);
         List<String> commands = collectCommands(fastMoneyPage);
 
-        assertTrue(commands.contains("/feud fastmoney set s1"));
-        assertTrue(commands.contains("/feud fastmoney bind p1"));
-        assertTrue(commands.contains("/feud fastmoney bind p2"));
-        assertTrue(commands.contains("/feud fastmoney bind clear"));
-        assertTrue(commands.contains("/feud fastmoney start"));
-        assertTrue(commands.contains("/feud fastmoney stop"));
-        assertTrue(commands.contains("/feud fastmoney status"));
-        assertTrue(commands.contains("/feud fastmoney reveal 1 1"));
-        assertTrue(commands.contains("/feud fastmoney reveal 5 8"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney set s1"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney bind p1"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney bind p2"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney bind clear"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney start"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney stop"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney status"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney reveal 1 1"));
+        assertTrue(commands.contains("feud ui click fast_money fastmoney reveal 5 8"));
     }
 
     private List<String> collectCommands(Component component) {

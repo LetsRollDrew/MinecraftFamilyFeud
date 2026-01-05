@@ -6,16 +6,22 @@ import io.letsrolldrew.feud.ui.HostBookAnchorStore;
 import io.letsrolldrew.feud.ui.HostBookPage;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class UiHandler implements CommandHandler {
     private final BiFunction<CommandContext, String[], Boolean> delegate;
     private final HostBookAnchorStore anchorStore;
+    private final Consumer<Player> refresher;
 
-    public UiHandler(BiFunction<CommandContext, String[], Boolean> delegate, HostBookAnchorStore anchorStore) {
+    public UiHandler(
+            BiFunction<CommandContext, String[], Boolean> delegate,
+            HostBookAnchorStore anchorStore,
+            Consumer<Player> refresher) {
         this.delegate = Objects.requireNonNull(delegate, "delegate");
         this.anchorStore = Objects.requireNonNull(anchorStore, "anchorStore");
+        this.refresher = Objects.requireNonNull(refresher, "refresher");
     }
 
     @Override
@@ -53,6 +59,7 @@ public final class UiHandler implements CommandHandler {
         }
 
         Bukkit.dispatchCommand(player, "feud " + remainder);
+        refresher.accept(player);
         return true;
     }
 

@@ -33,6 +33,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 public final class HostBookUiBuilder {
+    private static final String UI_CLICK_PREFIX = "feud ui click ";
+
     private static final List<HostBookPage> PAGE_ORDER = List.of(
             HostBookPage.CONTROL,
             HostBookPage.SURVEYS,
@@ -379,26 +381,11 @@ public final class HostBookUiBuilder {
                         true),
                 Component.text("|", NamedTextColor.GRAY),
                 buttonRunCommand(
-                        HostBookPage.FAST_MONEY,
-                        "S",
-                        "/feud fastmoney start",
-                        "Start",
-                        NamedTextColor.BLUE,
-                        true),
+                        HostBookPage.FAST_MONEY, "S", "/feud fastmoney start", "Start", NamedTextColor.BLUE, true),
                 buttonRunCommand(
-                        HostBookPage.FAST_MONEY,
-                        "ST",
-                        "/feud fastmoney stop",
-                        "Stop",
-                        NamedTextColor.BLUE,
-                        true),
+                        HostBookPage.FAST_MONEY, "ST", "/feud fastmoney stop", "Stop", NamedTextColor.BLUE, true),
                 buttonRunCommand(
-                        HostBookPage.FAST_MONEY,
-                        "N",
-                        "/feud fastmoney status",
-                        "Next",
-                        NamedTextColor.BLUE,
-                        true)));
+                        HostBookPage.FAST_MONEY, "N", "/feud fastmoney status", "Next", NamedTextColor.BLUE, true)));
         for (int q = 1; q <= 5; q++) {
             rows.add(Component.text("Q" + q + " | P1 | P2", NamedTextColor.GRAY));
             rows.add(buildFastMoneyRow(q));
@@ -447,7 +434,11 @@ public final class HostBookUiBuilder {
         Component spawnButtons = Component.empty()
                 .append(buttonRunCommand(
                         HostBookPage.SELECTOR,
-                        "B", "/feud board display selection board board1", "Spawn Board", NamedTextColor.BLUE, true))
+                        "B",
+                        "/feud board display selection board board1",
+                        "Spawn Board",
+                        NamedTextColor.BLUE,
+                        true))
                 .append(Component.space())
                 .append(buttonRunCommand(
                         HostBookPage.SELECTOR,
@@ -505,14 +496,13 @@ public final class HostBookUiBuilder {
         return button(page, label, action, hoverText, NamedTextColor.BLUE, true);
     }
 
-    private Component button(
-            HostBookPage page, String label, String action, String hoverText, NamedTextColor color) {
+    private Component button(HostBookPage page, String label, String action, String hoverText, NamedTextColor color) {
         return button(page, label, action, hoverText, color, true);
     }
 
     private Component button(
             HostBookPage page, String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
-        String command = commandPrefix + " click " + page.token() + " " + action;
+        String command = UI_CLICK_PREFIX + page.token() + " " + action;
 
         Component hover = hoverText != null ? Component.text(hoverText) : Component.text("Click to run " + command);
 
@@ -525,11 +515,16 @@ public final class HostBookUiBuilder {
     }
 
     private Component buttonRunCommand(
-            HostBookPage page, String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+            HostBookPage page,
+            String label,
+            String fullCommand,
+            String hoverText,
+            NamedTextColor color,
+            boolean noBreak) {
         String shown = noBreak ? toNoBreak(label) : label;
         String stableLabel = "[" + shown + "]";
         String remainder = stripFeudPrefix(fullCommand);
-        String command = commandPrefix + " click " + page.token() + " " + remainder;
+        String command = UI_CLICK_PREFIX + page.token() + " " + remainder;
 
         return Component.text(stableLabel, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
@@ -537,10 +532,15 @@ public final class HostBookUiBuilder {
     }
 
     private Component buttonRunCommandBare(
-            HostBookPage page, String label, String fullCommand, String hoverText, NamedTextColor color, boolean noBreak) {
+            HostBookPage page,
+            String label,
+            String fullCommand,
+            String hoverText,
+            NamedTextColor color,
+            boolean noBreak) {
         String shown = noBreak ? toNoBreak(label) : label;
         String remainder = stripFeudPrefix(fullCommand);
-        String command = commandPrefix + " click " + page.token() + " " + remainder;
+        String command = UI_CLICK_PREFIX + page.token() + " " + remainder;
         return Component.text(shown, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
                 .clickEvent(ClickEvent.runCommand(command));
@@ -587,11 +587,11 @@ public final class HostBookUiBuilder {
             String label = formatRevealedLabel(ans.text(), ans.points());
 
             String hover = "Slot " + slot + ": " + ans.text() + " (" + ans.points() + ")";
-            return button(page, label, "reveal " + slot, hover, NamedTextColor.DARK_AQUA);
+            return button(page, label, "ui reveal " + slot, hover, NamedTextColor.DARK_AQUA);
         }
 
         String label = unrevealedLabel(slot);
-        return button(page, label, "reveal " + slot, hovers.get(slot - 1), NamedTextColor.BLUE);
+        return button(page, label, "ui reveal " + slot, hovers.get(slot - 1), NamedTextColor.BLUE);
     }
 
     private Component row(Component left, Component right) {
@@ -718,14 +718,20 @@ public final class HostBookUiBuilder {
                 controlButton(HostBookPage.CONTROL, "Ctrl RED", "control red", controllingTeam, TeamControl.RED),
                 controlButton(HostBookPage.CONTROL, "Ctrl BLUE", "control blue", controllingTeam, TeamControl.BLUE)));
         rows.add(row3(
-                button(HostBookPage.CONTROL, "Strike", "strike", "Add a strike", NamedTextColor.BLUE, true),
+                button(HostBookPage.CONTROL, "Strike", "ui strike", "Add a strike", NamedTextColor.BLUE, true),
                 rowSpacer(),
-                button(HostBookPage.CONTROL, "Clear", "clearstrikes", "Clear all strikes", NamedTextColor.BLUE, true)));
+                button(
+                        HostBookPage.CONTROL,
+                        "Clear",
+                        "ui clearstrikes",
+                        "Clear all strikes",
+                        NamedTextColor.BLUE,
+                        true)));
         rows.add(row3(
                 button(
                         HostBookPage.CONTROL,
                         "Reset",
-                        "reset",
+                        "ui reset",
                         "Reset round (clear strikes, points, reveals)",
                         NamedTextColor.GRAY,
                         true),
@@ -787,7 +793,7 @@ public final class HostBookUiBuilder {
     private Component controlButton(
             HostBookPage page, String label, String action, TeamControl current, TeamControl target) {
         NamedTextColor color = target == TeamControl.RED ? NamedTextColor.RED : NamedTextColor.BLUE;
-        return button(page, label, action, "Give control to " + target.name(), color, true);
+        return button(page, label, "ui " + action, "Give control to " + target.name(), color, true);
     }
 
     private Component awardButton(HostBookPage page, TeamControl controllingTeam, int roundPoints) {
@@ -795,7 +801,7 @@ public final class HostBookUiBuilder {
                 ? "Set control before awarding"
                 : "Award points to " + controllingTeam.name() + " (" + roundPoints + " pts)";
         NamedTextColor color = controllingTeam == TeamControl.NONE ? NamedTextColor.GRAY : NamedTextColor.GOLD;
-        return button(page, "Award", "award", hover, color, true);
+        return button(page, "Award", "ui award", hover, color, true);
     }
 
     private DisplayBoardSelection selectionFor(Player player) {
