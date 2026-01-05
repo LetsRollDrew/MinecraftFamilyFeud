@@ -1,11 +1,15 @@
 package io.letsrolldrew.feud.ui;
 
-import static io.letsrolldrew.feud.ui.BookTextFormatter.COL_GAP;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.abbreviate;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.formatRevealedLabel;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.strikeLine;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.toNoBreak;
 import static io.letsrolldrew.feud.ui.BookTextFormatter.unrevealedLabel;
+import static io.letsrolldrew.feud.ui.BookUiComponents.page;
+import static io.letsrolldrew.feud.ui.BookUiComponents.row;
+import static io.letsrolldrew.feud.ui.BookUiComponents.row3;
+import static io.letsrolldrew.feud.ui.BookUiComponents.rowSpacer;
+import static io.letsrolldrew.feud.ui.BookUiComponents.spacerLine;
 
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
@@ -611,14 +615,6 @@ public final class HostBookUiBuilder {
         return button(page, label, "ui reveal " + slot, hovers.get(slot - 1), NamedTextColor.BLUE);
     }
 
-    private Component row(Component left, Component right) {
-        return Component.join(JoinConfiguration.separator(COL_GAP), left, right);
-    }
-
-    private Component spacerLine() {
-        return Component.text(" ");
-    }
-
     private String stripFeudPrefix(String fullCommand) {
         if (fullCommand == null) {
             return "";
@@ -631,10 +627,6 @@ public final class HostBookUiBuilder {
             return trimmed.substring("feud ".length()).trim();
         }
         return trimmed;
-    }
-
-    private Component page(Component... components) {
-        return Component.join(JoinConfiguration.separator(Component.newline()), components);
     }
 
     private void rotatePagesForPlayer(Player player, List<Component> pages) {
@@ -797,14 +789,6 @@ public final class HostBookUiBuilder {
                 : NamedTextColor.BLUE;
 
         return buttonRunCommand(HostBookPage.SURVEYS, label, command, survey.question(), color, false);
-    }
-
-    private Component row3(Component a, Component b, Component c) {
-        return Component.join(JoinConfiguration.separator(COL_GAP), a, b, c);
-    }
-
-    private Component rowSpacer() {
-        return Component.text("      ");
     }
 
     private Component controlButton(
