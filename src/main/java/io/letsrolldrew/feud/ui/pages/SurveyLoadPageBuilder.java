@@ -6,7 +6,7 @@ import static io.letsrolldrew.feud.ui.BookUiComponents.spacerLine;
 
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
-import io.letsrolldrew.feud.ui.BookButtonFactory;
+import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,15 +15,14 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public final class SurveyLoadPageBuilder {
-    private final SurveyRepository surveyRepository;
-    private final BookButtonFactory buttons;
+    private final HostBookContext context;
 
-    public SurveyLoadPageBuilder(SurveyRepository surveyRepository, BookButtonFactory buttons) {
-        this.surveyRepository = surveyRepository;
-        this.buttons = Objects.requireNonNull(buttons, "buttons");
+    public SurveyLoadPageBuilder(HostBookContext context) {
+        this.context = Objects.requireNonNull(context, "context");
     }
 
     public Component build(Survey activeSurvey) {
+        SurveyRepository surveyRepository = context.surveyRepository();
         if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
             return page(
                     Component.text("Survey Selection List", NamedTextColor.GOLD),
@@ -60,6 +59,6 @@ public final class SurveyLoadPageBuilder {
                 ? NamedTextColor.GREEN
                 : NamedTextColor.BLUE;
 
-        return buttons.runCommand(HostBookPage.SURVEYS, label, command, survey.question(), color, false);
+        return context.buttons().runCommand(HostBookPage.SURVEYS, label, command, survey.question(), color, false);
     }
 }

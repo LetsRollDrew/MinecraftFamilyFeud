@@ -13,7 +13,7 @@ import static io.letsrolldrew.feud.ui.BookUiComponents.spacerLine;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
-import io.letsrolldrew.feud.ui.BookButtonFactory;
+import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +23,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public final class ControlPageBuilder {
-    private final BookButtonFactory buttons;
+    private final HostBookContext context;
 
-    public ControlPageBuilder(BookButtonFactory buttons) {
-        this.buttons = Objects.requireNonNull(buttons, "buttons");
+    public ControlPageBuilder(HostBookContext context) {
+        this.context = Objects.requireNonNull(context, "context");
     }
 
     public Component build(ControlPageModel model) {
@@ -71,23 +71,26 @@ public final class ControlPageBuilder {
                 controlButton(
                         HostBookPage.CONTROL, "Ctrl BLUE", "control blue", model.controllingTeam(), TeamControl.BLUE)));
         rows.add(row3(
-                buttons.button(HostBookPage.CONTROL, "Strike", "ui strike", "Add a strike", NamedTextColor.BLUE, true),
+                context.buttons()
+                        .button(HostBookPage.CONTROL, "Strike", "ui strike", "Add a strike", NamedTextColor.BLUE, true),
                 rowSpacer(),
-                buttons.button(
-                        HostBookPage.CONTROL,
-                        "Clear",
-                        "ui clearstrikes",
-                        "Clear all strikes",
-                        NamedTextColor.BLUE,
-                        true)));
+                context.buttons()
+                        .button(
+                                HostBookPage.CONTROL,
+                                "Clear",
+                                "ui clearstrikes",
+                                "Clear all strikes",
+                                NamedTextColor.BLUE,
+                                true)));
         rows.add(row3(
-                buttons.button(
-                        HostBookPage.CONTROL,
-                        "Reset",
-                        "ui reset",
-                        "Reset round (clear strikes, points, reveals)",
-                        NamedTextColor.GRAY,
-                        true),
+                context.buttons()
+                        .button(
+                                HostBookPage.CONTROL,
+                                "Reset",
+                                "ui reset",
+                                "Reset round (clear strikes, points, reveals)",
+                                NamedTextColor.GRAY,
+                                true),
                 rowSpacer(),
                 awardButton(HostBookPage.CONTROL, model.controllingTeam(), model.roundPoints())));
 
@@ -106,18 +109,18 @@ public final class ControlPageBuilder {
             String label = formatRevealedLabel(ans.text(), ans.points());
 
             String hover = "Slot " + slot + ": " + ans.text() + " (" + ans.points() + ")";
-            return buttons.button(page, label, "ui reveal " + slot, hover, NamedTextColor.DARK_AQUA, true);
+            return context.buttons().button(page, label, "ui reveal " + slot, hover, NamedTextColor.DARK_AQUA, true);
         }
 
         String label = unrevealedLabel(slot);
         String hover = (hovers != null && hovers.size() >= slot) ? hovers.get(slot - 1) : "Reveal";
-        return buttons.button(page, label, "ui reveal " + slot, hover, NamedTextColor.BLUE, true);
+        return context.buttons().button(page, label, "ui reveal " + slot, hover, NamedTextColor.BLUE, true);
     }
 
     private Component controlButton(
             HostBookPage page, String label, String action, TeamControl current, TeamControl target) {
         NamedTextColor color = target == TeamControl.RED ? NamedTextColor.RED : NamedTextColor.BLUE;
-        return buttons.button(page, label, "ui " + action, "Give control to " + target.name(), color, true);
+        return context.buttons().button(page, label, "ui " + action, "Give control to " + target.name(), color, true);
     }
 
     private Component awardButton(HostBookPage page, TeamControl controllingTeam, int roundPoints) {
@@ -125,6 +128,6 @@ public final class ControlPageBuilder {
                 ? "Set control before awarding"
                 : "Award points to " + controllingTeam.name() + " (" + roundPoints + " pts)";
         NamedTextColor color = controllingTeam == TeamControl.NONE ? NamedTextColor.GRAY : NamedTextColor.GOLD;
-        return buttons.button(page, "Award", "ui award", hover, color, true);
+        return context.buttons().button(page, "Award", "ui award", hover, color, true);
     }
 }

@@ -17,7 +17,7 @@ public final class BookButtonFactory {
 
     public Component button(
             HostBookPage page, String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
-        String command = clickPrefix + page.token() + " " + action;
+        String command = clickPrefix + " " + page.token() + " " + action;
         Component hover = hoverText != null ? Component.text(hoverText) : Component.text("Click to run " + command);
 
         String shown = noBreak ? toNoBreak(label) : label;
@@ -38,7 +38,7 @@ public final class BookButtonFactory {
         String shown = noBreak ? toNoBreak(label) : label;
         String stableLabel = "[" + shown + "]";
         String remainder = stripFeudPrefix(fullCommand);
-        String command = clickPrefix + page.token() + " " + remainder;
+        String command = clickPrefix + " " + page.token() + " " + remainder;
 
         return Component.text(stableLabel, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
@@ -54,7 +54,7 @@ public final class BookButtonFactory {
             boolean noBreak) {
         String shown = noBreak ? toNoBreak(label) : label;
         String remainder = stripFeudPrefix(fullCommand);
-        String command = clickPrefix + page.token() + " " + remainder;
+        String command = clickPrefix + " " + page.token() + " " + remainder;
         return Component.text(shown, color)
                 .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
                 .clickEvent(ClickEvent.runCommand(command));

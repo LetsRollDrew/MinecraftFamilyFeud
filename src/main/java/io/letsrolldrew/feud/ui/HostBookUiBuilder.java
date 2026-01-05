@@ -274,13 +274,15 @@ public final class HostBookUiBuilder {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
 
         List<Component> pages = new ArrayList<>();
-        pages.add(new ControlPageBuilder(buttons)
+        HostBookContext context = new HostBookContext(buttons, fastMoneyHoverResolver, surveyRepository);
+
+        pages.add(new ControlPageBuilder(context)
                 .build(new ControlPageModel(
                         hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam)));
-        pages.add(new SurveyLoadPageBuilder(surveyRepository, buttons).build(activeSurvey));
-        pages.add(new SelectorPageBuilder(buttons).build(selection));
-        pages.add(new HostConfigPageBuilder(buttons).build());
-        pages.add(new FastMoneyPageBuilder(buttons, fastMoneyHoverResolver).build());
+        pages.add(new SurveyLoadPageBuilder(context).build(activeSurvey));
+        pages.add(new SelectorPageBuilder(context).build(selection));
+        pages.add(new HostConfigPageBuilder(context).build());
+        pages.add(new FastMoneyPageBuilder(context).build());
         return pages;
     }
 
