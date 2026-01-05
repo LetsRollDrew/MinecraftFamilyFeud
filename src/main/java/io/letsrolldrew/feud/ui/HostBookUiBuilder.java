@@ -12,7 +12,6 @@ import static io.letsrolldrew.feud.ui.BookUiComponents.spacerLine;
 
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
-import io.letsrolldrew.feud.fastmoney.FastMoneyQuestionState;
 import io.letsrolldrew.feud.fastmoney.FastMoneyService;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.survey.AnswerOption;
@@ -35,7 +34,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 public final class HostBookUiBuilder {
-    private static final String UI_CLICK_PREFIX = "feud ui click ";
+    private static final String UI_CLICK_PREFIX = "/feud ui click ";
 
     private static final List<HostBookPage> PAGE_ORDER = List.of(
             HostBookPage.CONTROL,
@@ -50,7 +49,7 @@ public final class HostBookUiBuilder {
     private final DisplayBoardSelectionStore selectionStore;
     private final BookButtonFactory buttons;
     private boolean openBookEnabled;
-    private FastMoneyService fastMoneyService;
+    private FastMoneyHoverResolver fastMoneyHoverResolver;
     private HostBookAnchorStore hostBookAnchorStore;
 
     public HostBookUiBuilder(String commandPrefix) {
@@ -249,7 +248,11 @@ public final class HostBookUiBuilder {
     }
 
     public void setFastMoneyService(FastMoneyService fastMoneyService) {
-        this.fastMoneyService = fastMoneyService;
+        if (fastMoneyService == null || surveyRepository == null) {
+            this.fastMoneyHoverResolver = null;
+            return;
+        }
+        this.fastMoneyHoverResolver = new FastMoneyHoverResolver(fastMoneyService, surveyRepository);
     }
 
     public void setHostBookAnchorStore(HostBookAnchorStore hostBookAnchorStore) {
@@ -508,31 +511,10 @@ public final class HostBookUiBuilder {
 
     @SuppressWarnings("unused")
     private String fastMoneyHover(int questionIndex, int slot) {
-        String fallback = "Answer for slot " + slot;
-        if (fastMoneyService == null || surveyRepository == null) {
-            return fallback;
+        if (fastMoneyHoverResolver == null) {
+            return "Answer for slot " + slot;
         }
-
-        var state = fastMoneyService.state();
-        if (state.questions() == null
-                || questionIndex < 1
-                || questionIndex > state.questions().size()) {
-            return fallback;
-        }
-
-        FastMoneyQuestionState question = state.questions().get(questionIndex - 1);
-        var surveyOpt = surveyRepository.findById(question.surveyId());
-        if (surveyOpt.isEmpty()) {
-            return fallback;
-        }
-
-        Survey survey = surveyOpt.get();
-        if (slot < 1 || slot > survey.answers().size()) {
-            return fallback;
-        }
-
-        AnswerOption ans = survey.answers().get(slot - 1);
-        return ans.text() + " (" + ans.points() + ")";
+        return fastMoneyHoverResolver.hoverFor(questionIndex, slot);
     }
 
     private Component buttonForSlot(

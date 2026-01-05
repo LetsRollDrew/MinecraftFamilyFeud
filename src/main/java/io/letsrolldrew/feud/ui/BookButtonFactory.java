@@ -16,12 +16,7 @@ public final class BookButtonFactory {
     }
 
     public Component button(
-            HostBookPage page,
-            String label,
-            String action,
-            String hoverText,
-            NamedTextColor color,
-            boolean noBreak) {
+            HostBookPage page, String label, String action, String hoverText, NamedTextColor color, boolean noBreak) {
         String command = clickPrefix + page.token() + " " + action;
         Component hover = hoverText != null ? Component.text(hoverText) : Component.text("Click to run " + command);
 
