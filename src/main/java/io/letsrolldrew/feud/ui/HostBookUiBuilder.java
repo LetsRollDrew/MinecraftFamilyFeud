@@ -18,6 +18,8 @@ import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.pages.FastMoneyPageBuilder;
+import io.letsrolldrew.feud.ui.pages.HostConfigPageBuilder;
+import io.letsrolldrew.feud.ui.pages.SelectorPageBuilder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,8 +27,6 @@ import java.util.List;
 import java.util.Set;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -284,143 +284,10 @@ public final class HostBookUiBuilder {
         pages.add(controlPage(
                 hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
         pages.add(surveyLoadPage(activeSurvey));
-        pages.add(selectorPage(selection));
-        pages.add(teamsTimerPage());
+        pages.add(new SelectorPageBuilder(buttons).build(selection));
+        pages.add(new HostConfigPageBuilder(buttons).build());
         pages.add(new FastMoneyPageBuilder(buttons, fastMoneyHoverResolver).build());
         return pages;
-    }
-
-    private Component teamsTimerPage() {
-        Component teamsLine = Component.text("Teams: ")
-                .append(buttons.runCommand(
-                        HostBookPage.FAST_MONEY_CONFIG,
-                        "info",
-                        "/feud team info",
-                        "Show team info",
-                        NamedTextColor.BLUE,
-                        true));
-
-        Component timerLine = Component.text("Timer: ")
-                .append(buttons.runCommand(
-                        HostBookPage.FAST_MONEY_CONFIG,
-                        "start",
-                        "/feud timer start",
-                        "Start timer",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.FAST_MONEY_CONFIG,
-                        "stop",
-                        "/feud timer stop",
-                        "Stop timer",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.FAST_MONEY_CONFIG,
-                        "reset",
-                        "/feud timer reset",
-                        "Reset timer",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.FAST_MONEY_CONFIG,
-                        "status",
-                        "/feud timer status",
-                        "Timer status",
-                        NamedTextColor.BLUE,
-                        true));
-
-        Component buzzLine = Component.text("Buzz: ")
-                .append(buttons.runCommand(
-                        HostBookPage.FAST_MONEY_CONFIG,
-                        "reset",
-                        "/feud buzz reset",
-                        "Reset buzz lock",
-                        NamedTextColor.BLUE,
-                        true));
-
-        return page(teamsLine, timerLine, buzzLine);
-    }
-
-    private Component selectorPage(DisplayBoardSelection selection) {
-        Component header = Component.text("Display Control", NamedTextColor.GOLD);
-
-        Component actions = Component.join(
-                JoinConfiguration.separator(Component.space()),
-                buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "View Selection",
-                        "/feud board display selector",
-                        selectionHover(selection),
-                        NamedTextColor.BLUE,
-                        true),
-                buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "Give Selector",
-                        "/feud board display selector",
-                        "Gives the Display Selector wand",
-                        NamedTextColor.BLUE,
-                        true));
-
-        Component spawnLabel = Component.text("Spawn on Selection:", NamedTextColor.GRAY)
-                .hoverEvent(HoverEvent.showText(Component.text("Requires an active selection")));
-
-        Component spawnButtons = Component.empty()
-                .append(buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "B",
-                        "/feud board display selection board board1",
-                        "Spawn Board",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "SPR",
-                        "/feud board display selection panels board1 red",
-                        "Spawn Score Panel (Red)",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "SPB",
-                        "/feud board display selection panels board1 blue",
-                        "Spawn Score Panel (Blue)",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "T",
-                        "/feud board display selection timer board1",
-                        "Spawn Timer Panel",
-                        NamedTextColor.BLUE,
-                        true));
-
-        Component teamsLabel = Component.text("Buzzer:", NamedTextColor.GRAY);
-
-        Component teamsLine = Component.empty()
-                .append(buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "Bind Blue",
-                        "/feud team buzzer bind blue",
-                        "Bind BLUE team buzzer to your next Right-Click on a block",
-                        NamedTextColor.BLUE,
-                        true))
-                .append(Component.space())
-                .append(buttons.runCommand(
-                        HostBookPage.SELECTOR,
-                        "Bind Red",
-                        "/feud team buzzer bind red",
-                        "Bind RED team buzzer to your next Right-Click on a block",
-                        NamedTextColor.BLUE,
-                        true));
-
-        return page(header, spacerLine(), actions, spacerLine(), spawnLabel, spawnButtons, teamsLabel, teamsLine);
     }
 
     private Component buttonForSlot(
@@ -624,27 +491,5 @@ public final class HostBookUiBuilder {
             return null;
         }
         return selectionStore.get(player.getUniqueId());
-    }
-
-    private String formatBounds(DisplayBoardSelection selection) {
-        if (selection == null || selection.cornerA() == null || selection.cornerB() == null) {
-            return "none";
-        }
-        double minX = Math.min(selection.cornerA().x, selection.cornerB().x);
-        double minY = Math.min(selection.cornerA().y, selection.cornerB().y);
-        double minZ = Math.min(selection.cornerA().z, selection.cornerB().z);
-        double maxX = Math.max(selection.cornerA().x, selection.cornerB().x);
-        double maxY = Math.max(selection.cornerA().y, selection.cornerB().y);
-        double maxZ = Math.max(selection.cornerA().z, selection.cornerB().z);
-        return (int) minX + "," + (int) minY + "," + (int) minZ + " -> " + (int) maxX + "," + (int) maxY + ","
-                + (int) maxZ;
-    }
-
-    private String selectionHover(DisplayBoardSelection selection) {
-        if (selection == null) {
-            return "No selection. Use the selector wand.";
-        }
-        return "Selection: " + formatBounds(selection) + " | Facing: "
-                + selection.facing().name();
     }
 }
