@@ -20,6 +20,7 @@ import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.pages.FastMoneyPageBuilder;
 import io.letsrolldrew.feud.ui.pages.HostConfigPageBuilder;
 import io.letsrolldrew.feud.ui.pages.SelectorPageBuilder;
+import io.letsrolldrew.feud.ui.pages.SurveyLoadPageBuilder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -283,7 +284,7 @@ public final class HostBookUiBuilder {
         List<Component> pages = new ArrayList<>();
         pages.add(controlPage(
                 hovers, activeSurvey, revealedSlots, strikeCount, maxStrikes, roundPoints, controllingTeam));
-        pages.add(surveyLoadPage(activeSurvey));
+        pages.add(new SurveyLoadPageBuilder(surveyRepository, buttons).build(activeSurvey));
         pages.add(new SelectorPageBuilder(buttons).build(selection));
         pages.add(new HostConfigPageBuilder(buttons).build());
         pages.add(new FastMoneyPageBuilder(buttons, fastMoneyHoverResolver).build());
@@ -429,47 +430,6 @@ public final class HostBookUiBuilder {
                 awardButton(HostBookPage.CONTROL, controllingTeam, roundPoints)));
 
         return page(rows.toArray(new Component[0]));
-    }
-
-    private Component surveyLoadPage(Survey activeSurvey) {
-        if (surveyRepository == null || surveyRepository.listAll().isEmpty()) {
-            return page(
-                    Component.text("Survey Selection List", NamedTextColor.GOLD),
-                    spacerLine(),
-                    Component.text("No surveys found. Use /feud survey list."));
-        }
-
-        List<Survey> surveys = surveyRepository.listAll();
-        List<Component> rows = new ArrayList<>();
-
-        rows.add(Component.text("Survey Selection List", NamedTextColor.GOLD));
-        rows.add(spacerLine());
-
-        for (int i = 0; i < surveys.size(); i += 3) {
-            Survey s1 = surveys.get(i);
-            Survey s2 = (i + 1) < surveys.size() ? surveys.get(i + 1) : null;
-            Survey s3 = (i + 2) < surveys.size() ? surveys.get(i + 2) : null;
-
-            Component c1 = surveyButton(s1, activeSurvey);
-            Component c2 = s2 == null ? Component.text(" ") : surveyButton(s2, activeSurvey);
-            Component c3 = s3 == null ? Component.text(" ") : surveyButton(s3, activeSurvey);
-
-            rows.add(row3(c1, c2, c3));
-        }
-
-        return page(rows.toArray(new Component[0]));
-    }
-
-    private Component surveyButton(Survey survey, Survey activeSurvey) {
-        String command = "/feud survey load " + survey.id();
-
-        String label = survey.displayName(); // normal spaces, no abbreviation
-
-        NamedTextColor color = activeSurvey != null && survey.id().equals(activeSurvey.id())
-                ? NamedTextColor.GREEN
-                : NamedTextColor.BLUE;
-
-        return buttons.runCommand(HostBookPage.SURVEYS, label, command, survey.question(), color, false);
     }
 
     private Component controlButton(
