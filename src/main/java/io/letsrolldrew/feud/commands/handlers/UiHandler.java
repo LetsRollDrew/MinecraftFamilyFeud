@@ -44,7 +44,7 @@ public final class UiHandler implements CommandHandler {
         }
 
         if (args.length < 3) {
-            context.sender().sendMessage("Usage: /feud ui click <page> <command...>");
+            context.sender().sendMessage("Usage: /feud ui click <page> <command...> OR <page> action <actionId>");
             return true;
         }
 
@@ -53,7 +53,11 @@ public final class UiHandler implements CommandHandler {
             anchorStore.set(player.getUniqueId(), page);
         }
 
-        String remainder = buildRemainder(args);
+        if (args.length >= 3 && "action".equalsIgnoreCase(args[2])) {
+            return handleActionClick(player, args);
+        }
+
+        String remainder = buildRemainder(args, 2);
         if (remainder.isBlank()) {
             return true;
         }
@@ -63,17 +67,32 @@ public final class UiHandler implements CommandHandler {
         return true;
     }
 
-    private String buildRemainder(String[] args) {
-        if (args.length < 3) {
+    private boolean handleActionClick(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            return true;
+        }
+
+        String actionId = buildRemainder(args, 3);
+        player.sendMessage("Unknown UI action: " + actionId);
+        refresher.accept(player);
+
+        return true;
+    }
+
+    private String buildRemainder(String[] args, int startIndex) {
+        if (args.length <= startIndex) {
             return "";
         }
+
         StringBuilder sb = new StringBuilder();
-        for (int i = 2; i < args.length; i++) {
-            if (i > 2) {
+        for (int i = startIndex; i < args.length; i++) {
+            if (i > startIndex) {
                 sb.append(' ');
             }
             sb.append(args[i]);
         }
+
         return sb.toString().trim();
     }
 }
