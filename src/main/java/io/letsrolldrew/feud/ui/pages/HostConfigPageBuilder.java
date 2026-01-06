@@ -4,6 +4,7 @@ import static io.letsrolldrew.feud.ui.BookUiComponents.page;
 
 import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
+import io.letsrolldrew.feud.ui.actions.ActionIds;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -18,57 +19,57 @@ public final class HostConfigPageBuilder {
     public Component build() {
         Component teamsLine = Component.text("Teams: ")
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY_CONFIG,
                                 "info",
-                                "/feud team info",
+                                ActionIds.hostConfigTeamInfo(),
                                 "Show team info",
                                 NamedTextColor.BLUE,
                                 true));
 
         Component timerLine = Component.text("Timer: ")
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY_CONFIG,
                                 "start",
-                                "/feud timer start",
+                                ActionIds.hostConfigTimerStart(),
                                 "Start timer",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY_CONFIG,
                                 "stop",
-                                "/feud timer stop",
+                                ActionIds.hostConfigTimerStop(),
                                 "Stop timer",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY_CONFIG,
                                 "reset",
-                                "/feud timer reset",
+                                ActionIds.hostConfigTimerReset(),
                                 "Reset timer",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY_CONFIG,
                                 "status",
-                                "/feud timer status",
+                                ActionIds.hostConfigTimerStatus(),
                                 "Timer status",
                                 NamedTextColor.BLUE,
                                 true));
 
         Component buzzLine = Component.text("Buzz: ")
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY_CONFIG,
                                 "reset",
-                                "/feud buzz reset",
+                                ActionIds.hostConfigBuzzReset(),
                                 "Reset buzz lock",
                                 NamedTextColor.BLUE,
                                 true));
