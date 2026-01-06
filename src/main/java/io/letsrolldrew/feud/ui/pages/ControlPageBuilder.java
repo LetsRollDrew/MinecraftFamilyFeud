@@ -15,6 +15,7 @@ import io.letsrolldrew.feud.survey.AnswerOption;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
+import io.letsrolldrew.feud.ui.actions.ActionIds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -72,22 +73,28 @@ public final class ControlPageBuilder {
                         HostBookPage.CONTROL, "Ctrl BLUE", "control blue", model.controllingTeam(), TeamControl.BLUE)));
         rows.add(row3(
                 context.buttons()
-                        .button(HostBookPage.CONTROL, "Strike", "ui strike", "Add a strike", NamedTextColor.BLUE, true),
+                        .action(
+                                HostBookPage.CONTROL,
+                                "Strike",
+                                ActionIds.controlStrike(),
+                                "Add a strike",
+                                NamedTextColor.BLUE,
+                                true),
                 rowSpacer(),
                 context.buttons()
-                        .button(
+                        .action(
                                 HostBookPage.CONTROL,
                                 "Clear",
-                                "ui clearstrikes",
+                                ActionIds.controlClearStrikes(),
                                 "Clear all strikes",
                                 NamedTextColor.BLUE,
                                 true)));
         rows.add(row3(
                 context.buttons()
-                        .button(
+                        .action(
                                 HostBookPage.CONTROL,
                                 "Reset",
-                                "ui reset",
+                                ActionIds.controlReset(),
                                 "Reset round (clear strikes, points, reveals)",
                                 NamedTextColor.GRAY,
                                 true),
@@ -109,18 +116,20 @@ public final class ControlPageBuilder {
             String label = formatRevealedLabel(ans.text(), ans.points());
 
             String hover = "Slot " + slot + ": " + ans.text() + " (" + ans.points() + ")";
-            return context.buttons().button(page, label, "ui reveal " + slot, hover, NamedTextColor.DARK_AQUA, true);
+            return context.buttons()
+                    .action(page, label, ActionIds.controlReveal(slot), hover, NamedTextColor.DARK_AQUA, true);
         }
 
         String label = unrevealedLabel(slot);
         String hover = (hovers != null && hovers.size() >= slot) ? hovers.get(slot - 1) : "Reveal";
-        return context.buttons().button(page, label, "ui reveal " + slot, hover, NamedTextColor.BLUE, true);
+        return context.buttons().action(page, label, ActionIds.controlReveal(slot), hover, NamedTextColor.BLUE, true);
     }
 
     private Component controlButton(
             HostBookPage page, String label, String action, TeamControl current, TeamControl target) {
         NamedTextColor color = target == TeamControl.RED ? NamedTextColor.RED : NamedTextColor.BLUE;
-        return context.buttons().button(page, label, "ui " + action, "Give control to " + target.name(), color, true);
+        String actionId = target == TeamControl.RED ? ActionIds.controlControlRed() : ActionIds.controlControlBlue();
+        return context.buttons().action(page, label, actionId, "Give control to " + target.name(), color, true);
     }
 
     private Component awardButton(HostBookPage page, TeamControl controllingTeam, int roundPoints) {
@@ -128,6 +137,6 @@ public final class ControlPageBuilder {
                 ? "Set control before awarding"
                 : "Award points to " + controllingTeam.name() + " (" + roundPoints + " pts)";
         NamedTextColor color = controllingTeam == TeamControl.NONE ? NamedTextColor.GRAY : NamedTextColor.GOLD;
-        return context.buttons().button(page, "Award", "ui award", hover, color, true);
+        return context.buttons().action(page, "Award", ActionIds.controlAward(), hover, color, true);
     }
 }
