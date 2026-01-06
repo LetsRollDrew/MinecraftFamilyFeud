@@ -4,6 +4,7 @@ import static io.letsrolldrew.feud.ui.BookUiComponents.page;
 
 import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
+import io.letsrolldrew.feud.ui.actions.ActionIds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -25,34 +26,34 @@ public final class FastMoneyPageBuilder {
         rows.add(Component.join(
                 JoinConfiguration.separator(Component.space()),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "S1",
-                                "/feud fastmoney set s1",
+                                ActionIds.fastMoneySet("s1"),
                                 "Load survey set S1",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "S2",
-                                "/feud fastmoney set s2",
+                                ActionIds.fastMoneySet("s2"),
                                 "Load survey set S2",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "S3",
-                                "/feud fastmoney set s3",
+                                ActionIds.fastMoneySet("s3"),
                                 "Load survey set S3",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "S4",
-                                "/feud fastmoney set s4",
+                                ActionIds.fastMoneySet("s4"),
                                 "Load survey set S4",
                                 NamedTextColor.BLUE,
                                 true)));
@@ -60,51 +61,51 @@ public final class FastMoneyPageBuilder {
         rows.add(Component.join(
                 JoinConfiguration.separator(Component.space()),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "P1",
-                                "/feud fastmoney bind p1",
+                                ActionIds.fastMoneyBindP1(),
                                 "Bind Player 1",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "P2",
-                                "/feud fastmoney bind p2",
+                                ActionIds.fastMoneyBindP2(),
                                 "Bind Player 2",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "X",
-                                "/feud fastmoney bind clear",
+                                ActionIds.fastMoneyBindClear(),
                                 "Clear bindings",
                                 NamedTextColor.BLUE,
                                 true),
                 Component.text("|", NamedTextColor.GRAY),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "S",
-                                "/feud fastmoney start",
+                                ActionIds.fastMoneyStart(),
                                 "Start",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "ST",
-                                "/feud fastmoney stop",
+                                ActionIds.fastMoneyStop(),
                                 "Stop",
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.FAST_MONEY,
                                 "N",
-                                "/feud fastmoney status",
+                                ActionIds.fastMoneyStatus(),
                                 "Next",
                                 NamedTextColor.BLUE,
                                 true)));
@@ -118,12 +119,12 @@ public final class FastMoneyPageBuilder {
     private Component buildFastMoneyRow(int questionIndex) {
         List<Component> rowButtons = new ArrayList<>();
         for (int slot = 1; slot <= 8; slot++) {
-            String cmd = "/feud fastmoney reveal " + questionIndex + " " + slot;
+            String actionId = ActionIds.fastMoneyReveal(questionIndex, slot);
             rowButtons.add(context.buttons()
-                    .runCommandBare(
+                    .actionBare(
                             HostBookPage.FAST_MONEY,
                             String.valueOf(slot),
-                            cmd,
+                            actionId,
                             hoverFor(questionIndex, slot),
                             NamedTextColor.BLUE,
                             true));

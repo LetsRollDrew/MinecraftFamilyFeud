@@ -60,7 +60,6 @@ public final class SurveyLoadPageBuilder {
                 : NamedTextColor.BLUE;
 
         String actionId = ActionIds.surveysLoad(survey.id());
-        return context.buttons()
-                .action(HostBookPage.SURVEYS, label, actionId, survey.question(), color, false);
+        return context.buttons().action(HostBookPage.SURVEYS, label, actionId, survey.question(), color, false);
     }
 }
