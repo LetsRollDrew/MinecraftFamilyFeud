@@ -5,6 +5,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+// registry mapping action ids to executable host book actions
+// used by the /feud ui click <page> action <id> handler to resolve what code needs to run
+// basically a lookup table for click actions
+
 public final class HostBookActionRegistry {
     private final ConcurrentMap<HostBookActionId, HostBookAction> actions = new ConcurrentHashMap<>();
 

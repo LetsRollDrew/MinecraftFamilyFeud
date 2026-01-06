@@ -17,6 +17,7 @@ public final class BookButtonFactory {
 
     public Component action(
             HostBookPage page, String label, String actionId, String hoverText, NamedTextColor color, boolean noBreak) {
+        // emit the standard click shape: /feud ui click <page> action <id>
         String shown = noBreak ? toNoBreak(label) : label;
         String stableLabel = "[" + shown + "]";
         String command = formatActionCommand(page, actionId);

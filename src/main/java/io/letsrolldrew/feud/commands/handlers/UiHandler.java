@@ -43,6 +43,7 @@ public final class UiHandler implements CommandHandler {
         }
 
         if (args.length < 4 || !"action".equalsIgnoreCase(args[2])) {
+            // host book clicks must use action so we can rotate pages
             context.sender().sendMessage("Usage: /feud ui click <page> action <actionId>");
             return true;
         }

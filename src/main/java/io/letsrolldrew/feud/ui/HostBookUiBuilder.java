@@ -274,6 +274,8 @@ public final class HostBookUiBuilder {
         List<String> hovers = hoverTexts == null ? defaultHovers() : hoverTexts;
 
         List<Component> pages = new ArrayList<>();
+
+        // build a fresh context for page builders so shared deps stay consistent per book render
         HostBookContext context = new HostBookContext(buttons, fastMoneyHoverResolver, surveyRepository);
 
         pages.add(new ControlPageBuilder(context)

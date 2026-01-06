@@ -16,6 +16,7 @@ public final class HostBookActions {
             register(registry, revealId, player -> dispatch(player, "feud ui reveal " + captureSlot));
         }
 
+        // bridge to existing command behaviors until actions invoke services directly
         register(registry, ActionIds.controlStrike(), player -> dispatch(player, "feud ui strike"));
         register(registry, ActionIds.controlClearStrikes(), player -> dispatch(player, "feud ui clearstrikes"));
         register(registry, ActionIds.controlControlRed(), player -> dispatch(player, "feud ui control red"));
