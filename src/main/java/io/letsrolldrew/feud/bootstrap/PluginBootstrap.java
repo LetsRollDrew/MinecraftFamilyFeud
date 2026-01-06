@@ -315,6 +315,17 @@ public final class PluginBootstrap {
                                 .then(literal("reset").executes(ctx -> exec(command, ctx.getSource(), "ui", "reset")))
                                 .then(literal("click")
                                         .then(wordArg("page")
+                                                .then(literal("action")
+                                                        .then(greedyStringArg("actionId")
+                                                                .executes(ctx -> exec(
+                                                                        command,
+                                                                        ctx.getSource(),
+                                                                        "ui",
+                                                                        "click",
+                                                                        StringArgumentType.getString(ctx, "page"),
+                                                                        "action",
+                                                                        StringArgumentType.getString(
+                                                                                ctx, "actionId")))))
                                                 .then(greedyStringArg("cmd")
                                                         .executes(ctx -> exec(
                                                                 command,
