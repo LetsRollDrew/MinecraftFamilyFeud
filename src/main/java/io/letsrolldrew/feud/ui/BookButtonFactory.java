@@ -60,6 +60,33 @@ public final class BookButtonFactory {
                 .clickEvent(ClickEvent.runCommand(command));
     }
 
+    public Component action(
+            HostBookPage page, String label, String actionId, String hoverText, NamedTextColor color, boolean noBreak) {
+        String shown = noBreak ? toNoBreak(label) : label;
+        String stableLabel = "[" + shown + "]";
+        String command = formatActionCommand(page, actionId);
+
+        Component hover = hoverText != null ? Component.text(hoverText) : Component.text("Click to run " + command);
+
+        return Component.text(stableLabel, color)
+                .hoverEvent(HoverEvent.showText(hover))
+                .clickEvent(ClickEvent.runCommand(command));
+    }
+
+    public Component actionBare(
+            HostBookPage page, String label, String actionId, String hoverText, NamedTextColor color, boolean noBreak) {
+        String shown = noBreak ? toNoBreak(label) : label;
+        String command = formatActionCommand(page, actionId);
+        return Component.text(shown, color)
+                .hoverEvent(HoverEvent.showText(Component.text(hoverText)))
+                .clickEvent(ClickEvent.runCommand(command));
+    }
+
+    private String formatActionCommand(HostBookPage page, String actionId) {
+        String validated = Validation.requireNonBlank(actionId, "actionId").toLowerCase();
+        return clickPrefix + " " + page.token() + " action " + validated;
+    }
+
     private String stripFeudPrefix(String fullCommand) {
         if (fullCommand == null) {
             return "";
