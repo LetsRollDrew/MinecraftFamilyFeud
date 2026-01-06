@@ -5,6 +5,7 @@ import static io.letsrolldrew.feud.ui.BookUiComponents.page;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
+import io.letsrolldrew.feud.ui.actions.ActionIds;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
@@ -24,18 +25,18 @@ public final class SelectorPageBuilder {
         Component actions = Component.join(
                 JoinConfiguration.separator(Component.space()),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "View Selection",
-                                "/feud board display selector",
+                                ActionIds.selectorViewSelection(),
                                 selectionHover(selection),
                                 NamedTextColor.BLUE,
                                 true),
                 context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "Give Selector",
-                                "/feud board display selector",
+                                ActionIds.selectorGiveSelector(),
                                 "Gives the Display Selector wand",
                                 NamedTextColor.BLUE,
                                 true));
@@ -45,37 +46,37 @@ public final class SelectorPageBuilder {
 
         Component spawnButtons = Component.empty()
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "B",
-                                "/feud board display selection board board1",
+                                ActionIds.selectorSpawnBoard(),
                                 "Spawn Board",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "SPR",
-                                "/feud board display selection panels board1 red",
+                                ActionIds.selectorSpawnPanelsRed(),
                                 "Spawn Score Panel (Red)",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "SPB",
-                                "/feud board display selection panels board1 blue",
+                                ActionIds.selectorSpawnPanelsBlue(),
                                 "Spawn Score Panel (Blue)",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "T",
-                                "/feud board display selection timer board1",
+                                ActionIds.selectorSpawnTimer(),
                                 "Spawn Timer Panel",
                                 NamedTextColor.BLUE,
                                 true));
@@ -84,19 +85,19 @@ public final class SelectorPageBuilder {
 
         Component teamsLine = Component.empty()
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "Bind Blue",
-                                "/feud team buzzer bind blue",
+                                ActionIds.selectorBindBlue(),
                                 "Bind BLUE team buzzer to your next Right-Click on a block",
                                 NamedTextColor.BLUE,
                                 true))
                 .append(Component.space())
                 .append(context.buttons()
-                        .runCommand(
+                        .action(
                                 HostBookPage.SELECTOR,
                                 "Bind Red",
-                                "/feud team buzzer bind red",
+                                ActionIds.selectorBindRed(),
                                 "Bind RED team buzzer to your next Right-Click on a block",
                                 NamedTextColor.BLUE,
                                 true));
