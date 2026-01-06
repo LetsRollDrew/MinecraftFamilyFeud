@@ -35,13 +35,22 @@ class HostBookUiBuilderTest {
         assertAny(cmds, c -> c.startsWith(CLICK_PREFIX), "Expected at least one 'feud ui click ...' command");
 
         // control page anchors
-        assertAny(cmds, isOnPage("control", c -> c.contains("reveal 1")), "Missing control reveal 1");
-        assertAny(cmds, isOnPage("control", c -> containsWholeToken(c, "strike")), "Missing control strike");
-        assertAny(cmds, isOnPage("control", c -> c.contains("clearstrikes")), "Missing control clearstrikes");
-        assertAny(cmds, isOnPage("control", c -> c.contains("control red")), "Missing control control red");
-        assertAny(cmds, isOnPage("control", c -> c.contains("control blue")), "Missing control control blue");
-        assertAny(cmds, isOnPage("control", c -> containsWholeToken(c, "award")), "Missing control award");
-        assertAny(cmds, isOnPage("control", c -> containsWholeToken(c, "reset")), "Missing control reset");
+        assertAny(cmds, isOnPage("control", c -> c.contains("action control.reveal.1")), "Missing control reveal 1");
+        assertAny(cmds, isOnPage("control", c -> c.contains("action control.strike")), "Missing control strike");
+        assertAny(
+                cmds,
+                isOnPage("control", c -> c.contains("action control.clearstrikes")),
+                "Missing control clearstrikes");
+        assertAny(
+                cmds,
+                isOnPage("control", c -> c.contains("action control.control.red")),
+                "Missing control control red");
+        assertAny(
+                cmds,
+                isOnPage("control", c -> c.contains("action control.control.blue")),
+                "Missing control control blue");
+        assertAny(cmds, isOnPage("control", c -> c.contains("action control.award")), "Missing control award");
+        assertAny(cmds, isOnPage("control", c -> c.contains("action control.reset")), "Missing control reset");
     }
 
     @Test
@@ -60,22 +69,22 @@ class HostBookUiBuilderTest {
 
         List<String> cmds = collectAllRunCommands(pages);
 
-        // allow either token for now
         Predicate<String> onFastMoney = isOnAnyPage(List.of("fast_money", "fast_money_config"), c -> true);
 
-        assertAny(cmds, onFastMoney.and(c -> c.contains("fastmoney set s1")), "Missing fastmoney set s1");
-        assertAny(cmds, onFastMoney.and(c -> c.contains("fastmoney bind p1")), "Missing fastmoney bind p1");
-        assertAny(cmds, onFastMoney.and(c -> c.contains("fastmoney bind p2")), "Missing fastmoney bind p2");
-        assertAny(cmds, onFastMoney.and(c -> c.contains("fastmoney bind clear")), "Missing fastmoney bind clear");
-        assertAny(cmds, onFastMoney.and(c -> containsWholeToken(c, "fastmoney start")), "Missing fastmoney start");
-        assertAny(cmds, onFastMoney.and(c -> containsWholeToken(c, "fastmoney stop")), "Missing fastmoney stop");
-        assertAny(cmds, onFastMoney.and(c -> containsWholeToken(c, "fastmoney status")), "Missing fastmoney status");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.set.s1")), "Missing fastmoney set s1");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.bind.p1")), "Missing fastmoney bind p1");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.bind.p2")), "Missing fastmoney bind p2");
+        assertAny(
+                cmds, onFastMoney.and(c -> c.contains("action fastmoney.bind.clear")), "Missing fastmoney bind clear");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.start")), "Missing fastmoney start");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.stop")), "Missing fastmoney stop");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.status")), "Missing fastmoney status");
 
-        // spotcheck reveal endpoints
-        assertAny(cmds, onFastMoney.and(c -> c.contains("fastmoney reveal 1 1")), "Missing fastmoney reveal 1 1");
-        assertAny(cmds, onFastMoney.and(c -> c.contains("fastmoney reveal 5 8")), "Missing fastmoney reveal 5 8");
+        assertAny(
+                cmds, onFastMoney.and(c -> c.contains("action fastmoney.reveal.1.1")), "Missing fastmoney reveal 1 1");
+        assertAny(
+                cmds, onFastMoney.and(c -> c.contains("action fastmoney.reveal.5.8")), "Missing fastmoney reveal 5 8");
     }
-
 
     private Predicate<String> isOnPage(String pageToken, Predicate<String> rest) {
         String prefix = CLICK_PREFIX + pageToken + " ";
@@ -139,12 +148,6 @@ class HostBookUiBuilderTest {
         s = s.replaceAll("\\s+", " ").toLowerCase();
 
         return s;
-    }
-
-    private boolean containsWholeToken(String command, String tokenOrPhrase) {
-        String padded = " " + command + " ";
-        String needle = " " + tokenOrPhrase + " ";
-        return padded.contains(needle);
     }
 
     private void assertAny(List<String> commands, Predicate<String> predicate, String message) {
