@@ -8,6 +8,7 @@ import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.HostBookContext;
 import io.letsrolldrew.feud.ui.HostBookPage;
+import io.letsrolldrew.feud.ui.actions.ActionIds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -52,13 +53,14 @@ public final class SurveyLoadPageBuilder {
     }
 
     private Component surveyButton(Survey survey, Survey activeSurvey) {
-        String command = "/feud survey load " + survey.id();
         String label = survey.displayName();
 
         NamedTextColor color = activeSurvey != null && survey.id().equals(activeSurvey.id())
                 ? NamedTextColor.GREEN
                 : NamedTextColor.BLUE;
 
-        return context.buttons().runCommand(HostBookPage.SURVEYS, label, command, survey.question(), color, false);
+        String actionId = ActionIds.surveysLoad(survey.id());
+        return context.buttons()
+                .action(HostBookPage.SURVEYS, label, actionId, survey.question(), color, false);
     }
 }
