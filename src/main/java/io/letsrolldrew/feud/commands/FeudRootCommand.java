@@ -37,6 +37,7 @@ import io.letsrolldrew.feud.team.TeamCommands;
 import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.BookFactory;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
+import io.letsrolldrew.feud.ui.HostBookAnchorStore;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import net.kyori.adventure.inventory.Book;
@@ -83,6 +84,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final ScorePanelStore scorePanelStore;
     private final TimerPanelStore timerPanelStore;
     private final CommandTree commandTree;
+    private final HostBookAnchorStore hostBookAnchorStore;
 
     public FeudRootCommand(
             Plugin plugin,
@@ -112,7 +114,8 @@ public final class FeudRootCommand implements CommandExecutor {
             FastMoneyCommands fastMoneyCommands,
             DisplayRegistry displayRegistry,
             ScorePanelStore scorePanelStore,
-            TimerPanelStore timerPanelStore) {
+            TimerPanelStore timerPanelStore,
+            HostBookAnchorStore hostBookAnchorStore) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.hostBookUiBuilder = hostBookUiBuilder;
@@ -141,6 +144,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.displayRegistry = displayRegistry;
         this.scorePanelStore = scorePanelStore;
         this.timerPanelStore = timerPanelStore;
+        this.hostBookAnchorStore = hostBookAnchorStore;
         this.uiCommand = new UiCommand(
                 gameController,
                 hostPermission,
@@ -480,7 +484,10 @@ public final class FeudRootCommand implements CommandExecutor {
         var versionHandler = new VersionHandler(ctx -> handleVersion(ctx.sender()));
         var clearAllHandler = new ClearAllHandler(ctx -> handleClearAll(ctx.sender()));
 
-        var uiHandler = new UiHandler((ctx, remaining) -> uiCommand.handle(ctx.sender(), remaining));
+        var uiHandler = new UiHandler(
+                (ctx, remaining) -> uiCommand.handle(ctx.sender(), remaining),
+                hostBookAnchorStore,
+                player -> giveOrReplaceHostBook(player));
         var holoHandler = new HoloHandler((ctx, remaining) -> {
             if (!ctx.sender().hasPermission(adminPermission)) {
                 ctx.sender().sendMessage("Admin only");
