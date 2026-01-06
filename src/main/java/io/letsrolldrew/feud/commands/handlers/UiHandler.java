@@ -7,7 +7,6 @@ import io.letsrolldrew.feud.ui.HostBookPage;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class UiHandler implements CommandHandler {
@@ -43,8 +42,8 @@ public final class UiHandler implements CommandHandler {
             return true;
         }
 
-        if (args.length < 3) {
-            context.sender().sendMessage("Usage: /feud ui click <page> <command...> OR <page> action <actionId>");
+        if (args.length < 4 || !"action".equalsIgnoreCase(args[2])) {
+            context.sender().sendMessage("Usage: /feud ui click <page> action <actionId>");
             return true;
         }
 
@@ -53,30 +52,14 @@ public final class UiHandler implements CommandHandler {
             anchorStore.set(player.getUniqueId(), page);
         }
 
-        if (args.length >= 3 && "action".equalsIgnoreCase(args[2])) {
-            return handleActionClick(player, args);
-        }
-
-        String remainder = buildRemainder(args, 2);
-        if (remainder.isBlank()) {
-            return true;
-        }
-
-        Bukkit.dispatchCommand(player, "feud " + remainder);
-        refresher.accept(player);
-        return true;
-    }
-
-    private boolean handleActionClick(Player player, String[] args) {
-        if (args.length < 4) {
+        String actionId = buildRemainder(args, 3);
+        if (actionId.isBlank()) {
             player.sendMessage("Usage: /feud ui click <page> action <actionId>");
             return true;
         }
 
-        String actionId = buildRemainder(args, 3);
         player.sendMessage("Unknown UI action: " + actionId);
         refresher.accept(player);
-
         return true;
     }
 
