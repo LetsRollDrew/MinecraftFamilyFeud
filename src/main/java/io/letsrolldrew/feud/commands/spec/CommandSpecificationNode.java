@@ -47,6 +47,25 @@ public final class CommandSpecificationNode {
         return new Builder(type, name);
     }
 
+    // for creating separate literal nodes for the same command action
+
+    public static List<CommandSpecificationNode> literalAliases(String firstLiteral, String... otherLiterals) {
+        Objects.requireNonNull(firstLiteral, "firstLiteral");
+
+        List<CommandSpecificationNode> nodes = new ArrayList<>();
+        nodes.add(
+                CommandSpecificationNode.builder(ArgType.LITERAL, firstLiteral).build());
+
+        if (otherLiterals != null) {
+            for (String literal : otherLiterals) {
+                nodes.add(CommandSpecificationNode.builder(ArgType.LITERAL, Objects.requireNonNull(literal, "literal"))
+                        .build());
+            }
+        }
+
+        return nodes;
+    }
+
     public static final class Builder {
         private final ArgType type;
         private final String name;
