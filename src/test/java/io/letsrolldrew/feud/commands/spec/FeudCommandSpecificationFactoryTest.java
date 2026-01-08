@@ -231,4 +231,38 @@ class FeudCommandSpecificationFactoryTest {
         assertEquals(ArgType.GREEDY, greedy.type());
         assertTrue(greedy.executor().isPresent());
     }
+
+    @Test
+    void buildsBoardDisplayAdminWithAdminRequirement() {
+        AtomicBoolean boardCalled = new AtomicBoolean(false);
+        AtomicBoolean displayCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor boardExec = ctx -> boardCalled.compareAndSet(false, true);
+        SpecExecutor displayExec = ctx -> displayCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildBoardDisplayAdminSpecification(
+                "familyfeud.admin", rootExec, helpExec, versionExec, boardExec, displayExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode board = root.children().get(2);
+        assertEquals("board", board.name());
+        assertTrue(board.executor().isPresent());
+        assertEquals(1, board.children().size());
+
+        CommandSpecificationNode display = board.children().get(0);
+        assertEquals("display", display.name());
+        assertEquals(1, display.requirements().size());
+        assertTrue(display.executor().isPresent());
+        assertEquals(1, display.children().size());
+
+        CommandSpecificationNode greedy = display.children().get(0);
+        assertEquals(ArgType.GREEDY, greedy.type());
+        assertTrue(greedy.executor().isPresent());
+    }
 }

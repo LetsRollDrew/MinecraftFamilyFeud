@@ -255,4 +255,38 @@ public final class FeudCommandSpecificationFactory {
                 .children(mergeWithBoard(base.children(), board))
                 .build();
     }
+
+    // builds the /feud board display ... admin commands
+
+    public CommandSpecificationNode buildBoardDisplayAdminSpecification(
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor boardExecutor,
+            SpecExecutor displayExecutor) {
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode adminGreedy = CommandSpecificationNode.builder(ArgType.GREEDY, "rest")
+                .executor(Objects.requireNonNull(displayExecutor, "displayExecutor"))
+                .build();
+
+        CommandSpecificationNode display = CommandSpecificationNode.builder(ArgType.LITERAL, "display")
+                .requirements(List.of(Requirements.permission(adminPermission)))
+                .executor(Objects.requireNonNull(displayExecutor, "displayExecutor"))
+                .child(adminGreedy)
+                .build();
+
+        CommandSpecificationNode board = CommandSpecificationNode.builder(ArgType.LITERAL, "board")
+                .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                .child(display)
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithBoard(base.children(), board))
+                .build();
+    }
 }
