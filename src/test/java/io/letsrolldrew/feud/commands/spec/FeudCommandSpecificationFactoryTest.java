@@ -149,4 +149,45 @@ class FeudCommandSpecificationFactoryTest {
         assertEquals(1, itemNode.children().size());
         assertEquals(ArgType.GREEDY, itemNode.children().get(0).type());
     }
+
+    @Test
+    void buildsBoardMapSpecificationWithAdminGating() {
+        AtomicBoolean mapCalled = new AtomicBoolean(false);
+        AtomicBoolean wandCalled = new AtomicBoolean(false);
+        AtomicBoolean initMapsCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor mapExec = ctx -> mapCalled.compareAndSet(false, true);
+        SpecExecutor wandExec = ctx -> wandCalled.compareAndSet(false, true);
+        SpecExecutor initMapsExec = ctx -> initMapsCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildBoardMapSpecification(
+                "familyfeud.admin", rootExec, helpExec, versionExec, mapExec, wandExec, initMapsExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode board = root.children().get(2);
+        assertEquals("board", board.name());
+        assertTrue(board.executor().isPresent());
+        assertEquals(1, board.children().size());
+
+        CommandSpecificationNode map = board.children().get(0);
+        assertEquals("map", map.name());
+        assertEquals(1, map.requirements().size());
+        assertEquals(2, map.children().size());
+
+        List<String> names =
+                map.children().stream().map(CommandSpecificationNode::name).toList();
+        assertTrue(names.containsAll(List.of("wand", "initmaps")));
+
+        CommandSpecificationNode wand = map.children().get(names.indexOf("wand"));
+        assertEquals(1, wand.requirements().size());
+
+        CommandSpecificationNode initmaps = map.children().get(names.indexOf("initmaps"));
+        assertEquals(0, initmaps.requirements().size());
+    }
 }

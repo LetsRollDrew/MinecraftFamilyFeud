@@ -117,7 +117,7 @@ public final class FeudCommandSpecificationFactory {
         return children;
     }
 
-    // builds the /feud ui ... commands
+    // builds the /feud holo ... commands
 
     public CommandSpecificationNode buildHoloSpecification(
             String adminPermission,
@@ -166,6 +166,51 @@ public final class FeudCommandSpecificationFactory {
             List<CommandSpecificationNode> baseChildren, CommandSpecificationNode holoRoot) {
         List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
         children.add(holoRoot);
+        return children;
+    }
+
+    public CommandSpecificationNode buildBoardMapSpecification(
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor mapExecutor,
+            SpecExecutor wandExecutor,
+            SpecExecutor initMapsExecutor) {
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode wandNode = CommandSpecificationNode.builder(ArgType.LITERAL, "wand")
+                .requirements(List.of(Requirements.playerOnly()))
+                .executor(Objects.requireNonNull(wandExecutor, "wandExecutor"))
+                .build();
+
+        CommandSpecificationNode initMapsNode = CommandSpecificationNode.builder(ArgType.LITERAL, "initmaps")
+                .executor(Objects.requireNonNull(initMapsExecutor, "initMapsExecutor"))
+                .build();
+
+        CommandSpecificationNode mapRoot = CommandSpecificationNode.builder(ArgType.LITERAL, "map")
+                .requirements(List.of(Requirements.permission(adminPermission)))
+                .executor(Objects.requireNonNull(mapExecutor, "mapExecutor"))
+                .children(List.of(wandNode, initMapsNode))
+                .build();
+
+        CommandSpecificationNode boardRoot = CommandSpecificationNode.builder(ArgType.LITERAL, "board")
+                .executor(mapExecutor)
+                .child(mapRoot)
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithBoard(base.children(), boardRoot))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithBoard(
+            List<CommandSpecificationNode> baseChildren, CommandSpecificationNode boardRoot) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(boardRoot);
         return children;
     }
 }
