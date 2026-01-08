@@ -190,4 +190,45 @@ class FeudCommandSpecificationFactoryTest {
         CommandSpecificationNode initmaps = map.children().get(names.indexOf("initmaps"));
         assertEquals(0, initmaps.requirements().size());
     }
+
+    @Test
+    void buildsBoardDisplayRemoteWithHostPlayerRequirements() {
+        AtomicBoolean boardCalled = new AtomicBoolean(false);
+        AtomicBoolean displayCalled = new AtomicBoolean(false);
+        AtomicBoolean remoteCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor boardExec = ctx -> boardCalled.compareAndSet(false, true);
+        SpecExecutor displayExec = ctx -> displayCalled.compareAndSet(false, true);
+        SpecExecutor remoteExec = ctx -> remoteCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildBoardDisplayRemoteSpecification(
+                "familyfeud.host", rootExec, helpExec, versionExec, boardExec, displayExec, remoteExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode board = root.children().get(2);
+        assertEquals("board", board.name());
+        assertTrue(board.executor().isPresent());
+        assertEquals(1, board.children().size());
+
+        CommandSpecificationNode display = board.children().get(0);
+        assertEquals("display", display.name());
+        assertTrue(display.executor().isPresent());
+        assertEquals(1, display.children().size());
+
+        CommandSpecificationNode remote = display.children().get(0);
+        assertEquals("remote", remote.name());
+        assertEquals(2, remote.requirements().size());
+        assertTrue(remote.executor().isPresent());
+        assertEquals(1, remote.children().size());
+
+        CommandSpecificationNode greedy = remote.children().get(0);
+        assertEquals(ArgType.GREEDY, greedy.type());
+        assertTrue(greedy.executor().isPresent());
+    }
 }

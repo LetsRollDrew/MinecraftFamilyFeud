@@ -169,6 +169,8 @@ public final class FeudCommandSpecificationFactory {
         return children;
     }
 
+    // builds the /feud board map ... commands
+
     public CommandSpecificationNode buildBoardMapSpecification(
             String adminPermission,
             SpecExecutor rootExecutor,
@@ -212,5 +214,45 @@ public final class FeudCommandSpecificationFactory {
         List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
         children.add(boardRoot);
         return children;
+    }
+
+    // builds the /feud board display remote ... commands
+
+    public CommandSpecificationNode buildBoardDisplayRemoteSpecification(
+            String hostPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor boardExecutor,
+            SpecExecutor displayExecutor,
+            SpecExecutor remoteExecutor) {
+        Objects.requireNonNull(hostPermission, "hostPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode remoteGreedy = CommandSpecificationNode.builder(ArgType.GREEDY, "rest")
+                .executor(Objects.requireNonNull(remoteExecutor, "remoteExecutor"))
+                .build();
+
+        CommandSpecificationNode remote = CommandSpecificationNode.builder(ArgType.LITERAL, "remote")
+                .requirements(List.of(Requirements.permission(hostPermission), Requirements.playerOnly()))
+                .executor(Objects.requireNonNull(remoteExecutor, "remoteExecutor"))
+                .child(remoteGreedy)
+                .build();
+
+        CommandSpecificationNode display = CommandSpecificationNode.builder(ArgType.LITERAL, "display")
+                .executor(Objects.requireNonNull(displayExecutor, "displayExecutor"))
+                .child(remote)
+                .build();
+
+        CommandSpecificationNode board = CommandSpecificationNode.builder(ArgType.LITERAL, "board")
+                .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                .child(display)
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithBoard(base.children(), board))
+                .build();
     }
 }
