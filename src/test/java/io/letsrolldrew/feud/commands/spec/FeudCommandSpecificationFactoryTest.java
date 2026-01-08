@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class FeudCommandSpecificationFactoryTest {
@@ -109,5 +110,43 @@ class FeudCommandSpecificationFactoryTest {
         CommandSpecificationNode clickNode = ui.children().get(childNames.indexOf("click"));
         assertEquals(1, clickNode.children().size());
         assertEquals(ArgType.WORD, clickNode.children().get(0).type());
+    }
+
+    @Test
+    void buildsHoloSpecificationUnderAdminPermission() {
+        AtomicInteger callCounter = new AtomicInteger(0);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor holoExec = ctx -> callCounter.incrementAndGet() > -1;
+        SpecExecutor textExec = ctx -> callCounter.incrementAndGet() > -1;
+        SpecExecutor itemExec = ctx -> callCounter.incrementAndGet() > -1;
+        SpecExecutor listExec = ctx -> callCounter.incrementAndGet() > -1;
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildHoloSpecification(
+                "familyfeud.admin", rootExec, helpExec, versionExec, holoExec, textExec, itemExec, listExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode holo = root.children().get(2);
+        assertEquals("holo", holo.name());
+        assertEquals(1, holo.requirements().size());
+        assertTrue(holo.executor().isPresent());
+        assertEquals(3, holo.children().size());
+
+        List<String> names =
+                holo.children().stream().map(CommandSpecificationNode::name).toList();
+        assertTrue(names.containsAll(List.of("text", "item", "list")));
+
+        CommandSpecificationNode textNode = holo.children().get(names.indexOf("text"));
+        assertEquals(1, textNode.children().size());
+        assertEquals(ArgType.GREEDY, textNode.children().get(0).type());
+
+        CommandSpecificationNode itemNode = holo.children().get(names.indexOf("item"));
+        assertEquals(1, itemNode.children().size());
+        assertEquals(ArgType.GREEDY, itemNode.children().get(0).type());
     }
 }

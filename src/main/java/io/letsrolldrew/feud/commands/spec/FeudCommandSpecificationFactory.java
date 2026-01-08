@@ -116,4 +116,56 @@ public final class FeudCommandSpecificationFactory {
         children.add(uiRoot);
         return children;
     }
+
+    // builds the /feud ui ... commands
+
+    public CommandSpecificationNode buildHoloSpecification(
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor holoExecutor,
+            SpecExecutor textExecutor,
+            SpecExecutor itemExecutor,
+            SpecExecutor listExecutor) {
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode textNode = CommandSpecificationNode.builder(ArgType.LITERAL, "text")
+                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "rest")
+                        .executor(Objects.requireNonNull(textExecutor, "textExecutor"))
+                        .build())
+                .executor(Objects.requireNonNull(textExecutor, "textExecutor"))
+                .build();
+
+        CommandSpecificationNode itemNode = CommandSpecificationNode.builder(ArgType.LITERAL, "item")
+                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "rest")
+                        .executor(Objects.requireNonNull(itemExecutor, "itemExecutor"))
+                        .build())
+                .executor(Objects.requireNonNull(itemExecutor, "itemExecutor"))
+                .build();
+
+        CommandSpecificationNode listNode = CommandSpecificationNode.builder(ArgType.LITERAL, "list")
+                .executor(Objects.requireNonNull(listExecutor, "listExecutor"))
+                .build();
+
+        CommandSpecificationNode holoRoot = CommandSpecificationNode.builder(ArgType.LITERAL, "holo")
+                .requirements(List.of(Requirements.permission(adminPermission)))
+                .executor(Objects.requireNonNull(holoExecutor, "holoExecutor"))
+                .children(List.of(textNode, itemNode, listNode))
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithHolo(base.children(), holoRoot))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithHolo(
+            List<CommandSpecificationNode> baseChildren, CommandSpecificationNode holoRoot) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(holoRoot);
+        return children;
+    }
 }
