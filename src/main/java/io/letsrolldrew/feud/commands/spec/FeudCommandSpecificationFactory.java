@@ -289,4 +289,42 @@ public final class FeudCommandSpecificationFactory {
                 .children(mergeWithBoard(base.children(), board))
                 .build();
     }
+
+    // builds the /feud team ... commands
+
+    public CommandSpecificationNode buildTeamSpecification(
+            String hostPermission,
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor teamExecutor) {
+        Objects.requireNonNull(hostPermission, "hostPermission");
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode teamGreedy = CommandSpecificationNode.builder(ArgType.GREEDY, "rest")
+                .executor(Objects.requireNonNull(teamExecutor, "teamExecutor"))
+                .build();
+
+        CommandSpecificationNode team = CommandSpecificationNode.builder(ArgType.LITERAL, "team")
+                .requirements(List.of(Requirements.anyOf(
+                        Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
+                .executor(Objects.requireNonNull(teamExecutor, "teamExecutor"))
+                .child(teamGreedy)
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithTeam(base.children(), team))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithTeam(
+            List<CommandSpecificationNode> baseChildren, CommandSpecificationNode teamRoot) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(teamRoot);
+        return children;
+    }
 }

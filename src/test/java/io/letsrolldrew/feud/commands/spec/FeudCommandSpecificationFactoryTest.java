@@ -265,4 +265,31 @@ class FeudCommandSpecificationFactoryTest {
         assertEquals(ArgType.GREEDY, greedy.type());
         assertTrue(greedy.executor().isPresent());
     }
+
+    @Test
+    void buildsTeamSpecificationWithHostOrAdminRequirement() {
+        AtomicBoolean teamCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor teamExec = ctx -> teamCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildTeamSpecification(
+                "familyfeud.host", "familyfeud.admin", rootExec, helpExec, versionExec, teamExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode team = root.children().get(2);
+        assertEquals("team", team.name());
+        assertEquals(1, team.requirements().size());
+        assertTrue(team.executor().isPresent());
+        assertEquals(1, team.children().size());
+
+        CommandSpecificationNode greedy = team.children().get(0);
+        assertEquals(ArgType.GREEDY, greedy.type());
+        assertTrue(greedy.executor().isPresent());
+    }
 }
