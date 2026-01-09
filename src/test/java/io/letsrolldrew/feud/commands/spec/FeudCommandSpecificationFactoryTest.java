@@ -344,4 +344,81 @@ class FeudCommandSpecificationFactoryTest {
         assertEquals(1, reset.children().size());
         assertEquals(ArgType.INT, reset.children().get(0).type());
     }
+
+    @Test
+    void buildsFastMoneySpecificationWithHostOrAdminRequirement() {
+        AtomicBoolean fmCalled = new AtomicBoolean(false);
+        AtomicBoolean setCalled = new AtomicBoolean(false);
+        AtomicBoolean startCalled = new AtomicBoolean(false);
+        AtomicBoolean stopCalled = new AtomicBoolean(false);
+        AtomicBoolean statusCalled = new AtomicBoolean(false);
+        AtomicBoolean bindCalled = new AtomicBoolean(false);
+        AtomicBoolean answerCalled = new AtomicBoolean(false);
+        AtomicBoolean boardCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor fmExec = ctx -> fmCalled.compareAndSet(false, true);
+        SpecExecutor setExec = ctx -> setCalled.compareAndSet(false, true);
+        SpecExecutor startExec = ctx -> startCalled.compareAndSet(false, true);
+        SpecExecutor stopExec = ctx -> stopCalled.compareAndSet(false, true);
+        SpecExecutor statusExec = ctx -> statusCalled.compareAndSet(false, true);
+        SpecExecutor bindExec = ctx -> bindCalled.compareAndSet(false, true);
+        SpecExecutor answerExec = ctx -> answerCalled.compareAndSet(false, true);
+        SpecExecutor boardExec = ctx -> boardCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildFastMoneySpecification(
+                "familyfeud.host",
+                "familyfeud.admin",
+                rootExec,
+                helpExec,
+                versionExec,
+                fmExec,
+                setExec,
+                startExec,
+                stopExec,
+                statusExec,
+                bindExec,
+                answerExec,
+                boardExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode fastmoney = root.children().get(2);
+        assertEquals("fastmoney", fastmoney.name());
+        assertEquals(1, fastmoney.requirements().size());
+        assertTrue(fastmoney.executor().isPresent());
+        assertEquals(7, fastmoney.children().size());
+
+        List<String> names = fastmoney.children().stream()
+                .map(CommandSpecificationNode::name)
+                .toList();
+        assertTrue(names.containsAll(List.of("set", "start", "stop", "status", "bind", "answer", "board")));
+
+        CommandSpecificationNode set = fastmoney.children().get(names.indexOf("set"));
+        assertEquals(1, set.children().size());
+        assertEquals(ArgType.WORD, set.children().get(0).type());
+
+        CommandSpecificationNode start = fastmoney.children().get(names.indexOf("start"));
+        assertEquals(1, start.children().size());
+        assertEquals(ArgType.WORD, start.children().get(0).type());
+
+        CommandSpecificationNode stop = fastmoney.children().get(names.indexOf("stop"));
+        assertEquals(1, stop.children().size());
+        assertEquals(ArgType.WORD, stop.children().get(0).type());
+
+        CommandSpecificationNode answer = fastmoney.children().get(names.indexOf("answer"));
+        assertEquals(1, answer.requirements().size());
+        assertEquals(1, answer.children().size());
+        assertEquals(ArgType.GREEDY, answer.children().get(0).type());
+
+        CommandSpecificationNode board = fastmoney.children().get(names.indexOf("board"));
+        assertEquals(2, board.children().size());
+        List<String> boardNames =
+                board.children().stream().map(CommandSpecificationNode::name).toList();
+        assertTrue(boardNames.containsAll(List.of("show", "hide")));
+    }
 }

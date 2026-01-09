@@ -391,4 +391,107 @@ public final class FeudCommandSpecificationFactory {
         children.add(timerRoot);
         return children;
     }
+
+    // builds the /feud fastmoney ... commands
+
+    public CommandSpecificationNode buildFastMoneySpecification(
+            String hostPermission,
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor fastMoneyExecutor,
+            SpecExecutor setExecutor,
+            SpecExecutor startExecutor,
+            SpecExecutor stopExecutor,
+            SpecExecutor statusExecutor,
+            SpecExecutor bindExecutor,
+            SpecExecutor answerExecutor,
+            SpecExecutor boardExecutor) {
+        Objects.requireNonNull(hostPermission, "hostPermission");
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode set = CommandSpecificationNode.builder(ArgType.LITERAL, "set")
+                .child(CommandSpecificationNode.builder(ArgType.WORD, "setId")
+                        .executor(Objects.requireNonNull(setExecutor, "setExecutor"))
+                        .build())
+                .executor(Objects.requireNonNull(setExecutor, "setExecutor"))
+                .build();
+
+        CommandSpecificationNode startBoard = CommandSpecificationNode.builder(ArgType.WORD, "boardId")
+                .executor(Objects.requireNonNull(startExecutor, "startExecutor"))
+                .build();
+        CommandSpecificationNode start = CommandSpecificationNode.builder(ArgType.LITERAL, "start")
+                .child(startBoard)
+                .executor(Objects.requireNonNull(startExecutor, "startExecutor"))
+                .build();
+
+        CommandSpecificationNode stopBoard = CommandSpecificationNode.builder(ArgType.WORD, "boardId")
+                .executor(Objects.requireNonNull(stopExecutor, "stopExecutor"))
+                .build();
+        CommandSpecificationNode stop = CommandSpecificationNode.builder(ArgType.LITERAL, "stop")
+                .child(stopBoard)
+                .executor(Objects.requireNonNull(stopExecutor, "stopExecutor"))
+                .build();
+
+        CommandSpecificationNode status = CommandSpecificationNode.builder(ArgType.LITERAL, "status")
+                .executor(Objects.requireNonNull(statusExecutor, "statusExecutor"))
+                .build();
+
+        CommandSpecificationNode bindTarget = CommandSpecificationNode.builder(ArgType.WORD, "target")
+                .executor(Objects.requireNonNull(bindExecutor, "bindExecutor"))
+                .build();
+        CommandSpecificationNode bind = CommandSpecificationNode.builder(ArgType.LITERAL, "bind")
+                .child(bindTarget)
+                .executor(Objects.requireNonNull(bindExecutor, "bindExecutor"))
+                .build();
+
+        CommandSpecificationNode answerText = CommandSpecificationNode.builder(ArgType.GREEDY, "text")
+                .executor(Objects.requireNonNull(answerExecutor, "answerExecutor"))
+                .build();
+        CommandSpecificationNode answer = CommandSpecificationNode.builder(ArgType.LITERAL, "answer")
+                .requirements(List.of(Requirements.playerOnly()))
+                .child(answerText)
+                .executor(Objects.requireNonNull(answerExecutor, "answerExecutor"))
+                .build();
+
+        CommandSpecificationNode boardId = CommandSpecificationNode.builder(ArgType.WORD, "boardId")
+                .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                .build();
+        CommandSpecificationNode boardShow = CommandSpecificationNode.builder(ArgType.LITERAL, "show")
+                .child(boardId)
+                .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                .build();
+        CommandSpecificationNode boardHide = CommandSpecificationNode.builder(ArgType.LITERAL, "hide")
+                .child(CommandSpecificationNode.builder(ArgType.WORD, "boardId")
+                        .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                        .build())
+                .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                .build();
+        CommandSpecificationNode board = CommandSpecificationNode.builder(ArgType.LITERAL, "board")
+                .executor(Objects.requireNonNull(boardExecutor, "boardExecutor"))
+                .children(List.of(boardShow, boardHide))
+                .build();
+
+        CommandSpecificationNode fastmoney = CommandSpecificationNode.builder(ArgType.LITERAL, "fastmoney")
+                .requirements(List.of(Requirements.anyOf(
+                        Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
+                .executor(Objects.requireNonNull(fastMoneyExecutor, "fastMoneyExecutor"))
+                .children(List.of(set, start, stop, status, bind, answer, board))
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithFastMoney(base.children(), fastmoney))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithFastMoney(
+            List<CommandSpecificationNode> baseChildren, CommandSpecificationNode fastmoneyRoot) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(fastmoneyRoot);
+        return children;
+    }
 }
