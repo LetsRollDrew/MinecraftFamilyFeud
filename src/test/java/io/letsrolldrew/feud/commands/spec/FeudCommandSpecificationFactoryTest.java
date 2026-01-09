@@ -421,4 +421,44 @@ class FeudCommandSpecificationFactoryTest {
                 board.children().stream().map(CommandSpecificationNode::name).toList();
         assertTrue(boardNames.containsAll(List.of("show", "hide")));
     }
+
+    @Test
+    void buildsSurveySpecificationWithHostRequirementOnLoad() {
+        AtomicBoolean surveyCalled = new AtomicBoolean(false);
+        AtomicBoolean listCalled = new AtomicBoolean(false);
+        AtomicBoolean loadCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor surveyExec = ctx -> surveyCalled.compareAndSet(false, true);
+        SpecExecutor listExec = ctx -> listCalled.compareAndSet(false, true);
+        SpecExecutor loadExec = ctx -> loadCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildSurveySpecification(
+                "familyfeud.host", rootExec, helpExec, versionExec, surveyExec, listExec, loadExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode survey = root.children().get(2);
+        assertEquals("survey", survey.name());
+        assertTrue(survey.executor().isPresent());
+        assertEquals(2, survey.children().size());
+
+        List<String> names =
+                survey.children().stream().map(CommandSpecificationNode::name).toList();
+        assertTrue(names.containsAll(List.of("list", "load")));
+
+        CommandSpecificationNode list = survey.children().get(names.indexOf("list"));
+        assertTrue(list.executor().isPresent());
+        assertEquals(0, list.requirements().size());
+
+        CommandSpecificationNode load = survey.children().get(names.indexOf("load"));
+        assertEquals(1, load.requirements().size());
+        assertTrue(load.executor().isPresent());
+        assertEquals(1, load.children().size());
+        assertEquals(ArgType.WORD, load.children().get(0).type());
+    }
 }

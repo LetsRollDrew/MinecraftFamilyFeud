@@ -494,4 +494,50 @@ public final class FeudCommandSpecificationFactory {
         children.add(fastmoneyRoot);
         return children;
     }
+
+    // builds the /feud survey ... commands
+
+    public CommandSpecificationNode buildSurveySpecification(
+            String hostPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor surveyExecutor,
+            SpecExecutor listExecutor,
+            SpecExecutor loadExecutor) {
+        Objects.requireNonNull(hostPermission, "hostPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode list = CommandSpecificationNode.builder(ArgType.LITERAL, "list")
+                .executor(Objects.requireNonNull(listExecutor, "listExecutor"))
+                .build();
+
+        CommandSpecificationNode loadId = CommandSpecificationNode.builder(ArgType.WORD, "id")
+                .executor(Objects.requireNonNull(loadExecutor, "loadExecutor"))
+                .build();
+
+        CommandSpecificationNode load = CommandSpecificationNode.builder(ArgType.LITERAL, "load")
+                .requirements(List.of(Requirements.permission(hostPermission)))
+                .child(loadId)
+                .executor(Objects.requireNonNull(loadExecutor, "loadExecutor"))
+                .build();
+
+        CommandSpecificationNode survey = CommandSpecificationNode.builder(ArgType.LITERAL, "survey")
+                .executor(Objects.requireNonNull(surveyExecutor, "surveyExecutor"))
+                .children(List.of(list, load))
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithSurvey(base.children(), survey))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithSurvey(
+            List<CommandSpecificationNode> baseChildren, CommandSpecificationNode surveyRoot) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(surveyRoot);
+        return children;
+    }
 }
