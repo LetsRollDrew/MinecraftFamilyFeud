@@ -1,48 +1,27 @@
 package io.letsrolldrew.feud.bootstrap;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import io.letsrolldrew.feud.board.BoardBindingStore;
-import io.letsrolldrew.feud.board.BoardWandService;
-import io.letsrolldrew.feud.board.display.DisplayBoardService;
-import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
-import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPlacement;
-import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
-import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
-import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
-import io.letsrolldrew.feud.board.display.panels.TimerPanelPresenter;
-import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
-import io.letsrolldrew.feud.board.render.BoardRenderer;
-import io.letsrolldrew.feud.board.render.DirtyTracker;
-import io.letsrolldrew.feud.board.render.MapIdStore;
-import io.letsrolldrew.feud.board.render.TileFramebufferStore;
-import io.letsrolldrew.feud.commands.DisplayBoardCommands;
-import io.letsrolldrew.feud.commands.FeudRootCommand;
-import io.letsrolldrew.feud.commands.SurveyCommands;
-import io.letsrolldrew.feud.config.PluginConfig;
-import io.letsrolldrew.feud.display.DisplayRegistry;
-import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
-import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
-import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
-import io.letsrolldrew.feud.effects.buzz.BuzzerListener;
-import io.letsrolldrew.feud.effects.buzz.BuzzerService;
-import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindListener;
-import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
-import io.letsrolldrew.feud.effects.holo.HologramCommands;
-import io.letsrolldrew.feud.effects.holo.HologramService;
-import io.letsrolldrew.feud.effects.timer.TimerCommands;
-import io.letsrolldrew.feud.effects.timer.TimerService;
-import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
-import io.letsrolldrew.feud.fastmoney.FastMoneyService;
-import io.letsrolldrew.feud.fastmoney.FastMoneySurveySetStore;
-import io.letsrolldrew.feud.game.GameController;
-import io.letsrolldrew.feud.game.SimpleGameController;
-import io.letsrolldrew.feud.survey.SurveyRepository;
-import io.letsrolldrew.feud.team.TeamCommands;
-import io.letsrolldrew.feud.team.TeamService;
-import io.letsrolldrew.feud.ui.HostBookUiBuilder;
-import io.letsrolldrew.feud.ui.HostRemoteService;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.letsrolldrew.feud.board.*;
+import io.letsrolldrew.feud.board.display.*;
+import io.letsrolldrew.feud.board.display.fastmoney.*;
+import io.letsrolldrew.feud.board.display.panels.*;
+import io.letsrolldrew.feud.board.render.*;
+import io.letsrolldrew.feud.commands.*;
+import io.letsrolldrew.feud.commands.brigadier.*;
+import io.letsrolldrew.feud.commands.spec.*;
+import io.letsrolldrew.feud.config.*;
+import io.letsrolldrew.feud.display.*;
+import io.letsrolldrew.feud.effects.anim.*;
+import io.letsrolldrew.feud.effects.board.selection.*;
+import io.letsrolldrew.feud.effects.buzz.*;
+import io.letsrolldrew.feud.effects.fastmoney.*;
+import io.letsrolldrew.feud.effects.holo.*;
+import io.letsrolldrew.feud.effects.timer.*;
+import io.letsrolldrew.feud.fastmoney.*;
+import io.letsrolldrew.feud.game.*;
+import io.letsrolldrew.feud.survey.*;
+import io.letsrolldrew.feud.team.*;
+import io.letsrolldrew.feud.ui.*;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -274,182 +253,24 @@ public final class PluginBootstrap {
         try {
             LifecycleEventManager<?> lifecycle = plugin.getLifecycleManager();
             lifecycle.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-                final String adminPermission = "familyfeud.admin";
-                LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.<CommandSourceStack>literal(
-                                "feud")
-                        .executes(ctx -> exec(command, ctx.getSource()))
-                        .then(literal("help").executes(ctx -> exec(command, ctx.getSource(), "help")))
-                        .then(literal("version").executes(ctx -> exec(command, ctx.getSource(), "version")))
-                        .then(literal("ui")
-                                .then(literal("reveal")
-                                        .then(wordArg("slot")
-                                                .executes(ctx -> exec(
-                                                        command,
-                                                        ctx.getSource(),
-                                                        "ui",
-                                                        "reveal",
-                                                        StringArgumentType.getString(ctx, "slot"))))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "ui", "reveal")))
-                                .then(literal("strike").executes(ctx -> exec(command, ctx.getSource(), "ui", "strike")))
-                                .then(literal("clearstrikes")
-                                        .executes(ctx -> exec(command, ctx.getSource(), "ui", "clearstrikes")))
-                                .then(literal("add")
-                                        .then(wordArg("points")
-                                                .executes(ctx -> exec(
-                                                        command,
-                                                        ctx.getSource(),
-                                                        "ui",
-                                                        "add",
-                                                        StringArgumentType.getString(ctx, "points"))))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "ui", "add")))
-                                .then(literal("control")
-                                        .then(wordArg("team")
-                                                .executes(ctx -> exec(
-                                                        command,
-                                                        ctx.getSource(),
-                                                        "ui",
-                                                        "control",
-                                                        StringArgumentType.getString(ctx, "team"))))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "ui", "control")))
-                                .then(literal("award").executes(ctx -> exec(command, ctx.getSource(), "ui", "award")))
-                                .then(literal("reset").executes(ctx -> exec(command, ctx.getSource(), "ui", "reset")))
-                                .then(literal("click")
-                                        .then(wordArg("page")
-                                                .then(literal("action")
-                                                        .then(greedyStringArg("actionId")
-                                                                .executes(ctx -> exec(
-                                                                        command,
-                                                                        ctx.getSource(),
-                                                                        "ui",
-                                                                        "click",
-                                                                        StringArgumentType.getString(ctx, "page"),
-                                                                        "action",
-                                                                        StringArgumentType.getString(
-                                                                                ctx, "actionId")))))
-                                                .then(greedyStringArg("cmd")
-                                                        .executes(ctx -> exec(
-                                                                command,
-                                                                ctx.getSource(),
-                                                                "ui",
-                                                                "click",
-                                                                StringArgumentType.getString(ctx, "page"),
-                                                                StringArgumentType.getString(ctx, "cmd")))))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "ui", "click")))
-                                .executes(ctx -> exec(command, ctx.getSource(), "ui")))
-                        .then(literal("holo")
-                                .requires(src -> src.getSender().hasPermission(adminPermission))
-                                .then(literal("text")
-                                        .then(greedyArgs("rest", command, "holo", "text"))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "holo", "text")))
-                                .then(literal("item")
-                                        .then(greedyArgs("rest", command, "holo", "item"))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "holo", "item")))
-                                .then(literal("list").executes(ctx -> exec(command, ctx.getSource(), "holo", "list")))
-                                .executes(ctx -> exec(command, ctx.getSource(), "holo")))
-                        .then(literal("board")
-                                .requires(src -> src.getSender().hasPermission(adminPermission))
-                                .then(literal("map")
-                                        .then(literal("wand")
-                                                .executes(
-                                                        ctx -> exec(command, ctx.getSource(), "board", "map", "wand")))
-                                        .then(literal("initmaps")
-                                                .executes(ctx ->
-                                                        exec(command, ctx.getSource(), "board", "map", "initmaps")))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "board", "map")))
-                                .then(literal("display")
-                                        .then(greedyArgs("rest", command, "board", "display"))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "board", "display")))
-                                .executes(ctx -> exec(command, ctx.getSource(), "board")))
-                        .then(literal("survey")
-                                .then(literal("list").executes(ctx -> exec(command, ctx.getSource(), "survey", "list")))
-                                .then(literal("load")
-                                        .then(wordArg("id")
-                                                .executes(ctx -> exec(
-                                                        command,
-                                                        ctx.getSource(),
-                                                        "survey",
-                                                        "load",
-                                                        StringArgumentType.getString(ctx, "id"))))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "survey", "load")))
-                                .executes(ctx -> exec(command, ctx.getSource(), "survey")))
-                        .then(literal("team")
-                                .then(greedyArgs("rest", command, "team"))
-                                .executes(ctx -> exec(command, ctx.getSource(), "team")))
-                        .then(literal("buzz")
-                                .then(greedyArgs("rest", command, "buzz"))
-                                .executes(ctx -> exec(command, ctx.getSource(), "buzz")))
-                        .then(literal("fastmoney")
-                                .then(greedyArgs("rest", command, "fastmoney"))
-                                .executes(ctx -> exec(command, ctx.getSource(), "fastmoney")))
-                        .then(literal("timer")
-                                .then(greedyArgs("rest", command, "timer"))
-                                .executes(ctx -> exec(command, ctx.getSource(), "timer")))
-                        .then(literal("host")
-                                .then(literal("book")
-                                        .requires(src -> src.getSender().hasPermission(config.hostPermission()))
-                                        .then(literal("map")
-                                                .executes(ctx -> exec(command, ctx.getSource(), "host", "book", "map")))
-                                        .then(literal("display")
-                                                .then(wordArg("id")
-                                                        .executes(ctx -> exec(
-                                                                command,
-                                                                ctx.getSource(),
-                                                                "host",
-                                                                "book",
-                                                                "display",
-                                                                StringArgumentType.getString(ctx, "id"))))
-                                                .executes(ctx ->
-                                                        exec(command, ctx.getSource(), "host", "book", "display")))
-                                        .then(literal("cleanup")
-                                                .executes(ctx ->
-                                                        exec(command, ctx.getSource(), "host", "book", "cleanup")))
-                                        .executes(ctx -> exec(command, ctx.getSource(), "host", "book"))))
-                        .then(literal("clear")
-                                .requires(src -> src.getSender().hasPermission(adminPermission))
-                                .then(literal("all").executes(ctx -> exec(command, ctx.getSource(), "clear", "all"))));
+                FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+                CommandSpecificationNode spec =
+                        factory.buildFullSpecification(config.hostPermission(), "familyfeud.admin");
 
-                event.registrar().register(root.build());
+                BrigadierAdapter adapter = new BrigadierAdapter();
+                LiteralCommandNode<CommandSourceStack> root = adapter.buildWithExecution(
+                        spec, (source, args) -> exec(command, source, args.toArray(new String[0])));
+
+                event.registrar().register(root);
             });
         } catch (Throwable ex) {
             plugin.getLogger().fine("Skipping Brigadier registration: " + ex.getMessage());
         }
     }
 
-    private LiteralArgumentBuilder<CommandSourceStack> literal(String name) {
-        return LiteralArgumentBuilder.<CommandSourceStack>literal(name);
-    }
-
-    private RequiredArgumentBuilder<CommandSourceStack, String> wordArg(String name) {
-        return RequiredArgumentBuilder.<CommandSourceStack, String>argument(name, StringArgumentType.word());
-    }
-
-    private RequiredArgumentBuilder<CommandSourceStack, String> greedyStringArg(String name) {
-        return RequiredArgumentBuilder.<CommandSourceStack, String>argument(name, StringArgumentType.greedyString());
-    }
-
-    private RequiredArgumentBuilder<CommandSourceStack, String> greedyArgs(
-            String name, FeudRootCommand command, String... head) {
-        return greedyStringArg(name).executes(ctx -> {
-            String raw = StringArgumentType.getString(ctx, name);
-            String[] args = mergeArgs(raw, head);
-            return exec(command, ctx.getSource(), args);
-        });
-    }
-
     private int exec(FeudRootCommand command, CommandSourceStack source, String... args) {
         boolean handled = command.onCommand(source.getSender(), null, "feud", args);
         return handled ? 1 : 0;
-    }
-
-    private String[] mergeArgs(String raw, String... head) {
-        if (raw == null || raw.isBlank()) {
-            return head;
-        }
-        String[] tail = raw.split(" ");
-        String[] combined = new String[head.length + tail.length];
-        System.arraycopy(head, 0, combined, 0, head.length);
-        System.arraycopy(tail, 0, combined, head.length, tail.length);
-        return combined;
     }
 
     private void ensureFastMoneyFile(File fastMoneyFile) {
