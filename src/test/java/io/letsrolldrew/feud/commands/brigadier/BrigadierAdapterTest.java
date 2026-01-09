@@ -1,149 +1,249 @@
 package io.letsrolldrew.feud.commands.brigadier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.mojang.brigadier.tree.CommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
-import io.letsrolldrew.feud.commands.brigadier.BrigadierAdapter.BrigadierExecution;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.letsrolldrew.feud.commands.spec.ArgType;
 import io.letsrolldrew.feud.commands.spec.CommandSpecificationNode;
-import io.letsrolldrew.feud.commands.spec.Requirement;
 import io.letsrolldrew.feud.commands.spec.Requirements;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-class BrigadierAdapterTest {
-
-    @Test
-    void buildsLiteralTreeFromSpecification() {
-        CommandSpecificationNode help =
-                CommandSpecificationNode.builder(ArgType.LITERAL, "help").build();
-
-        CommandSpecificationNode root = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
-                .child(help)
-                .build();
-
-        BrigadierAdapter adapter = new BrigadierAdapter();
-        LiteralCommandNode<CommandSourceStack> node = adapter.build(root);
-
-        assertEquals("feud", node.getName());
-        assertNotNull(BrigadierAdapter.findChild(node, "help"));
-    }
+final class BrigadierAdapterTest {
 
     @Test
-    void appliesRequirementsToNodes() {
-        Requirement adminOnly = Requirements.permission("familyfeud.admin");
+    void executingRootPassesEmptyArgs() throws Exception {
+        CommandSpecificationNode spec =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "feud").build();
 
-        CommandSpecificationNode admin = CommandSpecificationNode.builder(ArgType.LITERAL, "admin")
-                .requirement(adminOnly)
-                .build();
-
-        CommandSpecificationNode root = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
-                .child(admin)
-                .build();
-
-        BrigadierAdapter adapter = new BrigadierAdapter();
-        LiteralCommandNode<CommandSourceStack> node = adapter.build(root);
-
-        CommandSourceStack source = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
-        CommandSender sender = mock(CommandSender.class);
-        when(source.getSender()).thenReturn(sender);
-
-        CommandSourceStack sourceWithPerm = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
-        CommandSender senderWithPerm = mock(CommandSender.class);
-        when(sourceWithPerm.getSender()).thenReturn(senderWithPerm);
-        when(senderWithPerm.hasPermission("familyfeud.admin")).thenReturn(true);
-
-        assertFalse(node.getChild("admin").getRequirement().test(source));
-        assertTrue(node.getChild("admin").getRequirement().test(sourceWithPerm));
-    }
-
-    @Test
-    void executesWithReconstructedArgs() {
-        CommandSpecificationNode arg = CommandSpecificationNode.builder(ArgType.WORD, "target")
-                .executor(ctx -> true)
-                .build();
-
-        CommandSpecificationNode root = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
-                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "test")
-                        .child(arg)
-                        .executor(ctx -> true)
-                        .build())
-                .executor(ctx -> true)
-                .build();
-
-        BrigadierExecution execution = (source, args) -> {
-            assertEquals(List.of("feud", "test", "value"), args);
+        AtomicReference<List<String>> captured = new AtomicReference<>();
+        var root = new BrigadierAdapter().buildWithExecution(spec, (source, args) -> {
+            captured.set(args);
             return 1;
-        };
+        });
 
-        BrigadierAdapter adapter = new BrigadierAdapter();
-        LiteralCommandNode<CommandSourceStack> node = adapter.buildWithExecution(root, execution);
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        dispatcher.getRoot().addChild(root);
 
-        CommandSourceStack source = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
-        when(source.getSender()).thenReturn(mock(CommandSender.class));
+        dispatcher.execute("feud", stack(sender(false, Set.of())));
 
-        var dispatcher = new com.mojang.brigadier.CommandDispatcher<CommandSourceStack>();
-        dispatcher.getRoot().addChild(node);
-
-        try {
-            dispatcher.execute("feud test value", source);
-        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException ex) {
-            throw new AssertionError("Dispatch failed", ex);
-        }
+        assertNotNull(captured.get());
+        assertEquals(List.of(), captured.get(), "root command should pass args=[] (label excluded)");
     }
 
     @Test
-    void enforcesRequirementsForBoardDisplayRemote() {
-        CommandSpecificationNode remote = CommandSpecificationNode.builder(ArgType.LITERAL, "remote")
-                .requirements(List.of(Requirements.permission("familyfeud.host"), Requirements.playerOnly()))
-                .executor(ctx -> true)
+    void executingLeafOmitsRootLabel() throws Exception {
+        CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "ui")
+                        .child(CommandSpecificationNode.builder(ArgType.LITERAL, "strike")
+                                .build())
+                        .build())
                 .build();
 
-        CommandSpecificationNode display = CommandSpecificationNode.builder(ArgType.LITERAL, "display")
-                .child(remote)
+        AtomicReference<List<String>> captured = new AtomicReference<>();
+        var root = new BrigadierAdapter().buildWithExecution(spec, (source, args) -> {
+            captured.set(args);
+            return 1;
+        });
+
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        dispatcher.getRoot().addChild(root);
+
+        dispatcher.execute("feud ui strike", stack(sender(false, Set.of())));
+
+        assertEquals(List.of("ui", "strike"), captured.get(), "args must not include 'feud'");
+    }
+
+    @Test
+    void greedyRawSingleArgIsPreserved() throws Exception {
+        CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "ui")
+                        .requirements(List.of(Requirements.permission("host.perm")))
+                        .child(CommandSpecificationNode.builder(ArgType.LITERAL, "click")
+                                .requirements(List.of(Requirements.playerOnly()))
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "page")
+                                        .child(CommandSpecificationNode.builder(ArgType.LITERAL, "action")
+                                                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "actionId")
+                                                        .greedyRawSingleArg()
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
                 .build();
 
-        CommandSpecificationNode board = CommandSpecificationNode.builder(ArgType.LITERAL, "board")
-                .child(display)
+        AtomicReference<List<String>> captured = new AtomicReference<>();
+        var root = new BrigadierAdapter().buildWithExecution(spec, (source, args) -> {
+            captured.set(args);
+            return 1;
+        });
+
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        dispatcher.getRoot().addChild(root);
+
+        // must be a Player + must have host permission
+        dispatcher.execute("feud ui click 2 action hello world", stack(sender(true, Set.of("host.perm"))));
+
+        assertEquals(
+                List.of("ui", "click", "2", "action", "hello world"),
+                captured.get(),
+                "RAW_SINGLE_ARG should keep greedy string as one arg");
+    }
+
+    @Test
+    void greedySplitSpacesMatchesBukkitStyle() throws Exception {
+        CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "fastmoney")
+                        .child(CommandSpecificationNode.builder(ArgType.LITERAL, "answer")
+                                .requirements(List.of(Requirements.playerOnly()))
+                                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "text")
+                                        .build())
+                                .build())
+                        .build())
                 .build();
 
-        CommandSpecificationNode root = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
-                .child(board)
+        AtomicReference<List<String>> captured = new AtomicReference<>();
+        var root = new BrigadierAdapter().buildWithExecution(spec, (source, args) -> {
+            captured.set(args);
+            return 1;
+        });
+
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        dispatcher.getRoot().addChild(root);
+
+        dispatcher.execute("feud fastmoney answer hello world", stack(sender(true, Set.of())));
+
+        assertEquals(
+                List.of("fastmoney", "answer", "hello", "world"),
+                captured.get(),
+                "SPLIT_SPACES should split greedy into Bukkit-style tokens");
+    }
+
+    @Test
+    void requirementDeniesWhenPermissionMissing() {
+        CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "secret")
+                        .requirements(List.of(Requirements.permission("perm.secret")))
+                        .build())
                 .build();
 
-        BrigadierAdapter adapter = new BrigadierAdapter();
-        LiteralCommandNode<CommandSourceStack> node = adapter.build(root);
+        var root = new BrigadierAdapter().buildWithExecution(spec, (source, args) -> 1);
 
-        CommandNode<CommandSourceStack> remoteNode =
-                BrigadierAdapter.findChild(BrigadierAdapter.findChild(node, "board"), "display")
-                        .getChild("remote");
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        dispatcher.getRoot().addChild(root);
 
-        CommandSourceStack consoleSource = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
-        CommandSender console = mock(CommandSender.class);
-        when(console.hasPermission("familyfeud.host")).thenReturn(true);
-        when(consoleSource.getSender()).thenReturn(console);
+        assertThrows(
+                CommandSyntaxException.class,
+                () -> dispatcher.execute("feud secret", stack(sender(false, Set.of()))),
+                "without perm, branch should not parse");
+    }
 
-        CommandSourceStack playerNoPerm = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
-        CommandSender player = mock(org.bukkit.entity.Player.class);
-        when(player.hasPermission("familyfeud.host")).thenReturn(false);
-        when(playerNoPerm.getSender()).thenReturn(player);
+    @Test
+    void duplicateLiteralChildrenThrow() {
+        CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .children(List.of(
+                        CommandSpecificationNode.builder(ArgType.LITERAL, "dup").build(),
+                        CommandSpecificationNode.builder(ArgType.LITERAL, "dup").build()))
+                .build();
 
-        CommandSourceStack playerWithPerm = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
-        CommandSender playerPerm = mock(org.bukkit.entity.Player.class);
-        when(playerPerm.hasPermission("familyfeud.host")).thenReturn(true);
-        when(playerWithPerm.getSender()).thenReturn(playerPerm);
+        assertThrows(
+                IllegalStateException.class,
+                () -> new BrigadierAdapter().buildWithExecution(spec, (source, args) -> 1),
+                "adapter should throw when duplicate literal siblings exist");
+    }
 
-        assertFalse(remoteNode.getRequirement().test(consoleSource));
-        assertFalse(remoteNode.getRequirement().test(playerNoPerm));
-        assertTrue(remoteNode.getRequirement().test(playerWithPerm));
+    private static CommandSourceStack stack(CommandSender sender) {
+        return new TestStack(sender, new Location(null, 0, 0, 0), null);
+    }
+
+    private static CommandSender sender(boolean asPlayer, Set<String> perms) {
+        Class<?>[] ifaces = asPlayer ? new Class<?>[] {Player.class} : new Class<?>[] {CommandSender.class};
+
+        return (CommandSender)
+                Proxy.newProxyInstance(BrigadierAdapterTest.class.getClassLoader(), ifaces, (proxy, method, args) -> {
+                    String name = method.getName();
+
+                    if (name.equals("hasPermission") && args != null && args.length == 1) {
+                        return perms.contains(String.valueOf(args[0]));
+                    }
+
+                    if (name.equals("isPermissionSet")) {
+                        return true;
+                    }
+
+                    if (name.equals("getName")) {
+                        return "TestSender";
+                    }
+
+                    if (method.getReturnType().equals(boolean.class)) {
+                        return false;
+                    }
+
+                    if (method.getReturnType().equals(int.class)) {
+                        return 0;
+                    }
+
+                    if (method.getReturnType().equals(long.class)) {
+                        return 0L;
+                    }
+
+                    if (method.getReturnType().equals(float.class)) {
+                        return 0f;
+                    }
+
+                    if (method.getReturnType().equals(double.class)) {
+                        return 0d;
+                    }
+
+                    return null;
+                });
+    }
+
+    private static final class TestStack implements CommandSourceStack {
+        private final CommandSender sender;
+        private final Location location;
+        private final Entity executor;
+
+        private TestStack(CommandSender sender, Location location, Entity executor) {
+            this.sender = sender;
+            this.location = location;
+            this.executor = executor;
+        }
+
+        @Override
+        public Location getLocation() {
+            return location.clone();
+        }
+
+        @Override
+        public CommandSender getSender() {
+            return sender;
+        }
+
+        @Override
+        public Entity getExecutor() {
+            return executor;
+        }
+
+        @Override
+        public CommandSourceStack withLocation(Location location) {
+            return new TestStack(sender, location, executor);
+        }
+
+        @Override
+        public CommandSourceStack withExecutor(Entity executor) {
+            return new TestStack(sender, location, executor);
+        }
     }
 }
