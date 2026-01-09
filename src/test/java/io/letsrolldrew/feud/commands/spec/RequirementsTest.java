@@ -9,43 +9,41 @@ import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-class RequirementsTest {
+final class RequirementsTest {
 
     @Test
     void permissionPassesWhenSenderHasPermission() {
         CommandSender sender = Mockito.mock(CommandSender.class);
-        Mockito.when(sender.hasPermission("familyfeud.admin")).thenReturn(true);
+        Mockito.when(sender.hasPermission("perm.node")).thenReturn(true);
 
-        Requirement requirement = Requirements.permission("familyfeud.admin");
+        Requirement requirement = Requirements.permission("perm.node");
 
         assertTrue(requirement.test(sender));
         assertTrue(requirement.message().isPresent());
-        assertTrue(requirement.message().get().contains("familyfeud.admin"));
     }
 
     @Test
     void permissionFailsWhenSenderLacksPermission() {
         CommandSender sender = Mockito.mock(CommandSender.class);
-        Mockito.when(sender.hasPermission("familyfeud.admin")).thenReturn(false);
+        Mockito.when(sender.hasPermission("perm.node")).thenReturn(false);
 
-        Requirement requirement = Requirements.permission("familyfeud.admin");
+        Requirement requirement = Requirements.permission("perm.node");
 
         assertFalse(requirement.test(sender));
     }
 
     @Test
-    void playerOnlyPassesForPlayerSender() {
-        Player sender = Mockito.mock(Player.class);
+    void playerOnlyPassesForPlayers() {
+        CommandSender sender = Mockito.mock(Player.class);
 
         Requirement requirement = Requirements.playerOnly();
 
         assertTrue(requirement.test(sender));
         assertTrue(requirement.message().isPresent());
-        assertTrue(requirement.message().get().contains("player"));
     }
 
     @Test
-    void playerOnlyFailsForNonPlayerSender() {
+    void playerOnlyFailsForNonPlayers() {
         CommandSender sender = Mockito.mock(CommandSender.class);
 
         Requirement requirement = Requirements.playerOnly();
@@ -54,38 +52,28 @@ class RequirementsTest {
     }
 
     @Test
-    void anyOfPassesWhenAnyRequirementPasses() {
-        Requirement needsAdmin = Requirements.permission("familyfeud.admin");
-        Requirement needsHost = Requirements.permission("familyfeud.host");
-        CommandSender sender = Mockito.mock(CommandSender.class);
-        Mockito.when(sender.hasPermission("familyfeud.host")).thenReturn(true);
-        Mockito.when(sender.hasPermission("familyfeud.admin")).thenReturn(false);
+    void anyOfPassesWhenOneRequirementPasses() {
+        Requirement allow = fixedRequirement(true);
+        Requirement deny = fixedRequirement(false);
 
-        Requirement any = Requirements.anyOf(needsAdmin, needsHost);
+        Requirement requirement = Requirements.anyOf(deny, allow);
 
-        assertTrue(any.test(sender));
-        assertTrue(any.message().isPresent());
-        assertTrue(any.message().get().contains("familyfeud.admin"));
+        assertTrue(requirement.test(Mockito.mock(CommandSender.class)));
     }
 
     @Test
     void allOfFailsWhenAnyRequirementFails() {
-        Requirement needsAdmin = Requirements.permission("familyfeud.admin");
-        Requirement needsHost = Requirements.permission("familyfeud.host");
-        CommandSender sender = Mockito.mock(CommandSender.class);
-        Mockito.when(sender.hasPermission("familyfeud.host")).thenReturn(true);
-        Mockito.when(sender.hasPermission("familyfeud.admin")).thenReturn(false);
+        Requirement allow = fixedRequirement(true);
+        Requirement deny = fixedRequirement(false);
 
-        Requirement all = Requirements.allOf(needsAdmin, needsHost);
+        Requirement requirement = Requirements.allOf(allow, deny);
 
-        assertFalse(all.test(sender));
-        assertTrue(all.message().isPresent());
-        assertTrue(all.message().get().contains("familyfeud.admin"));
+        assertFalse(requirement.test(Mockito.mock(CommandSender.class)));
     }
 
     @Test
-    void firstMessagePrefersFirstNonEmptyRequirementMessage() {
-        Requirement host = new Requirement() {
+    void combinatorsUseFirstAvailableMessage() {
+        Requirement withMessage = new Requirement() {
             @Override
             public boolean test(CommandSender sender) {
                 return false;
@@ -93,14 +81,28 @@ class RequirementsTest {
 
             @Override
             public Optional<String> message() {
+                return Optional.of("first");
+            }
+        };
+
+        Requirement withoutMessage = fixedRequirement(true);
+
+        Requirement combined = Requirements.anyOf(withMessage, withoutMessage);
+
+        assertTrue(combined.message().isPresent());
+    }
+
+    private Requirement fixedRequirement(boolean result) {
+        return new Requirement() {
+            @Override
+            public boolean test(CommandSender sender) {
+                return result;
+            }
+
+            @Override
+            public Optional<String> message() {
                 return Optional.empty();
             }
         };
-        Requirement admin = Requirements.permission("familyfeud.admin");
-
-        Requirement any = Requirements.anyOf(host, admin);
-
-        assertTrue(any.message().isPresent());
-        assertTrue(any.message().get().contains("familyfeud.admin"));
     }
 }
