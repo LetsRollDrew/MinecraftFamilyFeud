@@ -327,4 +327,68 @@ public final class FeudCommandSpecificationFactory {
         children.add(teamRoot);
         return children;
     }
+
+    // builds the /feud timer ... commands
+
+    public CommandSpecificationNode buildTimerSpecification(
+            String hostPermission,
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor timerExecutor,
+            SpecExecutor startExecutor,
+            SpecExecutor stopExecutor,
+            SpecExecutor resetExecutor,
+            SpecExecutor statusExecutor) {
+        Objects.requireNonNull(hostPermission, "hostPermission");
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode startSeconds = CommandSpecificationNode.builder(ArgType.INT, "seconds")
+                .executor(Objects.requireNonNull(startExecutor, "startExecutor"))
+                .build();
+
+        CommandSpecificationNode start = CommandSpecificationNode.builder(ArgType.LITERAL, "start")
+                .child(startSeconds)
+                .executor(Objects.requireNonNull(startExecutor, "startExecutor"))
+                .build();
+
+        CommandSpecificationNode stop = CommandSpecificationNode.builder(ArgType.LITERAL, "stop")
+                .executor(Objects.requireNonNull(stopExecutor, "stopExecutor"))
+                .build();
+
+        CommandSpecificationNode resetSeconds = CommandSpecificationNode.builder(ArgType.INT, "seconds")
+                .executor(Objects.requireNonNull(resetExecutor, "resetExecutor"))
+                .build();
+
+        CommandSpecificationNode reset = CommandSpecificationNode.builder(ArgType.LITERAL, "reset")
+                .child(resetSeconds)
+                .executor(Objects.requireNonNull(resetExecutor, "resetExecutor"))
+                .build();
+
+        CommandSpecificationNode status = CommandSpecificationNode.builder(ArgType.LITERAL, "status")
+                .executor(Objects.requireNonNull(statusExecutor, "statusExecutor"))
+                .build();
+
+        CommandSpecificationNode timer = CommandSpecificationNode.builder(ArgType.LITERAL, "timer")
+                .requirements(List.of(Requirements.anyOf(
+                        Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
+                .executor(Objects.requireNonNull(timerExecutor, "timerExecutor"))
+                .children(List.of(start, stop, reset, status))
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithTimer(base.children(), timer))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithTimer(
+            List<CommandSpecificationNode> baseChildren, CommandSpecificationNode timerRoot) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(timerRoot);
+        return children;
+    }
 }

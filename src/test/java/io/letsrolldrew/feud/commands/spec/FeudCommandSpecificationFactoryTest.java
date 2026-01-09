@@ -292,4 +292,56 @@ class FeudCommandSpecificationFactoryTest {
         assertEquals(ArgType.GREEDY, greedy.type());
         assertTrue(greedy.executor().isPresent());
     }
+
+    @Test
+    void buildsTimerSpecificationWithOptionalSeconds() {
+        AtomicBoolean timerCalled = new AtomicBoolean(false);
+        AtomicBoolean startCalled = new AtomicBoolean(false);
+        AtomicBoolean stopCalled = new AtomicBoolean(false);
+        AtomicBoolean resetCalled = new AtomicBoolean(false);
+        AtomicBoolean statusCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor timerExec = ctx -> timerCalled.compareAndSet(false, true);
+        SpecExecutor startExec = ctx -> startCalled.compareAndSet(false, true);
+        SpecExecutor stopExec = ctx -> stopCalled.compareAndSet(false, true);
+        SpecExecutor resetExec = ctx -> resetCalled.compareAndSet(false, true);
+        SpecExecutor statusExec = ctx -> statusCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildTimerSpecification(
+                "familyfeud.host",
+                "familyfeud.admin",
+                rootExec,
+                helpExec,
+                versionExec,
+                timerExec,
+                startExec,
+                stopExec,
+                resetExec,
+                statusExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(3, root.children().size());
+
+        CommandSpecificationNode timer = root.children().get(2);
+        assertEquals("timer", timer.name());
+        assertEquals(1, timer.requirements().size());
+        assertTrue(timer.executor().isPresent());
+        assertEquals(4, timer.children().size());
+
+        List<String> names =
+                timer.children().stream().map(CommandSpecificationNode::name).toList();
+        assertTrue(names.containsAll(List.of("start", "stop", "reset", "status")));
+
+        CommandSpecificationNode start = timer.children().get(names.indexOf("start"));
+        assertEquals(1, start.children().size());
+        assertEquals(ArgType.INT, start.children().get(0).type());
+
+        CommandSpecificationNode reset = timer.children().get(names.indexOf("reset"));
+        assertEquals(1, reset.children().size());
+        assertEquals(ArgType.INT, reset.children().get(0).type());
+    }
 }
