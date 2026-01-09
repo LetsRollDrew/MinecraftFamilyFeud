@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 // represents a single node in the command specification tree
 
@@ -12,15 +11,17 @@ public final class CommandSpecificationNode {
     private final ArgType type;
     private final String name;
     private final List<Requirement> requirements;
-    private final SpecExecutor executor;
     private final List<CommandSpecificationNode> children;
+    private final boolean executes;
+    private final GreedyToken greedyToken;
 
     private CommandSpecificationNode(Builder builder) {
         this.type = builder.type;
         this.name = builder.name;
         this.requirements = Collections.unmodifiableList(new ArrayList<>(builder.requirements));
-        this.executor = builder.executor;
         this.children = Collections.unmodifiableList(new ArrayList<>(builder.children));
+        this.executes = builder.executes;
+        this.greedyToken = builder.greedyToken;
     }
 
     public ArgType type() {
@@ -35,12 +36,16 @@ public final class CommandSpecificationNode {
         return requirements;
     }
 
-    public Optional<SpecExecutor> executor() {
-        return Optional.ofNullable(executor);
-    }
-
     public List<CommandSpecificationNode> children() {
         return children;
+    }
+
+    public boolean executes() {
+        return executes;
+    }
+
+    public GreedyToken greedyToken() {
+        return greedyToken;
     }
 
     public static Builder builder(ArgType type, String name) {
@@ -71,7 +76,8 @@ public final class CommandSpecificationNode {
         private final String name;
         private final List<Requirement> requirements = new ArrayList<>();
         private final List<CommandSpecificationNode> children = new ArrayList<>();
-        private SpecExecutor executor;
+        private boolean executes = true;
+        private GreedyToken greedyToken = GreedyToken.SPLIT_SPACES;
 
         private Builder(ArgType type, String name) {
             this.type = Objects.requireNonNull(type, "type");
@@ -92,8 +98,18 @@ public final class CommandSpecificationNode {
             return this;
         }
 
-        public Builder executor(SpecExecutor executor) {
-            this.executor = Objects.requireNonNull(executor, "executor");
+        public Builder noExec() {
+            this.executes = false;
+            return this;
+        }
+
+        public Builder greedyRawSingleArg() {
+            this.greedyToken = GreedyToken.RAW_SINGLE_ARG;
+            return this;
+        }
+
+        public Builder greedySplitSpaces() {
+            this.greedyToken = GreedyToken.SPLIT_SPACES;
             return this;
         }
 
