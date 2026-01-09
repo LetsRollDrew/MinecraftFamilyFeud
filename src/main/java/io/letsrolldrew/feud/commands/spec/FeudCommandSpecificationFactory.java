@@ -97,20 +97,24 @@ public final class FeudCommandSpecificationFactory {
                         CommandSpecificationNode.builder(ArgType.LITERAL, "spawn")
                                 .requirements(List.of(Requirements.playerOnly()))
                                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
-                                        .child(CommandSpecificationNode.builder(ArgType.GREEDY, "text").build())
+                                        .child(CommandSpecificationNode.builder(ArgType.GREEDY, "text")
+                                                .build())
                                         .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "set")
                                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
-                                        .child(CommandSpecificationNode.builder(ArgType.GREEDY, "text").build())
+                                        .child(CommandSpecificationNode.builder(ArgType.GREEDY, "text")
+                                                .build())
                                         .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "move")
                                 .requirements(List.of(Requirements.playerOnly()))
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
+                                        .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "remove")
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
+                                        .build())
                                 .build()))
                 .build();
         CommandSpecificationNode item = CommandSpecificationNode.builder(ArgType.LITERAL, "item")
@@ -119,16 +123,19 @@ public final class FeudCommandSpecificationFactory {
                                 .requirements(List.of(Requirements.playerOnly()))
                                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
                                         .child(CommandSpecificationNode.builder(ArgType.WORD, "material")
-                                                .child(CommandSpecificationNode.builder(ArgType.INT, "cmd").build())
+                                                .child(CommandSpecificationNode.builder(ArgType.INT, "cmd")
+                                                        .build())
                                                 .build())
                                         .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "move")
                                 .requirements(List.of(Requirements.playerOnly()))
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
+                                        .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "remove")
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "id")
+                                        .build())
                                 .build()))
                 .build();
         CommandSpecificationNode list =
@@ -159,15 +166,21 @@ public final class FeudCommandSpecificationFactory {
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "boardId")
                         .children(List.of(
                                 CommandSpecificationNode.builder(ArgType.LITERAL, "reveal")
-                                        .child(CommandSpecificationNode.builder(ArgType.INT, "slot").build())
+                                        .child(CommandSpecificationNode.builder(ArgType.INT, "slot")
+                                                .build())
                                         .build(),
-                                CommandSpecificationNode.builder(ArgType.LITERAL, "strike").build(),
-                                CommandSpecificationNode.builder(ArgType.LITERAL, "clearstrikes").build(),
+                                CommandSpecificationNode.builder(ArgType.LITERAL, "strike")
+                                        .build(),
+                                CommandSpecificationNode.builder(ArgType.LITERAL, "clearstrikes")
+                                        .build(),
                                 CommandSpecificationNode.builder(ArgType.LITERAL, "control")
-                                        .child(CommandSpecificationNode.builder(ArgType.WORD, "team").build())
+                                        .child(CommandSpecificationNode.builder(ArgType.WORD, "team")
+                                                .build())
                                         .build(),
-                                CommandSpecificationNode.builder(ArgType.LITERAL, "award").build(),
-                                CommandSpecificationNode.builder(ArgType.LITERAL, "reset").build()))
+                                CommandSpecificationNode.builder(ArgType.LITERAL, "award")
+                                        .build(),
+                                CommandSpecificationNode.builder(ArgType.LITERAL, "reset")
+                                        .build()))
                         .build())
                 .build();
 
@@ -209,16 +222,7 @@ public final class FeudCommandSpecificationFactory {
                 .build();
 
         CommandSpecificationNode display = CommandSpecificationNode.builder(ArgType.LITERAL, "display")
-                .children(List.of(
-                        remote,
-                        create,
-                        dynamic,
-                        selection,
-                        list,
-                        remove,
-                        deleteAlias,
-                        wand,
-                        selectorAlias))
+                .children(List.of(remote, create, dynamic, selection, list, remove, deleteAlias, wand, selectorAlias))
                 .build();
 
         return CommandSpecificationNode.builder(ArgType.LITERAL, "board")
@@ -246,12 +250,15 @@ public final class FeudCommandSpecificationFactory {
      * /feud team ... (host/admin)
      ******************************************************************************************/
     private CommandSpecificationNode buildTeam(String hostPermission, String adminPermission) {
-        CommandSpecificationNode info = CommandSpecificationNode.builder(ArgType.LITERAL, "info").build();
-        CommandSpecificationNode reset = CommandSpecificationNode.builder(ArgType.LITERAL, "reset").build();
+        CommandSpecificationNode info =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "info").build();
+        CommandSpecificationNode reset =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "reset").build();
         CommandSpecificationNode set = CommandSpecificationNode.builder(ArgType.LITERAL, "set")
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "team")
                         .child(CommandSpecificationNode.builder(ArgType.LITERAL, "name")
-                                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "newName").build())
+                                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "newName")
+                                        .build())
                                 .build())
                         .build())
                 .build();
@@ -259,13 +266,16 @@ public final class FeudCommandSpecificationFactory {
                 .children(List.of(
                         CommandSpecificationNode.builder(ArgType.LITERAL, "bind")
                                 .requirements(List.of(Requirements.playerOnly()))
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "team").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "team")
+                                        .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "clear")
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "team").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "team")
+                                        .build())
                                 .build(),
                         CommandSpecificationNode.builder(ArgType.LITERAL, "test")
-                                .child(CommandSpecificationNode.builder(ArgType.WORD, "team").build())
+                                .child(CommandSpecificationNode.builder(ArgType.WORD, "team")
+                                        .build())
                                 .build()))
                 .build();
 
@@ -280,13 +290,15 @@ public final class FeudCommandSpecificationFactory {
      * /feud timer ... (host/admin)
      *******************************************************************************************/
     private CommandSpecificationNode buildTimer(String hostPermission, String adminPermission) {
-        CommandSpecificationNode startSeconds = CommandSpecificationNode.builder(ArgType.INT, "seconds").build();
+        CommandSpecificationNode startSeconds =
+                CommandSpecificationNode.builder(ArgType.INT, "seconds").build();
         CommandSpecificationNode start = CommandSpecificationNode.builder(ArgType.LITERAL, "start")
                 .child(startSeconds)
                 .build();
         CommandSpecificationNode stop =
                 CommandSpecificationNode.builder(ArgType.LITERAL, "stop").build();
-        CommandSpecificationNode resetSeconds = CommandSpecificationNode.builder(ArgType.INT, "seconds").build();
+        CommandSpecificationNode resetSeconds =
+                CommandSpecificationNode.builder(ArgType.INT, "seconds").build();
         CommandSpecificationNode reset = CommandSpecificationNode.builder(ArgType.LITERAL, "reset")
                 .child(resetSeconds)
                 .build();
@@ -349,9 +361,12 @@ public final class FeudCommandSpecificationFactory {
      * /feud host book ... (hosts)
      **********************************************************************/
     private CommandSpecificationNode buildHostBook(String hostPermission) {
-        CommandSpecificationNode map = CommandSpecificationNode.builder(ArgType.LITERAL, "map").build();
-        CommandSpecificationNode display = CommandSpecificationNode.builder(ArgType.LITERAL, "display").build();
-        CommandSpecificationNode cleanup = CommandSpecificationNode.builder(ArgType.LITERAL, "cleanup").build();
+        CommandSpecificationNode map =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "map").build();
+        CommandSpecificationNode display =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "display").build();
+        CommandSpecificationNode cleanup =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "cleanup").build();
 
         return CommandSpecificationNode.builder(ArgType.LITERAL, "host")
                 .child(CommandSpecificationNode.builder(ArgType.LITERAL, "book")

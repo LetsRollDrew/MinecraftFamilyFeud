@@ -3,7 +3,6 @@ package io.letsrolldrew.feud.commands.spec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -191,8 +190,10 @@ final class FeudCommandSpecificationFactoryTest {
         CommandSpecificationNode reset = child(timer, "reset");
 
         assertNotNull(timer);
-        assertEquals(ArgType.INT, firstChildByType(start, ArgType.INT, "seconds").type());
-        assertEquals(ArgType.INT, firstChildByType(reset, ArgType.INT, "seconds").type());
+        assertEquals(
+                ArgType.INT, firstChildByType(start, ArgType.INT, "seconds").type());
+        assertEquals(
+                ArgType.INT, firstChildByType(reset, ArgType.INT, "seconds").type());
     }
 
     @Test
@@ -206,11 +207,13 @@ final class FeudCommandSpecificationFactoryTest {
 
         CommandSpecificationNode answer = child(fastmoney, "answer");
         assertNotNull(answer);
-        assertEquals(ArgType.GREEDY, firstChildByType(answer, ArgType.GREEDY, "text").type());
+        assertEquals(
+                ArgType.GREEDY, firstChildByType(answer, ArgType.GREEDY, "text").type());
 
         CommandSpecificationNode bind = child(fastmoney, "bind");
         assertNotNull(bind);
-        assertEquals(ArgType.WORD, firstChildByType(bind, ArgType.WORD, "target").type());
+        assertEquals(
+                ArgType.WORD, firstChildByType(bind, ArgType.WORD, "target").type());
     }
 
     @Test

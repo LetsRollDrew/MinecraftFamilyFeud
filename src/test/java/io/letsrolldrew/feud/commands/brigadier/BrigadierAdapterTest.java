@@ -131,6 +131,32 @@ final class BrigadierAdapterTest {
     }
 
     @Test
+    void greedyBlankInputProducesNoTokens() throws Exception {
+        CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "fastmoney")
+                        .child(CommandSpecificationNode.builder(ArgType.LITERAL, "answer")
+                                .child(CommandSpecificationNode.builder(ArgType.GREEDY, "text")
+                                        .build())
+                                .build())
+                        .build())
+                .build();
+
+        AtomicReference<List<String>> captured = new AtomicReference<>();
+        var root = new BrigadierAdapter().buildWithExecution(spec, (source, args) -> {
+            captured.set(args);
+            return 1;
+        });
+
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        dispatcher.getRoot().addChild(root);
+
+        dispatcher.execute("feud fastmoney answer \"\"", stack(sender(true, Set.of())));
+
+        assertEquals(
+                List.of("fastmoney", "answer"), captured.get(), "blank greedy arg should not introduce an empty token");
+    }
+
+    @Test
     void requirementDeniesWhenPermissionMissing() {
         CommandSpecificationNode spec = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
                 .child(CommandSpecificationNode.builder(ArgType.LITERAL, "secret")
