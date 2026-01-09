@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.letsrolldrew.feud.commands.brigadier.BrigadierAdapter.BrigadierExecution;
 import io.letsrolldrew.feud.commands.spec.ArgType;
@@ -98,5 +99,51 @@ class BrigadierAdapterTest {
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException ex) {
             throw new AssertionError("Dispatch failed", ex);
         }
+    }
+
+    @Test
+    void enforcesRequirementsForBoardDisplayRemote() {
+        CommandSpecificationNode remote = CommandSpecificationNode.builder(ArgType.LITERAL, "remote")
+                .requirements(List.of(Requirements.permission("familyfeud.host"), Requirements.playerOnly()))
+                .executor(ctx -> true)
+                .build();
+
+        CommandSpecificationNode display = CommandSpecificationNode.builder(ArgType.LITERAL, "display")
+                .child(remote)
+                .build();
+
+        CommandSpecificationNode board = CommandSpecificationNode.builder(ArgType.LITERAL, "board")
+                .child(display)
+                .build();
+
+        CommandSpecificationNode root = CommandSpecificationNode.builder(ArgType.LITERAL, "feud")
+                .child(board)
+                .build();
+
+        BrigadierAdapter adapter = new BrigadierAdapter();
+        LiteralCommandNode<CommandSourceStack> node = adapter.build(root);
+
+        CommandNode<CommandSourceStack> remoteNode =
+                BrigadierAdapter.findChild(BrigadierAdapter.findChild(node, "board"), "display")
+                        .getChild("remote");
+
+        CommandSourceStack consoleSource = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
+        CommandSender console = mock(CommandSender.class);
+        when(console.hasPermission("familyfeud.host")).thenReturn(true);
+        when(consoleSource.getSender()).thenReturn(console);
+
+        CommandSourceStack playerNoPerm = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
+        CommandSender player = mock(org.bukkit.entity.Player.class);
+        when(player.hasPermission("familyfeud.host")).thenReturn(false);
+        when(playerNoPerm.getSender()).thenReturn(player);
+
+        CommandSourceStack playerWithPerm = mock(CommandSourceStack.class, Mockito.RETURNS_DEEP_STUBS);
+        CommandSender playerPerm = mock(org.bukkit.entity.Player.class);
+        when(playerPerm.hasPermission("familyfeud.host")).thenReturn(true);
+        when(playerWithPerm.getSender()).thenReturn(playerPerm);
+
+        assertFalse(remoteNode.getRequirement().test(consoleSource));
+        assertFalse(remoteNode.getRequirement().test(playerNoPerm));
+        assertTrue(remoteNode.getRequirement().test(playerWithPerm));
     }
 }
