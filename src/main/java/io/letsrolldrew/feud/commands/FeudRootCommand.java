@@ -101,17 +101,11 @@ public final class FeudRootCommand implements CommandExecutor {
             TileFramebufferStore framebufferStore,
             BoardRenderer boardRenderer,
             SlotRevealPainter slotRevealPainter,
-            HologramCommands hologramCommands,
-            DisplayBoardCommands boardCommands,
+            CommandModules commandModules,
             io.letsrolldrew.feud.effects.holo.HologramService hologramService,
             DisplayBoardService displayBoardPresenter,
-            SurveyCommands surveyCommands,
-            TeamCommands teamCommands,
             TeamService teamService,
             ScorePanelPresenter scorePanelPresenter,
-            TimerCommands timerCommands,
-            BuzzerCommands buzzerCommands,
-            FastMoneyCommands fastMoneyCommands,
             DisplayRegistry displayRegistry,
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore,
@@ -130,17 +124,17 @@ public final class FeudRootCommand implements CommandExecutor {
         this.framebufferStore = framebufferStore;
         this.boardRenderer = boardRenderer;
         this.slotRevealPainter = slotRevealPainter;
-        this.hologramCommands = hologramCommands;
-        this.boardCommands = boardCommands;
+        this.hologramCommands = commandModules.hologramCommands();
+        this.boardCommands = commandModules.displayBoardCommands();
         this.hologramService = hologramService;
         this.displayBoardPresenter = displayBoardPresenter;
-        this.surveyCommands = surveyCommands;
-        this.teamCommands = teamCommands;
+        this.surveyCommands = commandModules.surveyCommands();
+        this.teamCommands = commandModules.teamCommands();
         this.teamService = teamService;
         this.scorePanelPresenter = scorePanelPresenter;
-        this.timerCommands = timerCommands;
-        this.buzzerCommands = buzzerCommands;
-        this.fastMoneyCommands = fastMoneyCommands;
+        this.timerCommands = commandModules.timerCommands();
+        this.buzzerCommands = commandModules.buzzerCommands();
+        this.fastMoneyCommands = commandModules.fastMoneyCommands();
         this.displayRegistry = displayRegistry;
         this.scorePanelStore = scorePanelStore;
         this.timerPanelStore = timerPanelStore;

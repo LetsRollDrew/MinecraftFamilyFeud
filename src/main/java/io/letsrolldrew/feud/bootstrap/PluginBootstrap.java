@@ -215,6 +215,15 @@ public final class PluginBootstrap {
         if (feud == null) {
             throw new IllegalStateException("Command 'feud' not defined in plugin.yml");
         }
+        CommandModules commandModules = new CommandModules(
+                hologramCommands,
+                boardCommands,
+                surveyCommands,
+                teamCommands,
+                timerCommands,
+                buzzerCommands,
+                fastMoneyCommands);
+
         feudRootCommand = new FeudRootCommand(
                 plugin,
                 surveyRepository,
@@ -230,17 +239,11 @@ public final class PluginBootstrap {
                 framebufferStore,
                 boardRenderer,
                 slotRevealPainter,
-                hologramCommands,
-                boardCommands,
+                commandModules,
                 hologramService,
                 displayBoardPresenter,
-                surveyCommands,
-                teamCommands,
                 teamService,
                 scorePanelPresenter,
-                timerCommands,
-                buzzerCommands,
-                fastMoneyCommands,
                 displayRegistry,
                 scorePanelStore,
                 timerPanelStore,
