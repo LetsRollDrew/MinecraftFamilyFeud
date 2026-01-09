@@ -540,4 +540,47 @@ public final class FeudCommandSpecificationFactory {
         children.add(surveyRoot);
         return children;
     }
+
+    // builds the /feud clear & /feud buzz commands
+
+    public CommandSpecificationNode buildClearAndBuzzSpecification(
+            String adminPermission,
+            SpecExecutor rootExecutor,
+            SpecExecutor helpExecutor,
+            SpecExecutor versionExecutor,
+            SpecExecutor clearExecutor,
+            SpecExecutor buzzExecutor) {
+        Objects.requireNonNull(adminPermission, "adminPermission");
+
+        CommandSpecificationNode base = buildBaseSpecification(rootExecutor, helpExecutor, versionExecutor);
+
+        CommandSpecificationNode clearAll = CommandSpecificationNode.builder(ArgType.LITERAL, "all")
+                .executor(Objects.requireNonNull(clearExecutor, "clearExecutor"))
+                .build();
+
+        CommandSpecificationNode clear = CommandSpecificationNode.builder(ArgType.LITERAL, "clear")
+                .requirements(List.of(Requirements.permission(adminPermission)))
+                .executor(Objects.requireNonNull(clearExecutor, "clearExecutor"))
+                .child(clearAll)
+                .build();
+
+        CommandSpecificationNode buzz = CommandSpecificationNode.builder(ArgType.LITERAL, "buzz")
+                .executor(Objects.requireNonNull(buzzExecutor, "buzzExecutor"))
+                .build();
+
+        return CommandSpecificationNode.builder(base.type(), base.name())
+                .executor(base.executor().orElse(null))
+                .children(mergeWithClearAndBuzz(base.children(), clear, buzz))
+                .build();
+    }
+
+    private List<CommandSpecificationNode> mergeWithClearAndBuzz(
+            List<CommandSpecificationNode> baseChildren,
+            CommandSpecificationNode clear,
+            CommandSpecificationNode buzz) {
+        List<CommandSpecificationNode> children = new ArrayList<>(baseChildren);
+        children.add(clear);
+        children.add(buzz);
+        return children;
+    }
 }

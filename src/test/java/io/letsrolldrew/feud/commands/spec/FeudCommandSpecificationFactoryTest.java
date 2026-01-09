@@ -461,4 +461,37 @@ class FeudCommandSpecificationFactoryTest {
         assertEquals(1, load.children().size());
         assertEquals(ArgType.WORD, load.children().get(0).type());
     }
+
+    @Test
+    void buildsClearAndBuzzSpecification() {
+        AtomicBoolean clearCalled = new AtomicBoolean(false);
+        AtomicBoolean buzzCalled = new AtomicBoolean(false);
+
+        SpecExecutor rootExec = ctx -> true;
+        SpecExecutor helpExec = ctx -> true;
+        SpecExecutor versionExec = ctx -> true;
+        SpecExecutor clearExec = ctx -> clearCalled.compareAndSet(false, true);
+        SpecExecutor buzzExec = ctx -> buzzCalled.compareAndSet(false, true);
+
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildClearAndBuzzSpecification(
+                "familyfeud.admin", rootExec, helpExec, versionExec, clearExec, buzzExec);
+
+        assertEquals("feud", root.name());
+        assertEquals(4, root.children().size());
+
+        List<String> names =
+                root.children().stream().map(CommandSpecificationNode::name).toList();
+        assertTrue(names.containsAll(List.of("help", "version", "clear", "buzz")));
+
+        CommandSpecificationNode clear = root.children().get(names.indexOf("clear"));
+        assertEquals(1, clear.requirements().size());
+        assertTrue(clear.executor().isPresent());
+        assertEquals(1, clear.children().size());
+        assertEquals("all", clear.children().get(0).name());
+
+        CommandSpecificationNode buzz = root.children().get(names.indexOf("buzz"));
+        assertEquals(0, buzz.requirements().size());
+        assertTrue(buzz.executor().isPresent());
+    }
 }
