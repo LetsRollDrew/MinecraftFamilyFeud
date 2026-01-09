@@ -10,6 +10,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.letsrolldrew.feud.commands.spec.ArgType;
 import io.letsrolldrew.feud.commands.spec.CommandSpecificationNode;
+import io.letsrolldrew.feud.commands.spec.GreedyToken;
 import io.letsrolldrew.feud.commands.spec.Requirement;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import java.util.ArrayList;
@@ -18,35 +19,16 @@ import java.util.List;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 
-// Builds a Brigadier command tree from a CommandSpecificationNode
+// builds a Brigadier command tree from a CommandSpecificationNode
 
 public final class BrigadierAdapter {
-
-    public LiteralCommandNode<CommandSourceStack> build(CommandSpecificationNode rootSpec) {
-        Objects.requireNonNull(rootSpec, "rootSpec");
-
-        if (rootSpec.type() != ArgType.LITERAL) {
-            throw new IllegalArgumentException("Root command must be a literal");
-        }
-
-        ArgumentBuilder<CommandSourceStack, ?> builder = createBuilder(rootSpec, new ArrayList<>(), null);
-        if (!(builder instanceof LiteralArgumentBuilder)) {
-            throw new IllegalStateException("Root builder must be a LiteralArgumentBuilder");
-        }
-
-        @SuppressWarnings("unchecked")
-        LiteralArgumentBuilder<CommandSourceStack> literalBuilder =
-                (LiteralArgumentBuilder<CommandSourceStack>) builder;
-
-        return literalBuilder.build();
-    }
 
     public LiteralCommandNode<CommandSourceStack> buildWithExecution(
             CommandSpecificationNode rootSpec, BrigadierExecution execution) {
         Objects.requireNonNull(rootSpec, "rootSpec");
         Objects.requireNonNull(execution, "execution");
 
-        ArgumentBuilder<CommandSourceStack, ?> builder = createBuilder(rootSpec, new ArrayList<>(), execution);
+        ArgumentBuilder<CommandSourceStack, ?> builder = createBuilder(rootSpec, new ArrayList<>(), execution, true);
         if (!(builder instanceof LiteralArgumentBuilder)) {
             throw new IllegalStateException("Root builder must be a LiteralArgumentBuilder");
         }
@@ -59,16 +41,21 @@ public final class BrigadierAdapter {
     }
 
     private ArgumentBuilder<CommandSourceStack, ?> createBuilder(
-            CommandSpecificationNode spec, List<TokenExtractor> pathExtractors, BrigadierExecution execution) {
+            CommandSpecificationNode spec,
+            List<TokenExtractor> pathExtractors,
+            BrigadierExecution execution,
+            boolean isRoot) {
         ArgumentBuilder<CommandSourceStack, ?> builder = createNodeBuilder(spec);
 
         List<TokenExtractor> withCurrent = new ArrayList<>(pathExtractors);
-        withCurrent.add(extractorFor(spec));
+        if (!isRoot) {
+            withCurrent.add(extractorFor(spec));
+        }
 
         applyRequirements(builder, spec.requirements());
         attachChildren(builder, spec.children(), withCurrent, execution);
 
-        if (execution != null && spec.executor().isPresent()) {
+        if (execution != null && spec.executes()) {
             builder.executes(ctx -> execution.run(ctx.getSource(), materializeArgs(withCurrent, ctx)));
         }
 
@@ -112,13 +99,15 @@ public final class BrigadierAdapter {
             List<CommandSpecificationNode> children,
             List<TokenExtractor> pathExtractors,
             BrigadierExecution execution) {
+        ensureNoDuplicateLiterals(children);
         for (CommandSpecificationNode child : children) {
-            ArgumentBuilder<CommandSourceStack, ?> childBuilder = createBuilder(child, pathExtractors, execution);
+            ArgumentBuilder<CommandSourceStack, ?> childBuilder =
+                    createBuilder(child, pathExtractors, execution, false);
             parent.then(childBuilder);
         }
     }
 
-    // to inspect the built tree in tests.
+    // to inspect the built tree in tests
 
     public static CommandNode<CommandSourceStack> findChild(CommandNode<CommandSourceStack> node, String name) {
         return node.getChildren().stream()
@@ -134,10 +123,12 @@ public final class BrigadierAdapter {
             case INT -> ctx -> List.of(String.valueOf(IntegerArgumentType.getInteger(ctx, spec.name())));
             case GREEDY ->
                 ctx -> {
-                    // keep current onCommand tokenization: /feud fastmoney answer foo bar -> ["foo","bar"]
                     String raw = StringArgumentType.getString(ctx, spec.name());
-                    if (raw.isEmpty()) {
-                        return List.of("");
+                    if (raw.isBlank()) {
+                        return List.of();
+                    }
+                    if (spec.greedyToken() == GreedyToken.RAW_SINGLE_ARG) {
+                        return List.of(raw);
                     }
                     return Arrays.asList(raw.split(" "));
                 };
@@ -150,6 +141,19 @@ public final class BrigadierAdapter {
             args.addAll(extractor.extract(ctx));
         }
         return args;
+    }
+
+    private void ensureNoDuplicateLiterals(List<CommandSpecificationNode> children) {
+        List<String> names = new ArrayList<>();
+        for (CommandSpecificationNode child : children) {
+            if (child.type() == ArgType.LITERAL) {
+                String name = child.name().toLowerCase();
+                if (names.contains(name)) {
+                    throw new IllegalStateException("Duplicate literal child: " + child.name());
+                }
+                names.add(name);
+            }
+        }
     }
 
     @FunctionalInterface
