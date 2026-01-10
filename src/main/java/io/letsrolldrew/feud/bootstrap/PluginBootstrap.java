@@ -262,19 +262,14 @@ public final class PluginBootstrap {
             LifecycleEventManager<?> lifecycle = plugin.getLifecycleManager();
             lifecycle.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
                 BrigadierAdapter adapter = new BrigadierAdapter();
-                LiteralCommandNode<CommandSourceStack> root = adapter.buildWithExecution(
-                        spec, (source, args) -> exec(command, source, args.toArray(new String[0])));
+                LiteralCommandNode<CommandSourceStack> root =
+                        adapter.buildWithExecution(spec, (source, args) -> command.dispatchFromBrigadier(source, args));
 
                 event.registrar().register(root);
             });
         } catch (Throwable ex) {
             plugin.getLogger().fine("Skipping Brigadier registration: " + ex.getMessage());
         }
-    }
-
-    private int exec(FeudRootCommand command, CommandSourceStack source, String... args) {
-        boolean handled = command.onCommand(source.getSender(), null, "feud", args);
-        return handled ? 1 : 0;
     }
 
     private void ensureFastMoneyFile(File fastMoneyFile) {

@@ -28,6 +28,7 @@ import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookAnchorStore;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import java.util.Arrays;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
@@ -188,6 +189,12 @@ public final class FeudRootCommand implements CommandExecutor {
             default:
                 return handleHelp(sender);
         }
+    }
+
+    public int dispatchFromBrigadier(CommandSourceStack source, java.util.List<String> args) {
+        CommandSender sender = source.getSender();
+        boolean handled = onCommand(sender, null, "feud", args.toArray(new String[0]));
+        return handled ? 1 : 0;
     }
 
     private boolean handleClearArgs(CommandSender sender, String[] args) {
