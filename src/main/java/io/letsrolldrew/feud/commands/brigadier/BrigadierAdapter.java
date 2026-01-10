@@ -124,13 +124,15 @@ public final class BrigadierAdapter {
             case GREEDY ->
                 ctx -> {
                     String raw = StringArgumentType.getString(ctx, spec.name());
-                    if (raw.isBlank()) {
+                    if (isBlankGreedy(raw)) {
                         return List.of();
                     }
                     if (spec.greedyToken() == GreedyToken.RAW_SINGLE_ARG) {
                         return List.of(raw);
                     }
-                    return Arrays.asList(raw.split(" "));
+                    return Arrays.stream(raw.split(" "))
+                            .filter(part -> !part.isEmpty())
+                            .toList();
                 };
         };
     }
@@ -154,6 +156,17 @@ public final class BrigadierAdapter {
                 names.add(name);
             }
         }
+    }
+
+    private static boolean isBlankGreedy(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return true;
+        }
+        boolean quotedEmpty = raw.length() >= 2
+                && raw.charAt(0) == '"'
+                && raw.charAt(raw.length() - 1) == '"'
+                && raw.substring(1, raw.length() - 1).isBlank();
+        return quotedEmpty;
     }
 
     @FunctionalInterface
