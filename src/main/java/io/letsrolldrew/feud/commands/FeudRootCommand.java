@@ -11,20 +11,8 @@ import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
-import io.letsrolldrew.feud.commands.handlers.BoardHandler;
-import io.letsrolldrew.feud.commands.handlers.BuzzHandler;
-import io.letsrolldrew.feud.commands.handlers.ClearAllHandler;
-import io.letsrolldrew.feud.commands.handlers.FastMoneyHandler;
-import io.letsrolldrew.feud.commands.handlers.HelpHandler;
-import io.letsrolldrew.feud.commands.handlers.HoloHandler;
-import io.letsrolldrew.feud.commands.handlers.HostHandler;
-import io.letsrolldrew.feud.commands.handlers.SurveyHandler;
-import io.letsrolldrew.feud.commands.handlers.TeamHandler;
-import io.letsrolldrew.feud.commands.handlers.TimerHandler;
-import io.letsrolldrew.feud.commands.handlers.UiHandler;
-import io.letsrolldrew.feud.commands.handlers.VersionHandler;
-import io.letsrolldrew.feud.commands.tree.CommandNode;
-import io.letsrolldrew.feud.commands.tree.CommandTree;
+import io.letsrolldrew.feud.commands.spec.CommandSpecificationNode;
+import io.letsrolldrew.feud.commands.spec.SpecificationDispatcher;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
@@ -40,6 +28,7 @@ import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookAnchorStore;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import java.util.Arrays;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -83,8 +72,9 @@ public final class FeudRootCommand implements CommandExecutor {
     private final DisplayRegistry displayRegistry;
     private final ScorePanelStore scorePanelStore;
     private final TimerPanelStore timerPanelStore;
-    private final CommandTree commandTree;
     private final HostBookAnchorStore hostBookAnchorStore;
+    private final SpecificationDispatcher dispatcher;
+    private final CommandSpecificationNode commandSpec;
 
     public FeudRootCommand(
             Plugin plugin,
@@ -102,6 +92,7 @@ public final class FeudRootCommand implements CommandExecutor {
             BoardRenderer boardRenderer,
             SlotRevealPainter slotRevealPainter,
             CommandModules commandModules,
+            CommandSpecificationNode commandSpec,
             io.letsrolldrew.feud.effects.holo.HologramService hologramService,
             DisplayBoardService displayBoardPresenter,
             TeamService teamService,
@@ -139,6 +130,8 @@ public final class FeudRootCommand implements CommandExecutor {
         this.scorePanelStore = scorePanelStore;
         this.timerPanelStore = timerPanelStore;
         this.hostBookAnchorStore = hostBookAnchorStore;
+        this.commandSpec = commandSpec;
+        this.dispatcher = new SpecificationDispatcher(commandSpec);
         this.uiCommand = new UiCommand(
                 gameController,
                 hostPermission,
@@ -148,12 +141,70 @@ public final class FeudRootCommand implements CommandExecutor {
                 scorePanelPresenter,
                 scorePanelStore,
                 displayBoardPresenter);
-        this.commandTree = buildCommandTree();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        return commandTree.dispatch(sender, label, args);
+        SpecificationDispatcher.DispatchResult result = dispatcher.dispatch(sender, label, args);
+        if (result.requirementHandled()) {
+            return true;
+        }
+        if (!result.matched()) {
+            return handleHelp(sender);
+        }
+
+        if (args == null || args.length == 0) {
+            return handleVersion(sender);
+        }
+
+        String head = args[0].toLowerCase();
+        String[] tail = tail(args, 1);
+
+        switch (head) {
+            case "help":
+                return handleHelp(sender);
+            case "version":
+                return handleVersion(sender);
+            case "ui":
+                return uiCommand.handle(sender, tail);
+            case "holo":
+                return hologramCommands.handle(sender, tail);
+            case "board":
+                return handleBoard(sender, args);
+            case "survey":
+                return surveyCommands.handle(sender, tail);
+            case "team":
+                return teamCommands.handle(sender, tail);
+            case "buzz":
+                return buzzerCommands.handleBuzzReset(sender);
+            case "timer":
+                return timerCommands.handle(sender, tail);
+            case "fastmoney":
+                return fastMoneyCommands.handle(sender, tail);
+            case "host":
+                return handleHostArgs(sender, args);
+            case "clear":
+                return handleClearArgs(sender, args);
+            default:
+                return handleHelp(sender);
+        }
+    }
+
+    private boolean handleClearArgs(CommandSender sender, String[] args) {
+        if (args.length >= 2 && "all".equalsIgnoreCase(args[1])) {
+            return handleClearAll(sender);
+        }
+        sender.sendMessage("Usage: /feud clear all");
+        return true;
+    }
+
+    private boolean handleHostArgs(CommandSender sender, String[] args) {
+        if (args.length >= 2 && "book".equalsIgnoreCase(args[1])) {
+            String flavor = args.length >= 3 ? joinTail(args, 2) : "";
+            return handleHostBook(sender, flavor);
+        }
+        sender.sendMessage("Usage: /feud host book [map|display|cleanup]");
+        return true;
     }
 
     private void renderReveal(int slot) {
@@ -473,62 +524,10 @@ public final class FeudRootCommand implements CommandExecutor {
         return out;
     }
 
-    private CommandTree buildCommandTree() {
-        var helpHandler = new HelpHandler(ctx -> handleHelp(ctx.sender()));
-        var versionHandler = new VersionHandler(ctx -> handleVersion(ctx.sender()));
-        var clearAllHandler = new ClearAllHandler(ctx -> handleClearAll(ctx.sender()));
-
-        var uiHandler = new UiHandler(
-                (ctx, remaining) -> uiCommand.handle(ctx.sender(), remaining),
-                hostBookAnchorStore,
-                player -> giveOrReplaceHostBook(player));
-        var holoHandler = new HoloHandler((ctx, remaining) -> {
-            if (!ctx.sender().hasPermission(adminPermission)) {
-                ctx.sender().sendMessage("Admin only");
-                return true;
-            }
-            return hologramCommands.handle(ctx.sender(), remaining);
-        });
-
-        var boardHandler = new BoardHandler((ctx, remaining) -> handleBoard(ctx.sender(), prepend("board", remaining)));
-        var surveyHandler = new SurveyHandler((ctx, remaining) -> surveyCommands.handle(ctx.sender(), remaining));
-        var teamHandler = new TeamHandler((ctx, remaining) -> teamCommands.handle(ctx.sender(), remaining));
-        var timerHandler = new TimerHandler((ctx, remaining) -> timerCommands.handle(ctx.sender(), remaining));
-        var buzzHandler = new BuzzHandler((ctx, remaining) -> buzzerCommands.handleBuzzReset(ctx.sender()));
-        var hostHandler = new HostHandler(
-                (ctx, flavor) -> handleHostBook(ctx.sender(), flavor == null ? "" : flavor.toLowerCase()));
-        var fastMoneyHandler =
-                new FastMoneyHandler((ctx, remaining) -> fastMoneyCommands.handle(ctx.sender(), remaining));
-
-        CommandNode root = new CommandNode("root", null, false, versionHandler);
-
-        root.addChild(new CommandNode("help", null, false, helpHandler));
-        root.addChild(new CommandNode("version", null, false, versionHandler));
-        root.addChild(new CommandNode("ui", null, false, uiHandler));
-        root.addChild(new CommandNode("holo", null, false, holoHandler));
-
-        CommandNode clear = new CommandNode("clear");
-        clear.addChild(new CommandNode("all", null, false, clearAllHandler));
-        root.addChild(clear);
-
-        root.addChild(new CommandNode("board", null, false, boardHandler));
-        root.addChild(new CommandNode("survey", null, false, surveyHandler));
-        root.addChild(new CommandNode("team", null, false, teamHandler));
-        root.addChild(new CommandNode("buzz", null, false, buzzHandler));
-        root.addChild(new CommandNode("timer", null, false, timerHandler));
-        root.addChild(new CommandNode("fastmoney", null, false, fastMoneyHandler));
-
-        CommandNode host = new CommandNode("host");
-        host.addChild(new CommandNode("book", null, false, hostHandler));
-        root.addChild(host);
-
-        return new CommandTree(root, helpHandler);
-    }
-
-    private String[] prepend(String head, String[] tail) {
-        String[] out = new String[tail.length + 1];
-        out[0] = head;
-        System.arraycopy(tail, 0, out, 1, tail.length);
-        return out;
+    private static String joinTail(String[] args, int start) {
+        if (args == null || start >= args.length) {
+            return "";
+        }
+        return String.join(" ", Arrays.copyOfRange(args, start, args.length));
     }
 }

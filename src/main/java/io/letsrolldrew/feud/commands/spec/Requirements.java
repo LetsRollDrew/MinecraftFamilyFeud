@@ -22,7 +22,7 @@ public final class Requirements {
 
     public static Requirement playerOnly() {
         Predicate<CommandSender> predicate = sender -> sender instanceof Player;
-        Optional<String> message = Optional.of("Must be a player to use this command.");
+        Optional<String> message = Optional.of("Only players can use this command.");
 
         return new BasicRequirement(predicate, message);
     }

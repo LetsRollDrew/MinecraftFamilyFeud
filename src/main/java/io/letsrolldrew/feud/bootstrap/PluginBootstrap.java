@@ -215,6 +215,10 @@ public final class PluginBootstrap {
         if (feud == null) {
             throw new IllegalStateException("Command 'feud' not defined in plugin.yml");
         }
+        FeudCommandSpecificationFactory specFactory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode commandSpec =
+                specFactory.buildFullSpecification(config.hostPermission(), "familyfeud.admin");
+
         CommandModules commandModules = new CommandModules(
                 hologramCommands,
                 boardCommands,
@@ -240,6 +244,7 @@ public final class PluginBootstrap {
                 boardRenderer,
                 slotRevealPainter,
                 commandModules,
+                commandSpec,
                 hologramService,
                 displayBoardPresenter,
                 teamService,
@@ -249,17 +254,13 @@ public final class PluginBootstrap {
                 timerPanelStore,
                 hostBookAnchorStore);
         feud.setExecutor(feudRootCommand);
-        registerBrigadier(feudRootCommand);
+        registerBrigadier(feudRootCommand, commandSpec);
     }
 
-    private void registerBrigadier(FeudRootCommand command) {
+    private void registerBrigadier(FeudRootCommand command, CommandSpecificationNode spec) {
         try {
             LifecycleEventManager<?> lifecycle = plugin.getLifecycleManager();
             lifecycle.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-                FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
-                CommandSpecificationNode spec =
-                        factory.buildFullSpecification(config.hostPermission(), "familyfeud.admin");
-
                 BrigadierAdapter adapter = new BrigadierAdapter();
                 LiteralCommandNode<CommandSourceStack> root = adapter.buildWithExecution(
                         spec, (source, args) -> exec(command, source, args.toArray(new String[0])));

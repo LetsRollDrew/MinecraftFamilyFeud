@@ -3,14 +3,12 @@ package io.letsrolldrew.feud.commands.spec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import org.bukkit.command.CommandSender;
 
-/**
- * Walks a {@link CommandSpecificationNode} tree against Bukkit-style args.
- * Executes no handlers; it only matches, enforces requirements, and returns the match outcome
- * so callers can route to module handlers.
- */
+// walks a CommandSpecificationNode tree against Bukkit args
+// only matches, enforces requirements, and returns the match outcome
+// so callers can route to module handlers as needed
+
 public final class SpecificationDispatcher {
     private final CommandSpecificationNode root;
 
@@ -21,9 +19,8 @@ public final class SpecificationDispatcher {
         this.root = root;
     }
 
-    /**
-     * @return result describing whether we matched a node, enforced requirements, and the remaining args for callers.
-     */
+    // returns result describing whether we matched a node, enforced requirements, and the remaining args for callers
+
     public DispatchResult dispatch(CommandSender sender, String label, String[] args) {
         List<String> tokens = args == null ? List.of() : List.of(args);
 
@@ -109,9 +106,9 @@ public final class SpecificationDispatcher {
     private boolean requirementsPass(CommandSender sender, List<Requirement> requirements) {
         for (Requirement requirement : requirements) {
             if (!requirement.test(sender)) {
-                Optional<String> message = requirement.message();
-                if (message.isPresent() && sender != null) {
-                    sender.sendMessage(message.get());
+                if (sender != null) {
+                    String msg = requirement.message().orElse("You cannot use this command.");
+                    sender.sendMessage(msg);
                 }
                 return false;
             }

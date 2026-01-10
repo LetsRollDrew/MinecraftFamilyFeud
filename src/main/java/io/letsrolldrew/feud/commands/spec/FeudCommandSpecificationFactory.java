@@ -390,9 +390,13 @@ public final class FeudCommandSpecificationFactory {
      * /feud buzz ... (host/admin)
      ******************************************************************************************/
     private CommandSpecificationNode buildBuzz(String hostPermission, String adminPermission) {
+        CommandSpecificationNode reset =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "reset").build();
+
         return CommandSpecificationNode.builder(ArgType.LITERAL, "buzz")
                 .requirements(List.of(Requirements.anyOf(
                         Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
+                .child(reset)
                 .build();
     }
 }
