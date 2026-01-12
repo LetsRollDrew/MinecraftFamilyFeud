@@ -19,6 +19,7 @@ import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
 import io.letsrolldrew.feud.team.TeamService;
@@ -27,6 +28,7 @@ import io.letsrolldrew.feud.ui.HostBookPage;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import java.util.Objects;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,6 +37,7 @@ import org.bukkit.plugin.Plugin;
 
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
+    private final Messages messages;
     private final UiCommand uiCommand;
     private final HologramCommands hologramCommands;
     private final BoardCommandEntry boardCommandEntry;
@@ -52,6 +55,7 @@ public final class FeudRootCommand implements CommandExecutor {
 
     public FeudRootCommand(
             Plugin plugin,
+            Messages messages,
             SurveyRepository surveyRepository,
             HostBookUiBuilder hostBookUiBuilder,
             HostRemoteService hostRemoteService,
@@ -76,6 +80,7 @@ public final class FeudRootCommand implements CommandExecutor {
             HostBookAnchorStore hostBookAnchorStore,
             DisplayBoardSelectionStore displayBoardSelectionStore) {
         this.plugin = plugin;
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.hologramCommands = commandModules.hologramCommands();
         DisplayBoardCommands boardCommands = commandModules.displayBoardCommands();
         this.surveyCommands = commandModules.surveyCommands();
@@ -89,6 +94,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.hostBookService = new HostBookService(
                 gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
         this.boardCommandEntry = new BoardCommandEntry(
+                messages,
                 boardCommands,
                 adminPermission,
                 boardWandService,
@@ -96,8 +102,10 @@ public final class FeudRootCommand implements CommandExecutor {
                 mapIdStore,
                 framebufferStore,
                 boardRenderer);
-        this.hostBookCommandEntry = new HostBookCommandEntry(hostPermission, hostBookService, displayBoardPresenter);
+        this.hostBookCommandEntry =
+                new HostBookCommandEntry(messages, hostPermission, hostBookService, displayBoardPresenter);
         this.clearCommandEntry = new ClearCommandEntry(
+                messages,
                 plugin,
                 adminPermission,
                 displayRegistry,
@@ -107,6 +115,7 @@ public final class FeudRootCommand implements CommandExecutor {
                 timerPanelStore);
         this.dispatcher = new SpecificationDispatcher(commandSpec);
         this.uiCommand = new UiCommand(
+                messages,
                 gameController,
                 hostPermission,
                 hostBookService::giveOrReplaceHostBook,

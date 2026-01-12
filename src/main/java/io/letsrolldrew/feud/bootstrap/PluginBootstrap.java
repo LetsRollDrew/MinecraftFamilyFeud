@@ -19,6 +19,7 @@ import io.letsrolldrew.feud.effects.holo.*;
 import io.letsrolldrew.feud.effects.timer.*;
 import io.letsrolldrew.feud.fastmoney.*;
 import io.letsrolldrew.feud.game.*;
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.survey.*;
 import io.letsrolldrew.feud.team.*;
 import io.letsrolldrew.feud.ui.*;
@@ -36,6 +37,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PluginBootstrap {
     private final JavaPlugin plugin;
+    private Messages messages;
     private PluginConfig config;
     private SurveyRepository surveyRepository;
     private GameController gameController;
@@ -85,6 +87,7 @@ public final class PluginBootstrap {
 
     public void enable() {
         plugin.saveDefaultConfig();
+        this.messages = new Messages(plugin.getName());
         this.config = PluginConfig.from(plugin.getConfig());
         this.surveyRepository = SurveyRepository.load(plugin.getConfig());
         this.gameController = new SimpleGameController(config.maxStrikes());
@@ -114,7 +117,7 @@ public final class PluginBootstrap {
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin));
         this.timerService = new TimerService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin), System::currentTimeMillis, 20);
-        this.timerCommands = new TimerCommands(timerService, config.hostPermission(), "familyfeud.admin");
+        this.timerCommands = new TimerCommands(messages, timerService, config.hostPermission(), "familyfeud.admin");
         this.buzzerService = new BuzzerService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin),
                 System::currentTimeMillis,
@@ -122,8 +125,9 @@ public final class PluginBootstrap {
                 12_000L,
                 1_000L);
         this.buzzerCommands =
-                new BuzzerCommands(buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
-        this.teamCommands = new TeamCommands(teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
+                new BuzzerCommands(messages, buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
+        this.teamCommands =
+                new TeamCommands(messages, teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
         this.buzzerListener = new BuzzerListener(buzzerService, teamService);
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
@@ -133,8 +137,8 @@ public final class PluginBootstrap {
                 new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);
         File hologramStore = new File(plugin.getDataFolder(), "holograms.yml");
         this.hologramService = new HologramService(displayRegistry, hologramStore);
-        this.hologramCommands = new HologramCommands(hologramService);
-        this.surveyCommands = new SurveyCommands(surveyRepository, config.hostPermission(), gameController);
+        this.hologramCommands = new HologramCommands(messages, hologramService);
+        this.surveyCommands = new SurveyCommands(messages, surveyRepository, config.hostPermission(), gameController);
         this.fastMoneyService = new FastMoneyService();
         this.fastMoneyPlayerBindService = new FastMoneyPlayerBindService(fastMoneyService);
         this.hostBookUiBuilder.setFastMoneyService(fastMoneyService);
@@ -150,6 +154,7 @@ public final class PluginBootstrap {
         this.fastMoneyBoardPresenter = new FastMoneyBoardPresenter(displayRegistry, fastMoneyBoardPlacement);
         this.fastMoneyBackdropPresenter = new FastMoneyBackdropPresenter(displayRegistry);
         this.fastMoneyCommands = new FastMoneyCommands(
+                messages,
                 fastMoneyService,
                 fastMoneySurveySetStore,
                 fastMoneyPlayerBindService,
@@ -172,6 +177,7 @@ public final class PluginBootstrap {
                     hostRemoteService.giveOrReplace(player, fresh);
                 });
         this.boardCommands = new DisplayBoardCommands(
+                messages,
                 displayBoardPresenter,
                 "familyfeud.admin",
                 displayBoardSelectionListener,
@@ -230,6 +236,7 @@ public final class PluginBootstrap {
 
         feudRootCommand = new FeudRootCommand(
                 plugin,
+                messages,
                 surveyRepository,
                 hostBookUiBuilder,
                 hostRemoteService,
