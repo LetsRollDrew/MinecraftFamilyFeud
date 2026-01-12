@@ -82,11 +82,7 @@ public final class TimerCommands {
     }
 
     private boolean help(CommandSender sender) {
-        sender.sendMessage("Timer commands:");
-        sender.sendMessage("/feud timer start [seconds]");
-        sender.sendMessage("/feud timer stop");
-        sender.sendMessage("/feud timer reset [seconds]");
-        sender.sendMessage("/feud timer status");
+        messages.usage(sender, Msg.TIMER_HELP);
         return true;
     }
 

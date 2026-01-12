@@ -82,7 +82,7 @@ public final class HologramCommands {
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud holo text spawn <id> <text>");
+            messages.usage(sender, Msg.HOLO_TEXT_SPAWN_USAGE);
             return;
         }
         String id = args[1];
@@ -102,7 +102,7 @@ public final class HologramCommands {
 
     private void handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud holo text set <id> <text>");
+            messages.usage(sender, Msg.HOLO_TEXT_SET_USAGE);
             return;
         }
         String id = args[1];
@@ -125,7 +125,7 @@ public final class HologramCommands {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud holo text move <id>");
+            messages.usage(sender, Msg.HOLO_TEXT_MOVE_USAGE);
             return;
         }
         String id = args[1];
@@ -143,7 +143,7 @@ public final class HologramCommands {
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud holo text remove <id>");
+            messages.usage(sender, Msg.HOLO_TEXT_REMOVE_USAGE);
             return;
         }
         String id = args[1];
@@ -160,17 +160,15 @@ public final class HologramCommands {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo text <spawn|set|move|remove> ...");
-        sender.sendMessage("       /feud holo item <spawn|move|remove> ...");
-        sender.sendMessage("       /feud holo list");
+        messages.usage(sender, Msg.HOLO_HELP);
     }
 
     private void sendTextUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo text spawn <id> <text> | set <id> <text> | move <id> | remove <id>");
+        messages.usage(sender, Msg.HOLO_TEXT_USAGE);
     }
 
     private void sendItemUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>");
+        messages.usage(sender, Msg.HOLO_ITEM_USAGE);
     }
 
     private String[] sliceArgs(String[] args) {

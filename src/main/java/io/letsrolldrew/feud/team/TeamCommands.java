@@ -97,11 +97,7 @@ public final class TeamCommands {
     }
 
     private boolean help(CommandSender sender) {
-        sender.sendMessage("Team commands:");
-        sender.sendMessage("/feud team info");
-        sender.sendMessage("/feud team reset");
-        sender.sendMessage("/feud team set <red|blue> name <new-name>");
-        sender.sendMessage("/feud team buzzer bind|clear|test <red|blue>");
+        messages.usage(sender, Msg.TEAM_HELP);
         return true;
     }
 

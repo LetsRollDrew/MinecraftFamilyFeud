@@ -250,7 +250,7 @@ public final class FastMoneyCommands {
     }
 
     private boolean usage(CommandSender sender) {
-        sender.sendMessage("Fast Money: set|start|stop|status|bind|answer|board");
+        messages.usage(sender, Msg.FAST_MONEY_HELP);
         return true;
     }
 

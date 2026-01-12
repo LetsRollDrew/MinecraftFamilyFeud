@@ -81,9 +81,7 @@ public final class SurveyCommands {
     }
 
     private boolean help(CommandSender sender) {
-        sender.sendMessage("Survey commands:");
-        sender.sendMessage("/feud survey list");
-        sender.sendMessage("/feud survey load <id>");
+        messages.usage(sender, Msg.SURVEY_HELP);
         return true;
     }
 }

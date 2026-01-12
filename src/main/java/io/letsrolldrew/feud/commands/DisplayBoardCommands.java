@@ -403,7 +403,7 @@ public final class DisplayBoardCommands {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Board commands: create/dynamic/list/remove/wand (selector)");
+        messages.usage(sender, Msg.BOARD_DISPLAY_HELP);
     }
 
     private void spawnPanels(String boardId, DynamicBoardLayout layout, TeamId team) {
