@@ -45,7 +45,7 @@ public final class BoardCommandEntry {
     public boolean handle(CommandSender sender, String[] args) {
         String[] tokens = args == null ? new String[0] : args;
         if (tokens.length == 0) {
-            sender.sendMessage("Board commands: map | display ...");
+            messages.usage(sender, Msg.BOARD_ENTRY_HELP);
             return true;
         }
 
@@ -58,7 +58,7 @@ public final class BoardCommandEntry {
             case "display":
                 return boardCommands.handle(sender, tail);
             default:
-                sender.sendMessage("Board commands: map | display ...");
+                messages.usage(sender, Msg.BOARD_ENTRY_HELP);
                 return true;
         }
     }
@@ -72,7 +72,7 @@ public final class BoardCommandEntry {
             return handleBoardInitMaps(sender);
         }
 
-        sender.sendMessage("Board map commands: /feud board map wand | /feud board map initmaps");
+        messages.usage(sender, Msg.BOARD_MAP_HELP);
         return true;
     }
 

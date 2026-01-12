@@ -45,7 +45,7 @@ public final class ClearCommandEntry {
         if (args.length >= 1 && "all".equalsIgnoreCase(args[0])) {
             return handleClearAll(sender);
         }
-        sender.sendMessage("Usage: /feud clear all");
+        messages.usage(sender, Msg.USAGE_CLEAR_ALL);
         return true;
     }
 
