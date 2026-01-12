@@ -7,6 +7,7 @@ import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
 import java.util.Locale;
@@ -111,7 +112,7 @@ public final class FastMoneyCommands {
         String setId = args[1];
         Optional<FastMoneySurveySet> setOpt = surveySetStore.findById(setId);
         if (setOpt.isEmpty()) {
-            sender.sendMessage("Fast Money set not found: " + setId);
+            messages.error(sender, Msg.FAST_MONEY_SET_NOT_FOUND, Placeholder.of("setId", setId));
             return true;
         }
 
@@ -235,7 +236,7 @@ public final class FastMoneyCommands {
     private void showBoard(CommandSender sender, String boardId) {
         DynamicBoardLayout layout = displayBoardService.resolveLayoutOrNull(boardId);
         if (layout == null) {
-            sender.sendMessage("Fast Money board not spawned: no layout for " + boardId);
+            messages.error(sender, Msg.FAST_MONEY_BOARD_NO_LAYOUT, Placeholder.of("boardId", boardId));
             return;
         }
 

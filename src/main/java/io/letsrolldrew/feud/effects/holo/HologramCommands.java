@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.effects.holo;
 
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.Map;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
@@ -110,7 +111,7 @@ public final class HologramCommands {
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         String textRaw = joinArgs(args, 2);
@@ -133,7 +134,7 @@ public final class HologramCommands {
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         service.moveToPlayer(id, player);
@@ -151,7 +152,7 @@ public final class HologramCommands {
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         service.remove(id);
@@ -258,7 +259,7 @@ public final class HologramCommands {
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         service.moveItemToPlayer(id, player);

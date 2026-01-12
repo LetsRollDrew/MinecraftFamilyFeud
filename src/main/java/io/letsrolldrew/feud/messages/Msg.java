@@ -13,6 +13,12 @@ public enum Msg {
     INVALID_ID_HOLO("Invalid id, use letters, numbers, _ or -"),
 
     NOT_READY("Not ready"),
+    MISSING_BOARD_ID("Missing board id"),
+    SURVEYS_NOT_LOADED("Surveys not loaded"),
+    SURVEY_NOT_FOUND("Survey not found: {id}"),
+    HOLOGRAM_NOT_FOUND("Hologram not found: {id}"),
+    FAST_MONEY_SET_NOT_FOUND("Fast Money set not found: {setId}"),
+    FAST_MONEY_BOARD_NO_LAYOUT("Fast Money board not spawned: no layout for {boardId}"),
 
     USAGE_CLEAR_ALL("Usage: /feud clear all"),
     USAGE_HOST_BOOK("Usage: /feud host book [map|display|cleanup]"),

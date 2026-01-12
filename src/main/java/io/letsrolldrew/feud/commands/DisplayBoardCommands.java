@@ -111,11 +111,11 @@ public final class DisplayBoardCommands {
         }
         String boardId = args[1];
         if (boardId == null || boardId.isBlank()) {
-            sender.sendMessage("Missing board id");
+            messages.error(sender, Msg.MISSING_BOARD_ID);
             return;
         }
         if (presenter == null || controller == null) {
-            sender.sendMessage("Not ready");
+            messages.error(sender, Msg.NOT_READY);
             return;
         }
 

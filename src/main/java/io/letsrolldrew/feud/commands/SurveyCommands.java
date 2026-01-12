@@ -3,6 +3,7 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import java.util.Objects;
@@ -42,7 +43,7 @@ public final class SurveyCommands {
 
     private boolean handleList(CommandSender sender) {
         if (surveyRepository == null) {
-            sender.sendMessage("Surveys not loaded.");
+            messages.error(sender, Msg.SURVEYS_NOT_LOADED);
             return true;
         }
         if (surveyRepository.listAll().isEmpty()) {
@@ -62,12 +63,12 @@ public final class SurveyCommands {
             return true;
         }
         if (surveyRepository == null) {
-            sender.sendMessage("Surveys not loaded.");
+            messages.error(sender, Msg.SURVEYS_NOT_LOADED);
             return true;
         }
         Survey survey = surveyRepository.findById(surveyId).orElse(null);
         if (survey == null) {
-            sender.sendMessage("Survey not found: " + surveyId);
+            messages.error(sender, Msg.SURVEY_NOT_FOUND, Placeholder.of("id", surveyId));
             return true;
         }
         if (controller != null) {
