@@ -26,6 +26,7 @@ import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.BookFactory;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookAnchorStore;
+import io.letsrolldrew.feud.ui.HostBookPage;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -167,7 +168,7 @@ public final class FeudRootCommand implements CommandExecutor {
             case "version":
                 return handleVersion(sender);
             case "ui":
-                return uiCommand.handle(sender, tail);
+                return handleUi(sender, tail);
             case "holo":
                 return hologramCommands.handle(sender, tail);
             case "board":
@@ -189,6 +190,39 @@ public final class FeudRootCommand implements CommandExecutor {
             default:
                 return handleHelp(sender);
         }
+    }
+
+    private boolean handleUi(CommandSender sender, String[] args) {
+        if (args != null && args.length > 0 && "click".equalsIgnoreCase(args[0])) {
+            return handleUiClick(sender, args);
+        }
+        return uiCommand.handle(sender, args);
+    }
+
+    private boolean handleUiClick(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can use the host book.");
+            return true;
+        }
+        if (args.length < 3 || !"action".equalsIgnoreCase(args[1])) {
+            sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            return true;
+        }
+
+        HostBookPage page = HostBookPage.fromToken(args[0]);
+        if (page != null) {
+            hostBookAnchorStore.set(player.getUniqueId(), page);
+        }
+
+        String actionId = joinTail(args, 2).replaceFirst("(?i)^action\\s*", "").trim();
+        if (actionId.isBlank()) {
+            sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            return true;
+        }
+
+        sender.sendMessage("Unknown UI action: " + actionId);
+        giveOrReplaceHostBook(player);
+        return true;
     }
 
     public int dispatchFromBrigadier(CommandSourceStack source, java.util.List<String> args) {
