@@ -6,6 +6,7 @@ import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.util.Validation;
@@ -48,7 +49,7 @@ public final class UiCommand {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!sender.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to use these controls.");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
         if (args.length == 0) {

@@ -6,6 +6,7 @@ import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
 import java.util.Locale;
@@ -50,7 +51,7 @@ public final class FastMoneyCommands {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!isHost(sender)) {
-            sender.sendMessage("You must be the host to run Fast Money commands");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 
@@ -73,7 +74,7 @@ public final class FastMoneyCommands {
 
     public boolean reveal(CommandSender sender, int questionIndex, int slot) {
         if (!isHost(sender)) {
-            sender.sendMessage("You must be the host to run Fast Money commands");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 
@@ -165,7 +166,7 @@ public final class FastMoneyCommands {
         }
 
         if (!(sender instanceof Player host)) {
-            sender.sendMessage("Only players can arm binding");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
 
@@ -187,7 +188,7 @@ public final class FastMoneyCommands {
 
     private boolean answer(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can submit answers");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
 

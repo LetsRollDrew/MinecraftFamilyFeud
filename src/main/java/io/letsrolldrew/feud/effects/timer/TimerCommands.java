@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.effects.timer;
 
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
@@ -21,7 +22,7 @@ public final class TimerCommands {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!isAuthorized(sender)) {
-            sender.sendMessage("You must be the host to do that");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
         if (args == null || args.length == 0) {

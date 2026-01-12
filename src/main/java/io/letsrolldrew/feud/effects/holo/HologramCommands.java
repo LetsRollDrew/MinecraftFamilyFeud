@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.effects.holo;
 
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import java.util.Map;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
@@ -76,7 +77,7 @@ public final class HologramCommands {
 
     private void handleSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can spawn holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 3) {
@@ -119,7 +120,7 @@ public final class HologramCommands {
 
     private void handleMove(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can move holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
@@ -201,7 +202,7 @@ public final class HologramCommands {
 
     private void handleItemSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can spawn item holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 3) {
@@ -244,7 +245,7 @@ public final class HologramCommands {
 
     private void handleItemMove(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can move item holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {

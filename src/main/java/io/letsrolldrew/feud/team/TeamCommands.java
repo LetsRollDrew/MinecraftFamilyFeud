@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.team;
 
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
@@ -32,7 +33,7 @@ public final class TeamCommands {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!isAuthorized(sender)) {
-            sender.sendMessage("You must be the host to do that.");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 

@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,11 +28,11 @@ public final class HostBookCommandEntry {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the host book");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
         if (!player.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to use this");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 

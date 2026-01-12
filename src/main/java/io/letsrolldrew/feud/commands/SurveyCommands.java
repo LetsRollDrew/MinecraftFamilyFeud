@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import java.util.Objects;
@@ -57,7 +58,7 @@ public final class SurveyCommands {
 
     private boolean handleLoad(CommandSender sender, String surveyId) {
         if (!sender.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to do that.");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
         if (surveyRepository == null) {

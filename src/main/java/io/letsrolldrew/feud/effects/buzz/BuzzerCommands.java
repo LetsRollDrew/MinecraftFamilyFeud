@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.effects.buzz;
 
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.team.BlockRef;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
@@ -32,7 +33,7 @@ public final class BuzzerCommands {
 
     public boolean handleTeamBuzzer(CommandSender sender, String[] args) {
         if (!isAuthorized(sender)) {
-            sender.sendMessage("You must be the host to do that.");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
         if (args == null || args.length < 2) {
@@ -57,7 +58,7 @@ public final class BuzzerCommands {
 
     public boolean handleBuzzReset(CommandSender sender) {
         if (!isAuthorized(sender)) {
-            sender.sendMessage("You must be the host to do that.");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
         buzzerService.resetLock();
@@ -67,7 +68,7 @@ public final class BuzzerCommands {
 
     private void handleBind(CommandSender sender, TeamId team) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can bind buzzers.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         buzzerService.beginBind(player, team);
