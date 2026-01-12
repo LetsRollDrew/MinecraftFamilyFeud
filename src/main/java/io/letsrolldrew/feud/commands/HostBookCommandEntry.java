@@ -1,18 +1,25 @@
 package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
+import io.letsrolldrew.feud.messages.Messages;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class HostBookCommandEntry {
+    private final Messages messages;
     private final String hostPermission;
     private final HostBookService hostBookService;
     private final DisplayBoardService displayBoardPresenter;
 
     public HostBookCommandEntry(
-            String hostPermission, HostBookService hostBookService, DisplayBoardService displayBoardPresenter) {
+            Messages messages,
+            String hostPermission,
+            HostBookService hostBookService,
+            DisplayBoardService displayBoardPresenter) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.hostPermission = hostPermission;
         this.hostBookService = hostBookService;
         this.displayBoardPresenter = displayBoardPresenter;

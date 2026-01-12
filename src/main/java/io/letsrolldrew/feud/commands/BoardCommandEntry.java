@@ -6,10 +6,13 @@ import io.letsrolldrew.feud.board.MapWallBinder;
 import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
+import io.letsrolldrew.feud.messages.Messages;
+import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class BoardCommandEntry {
+    private final Messages messages;
     private final DisplayBoardCommands boardCommands;
     private final String adminPermission;
     private final BoardWandService boardWandService;
@@ -19,6 +22,7 @@ public final class BoardCommandEntry {
     private final BoardRenderer boardRenderer;
 
     public BoardCommandEntry(
+            Messages messages,
             DisplayBoardCommands boardCommands,
             String adminPermission,
             BoardWandService boardWandService,
@@ -26,6 +30,7 @@ public final class BoardCommandEntry {
             MapIdStore mapIdStore,
             TileFramebufferStore framebufferStore,
             BoardRenderer boardRenderer) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.boardCommands = boardCommands;
         this.adminPermission = adminPermission;
         this.boardWandService = boardWandService;
