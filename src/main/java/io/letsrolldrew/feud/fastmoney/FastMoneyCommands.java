@@ -118,7 +118,7 @@ public final class FastMoneyCommands {
 
         FastMoneySurveySet set = setOpt.get();
         service.loadSurveySet(set.id(), set.surveyIds());
-        sender.sendMessage("Fast Money set loaded: " + set.id());
+        messages.success(sender, Msg.FAST_MONEY_SET_LOADED, Placeholder.of("setId", set.id()));
 
         return true;
     }
@@ -241,12 +241,12 @@ public final class FastMoneyCommands {
         }
 
         displayBoardService.showFastMoneyBoard(boardId, layout, boardPresenter, backdropPresenter);
-        sender.sendMessage("Fast Money board shown on " + boardId);
+        messages.success(sender, Msg.FAST_MONEY_BOARD_SHOWN, Placeholder.of("boardId", boardId));
     }
 
     private void hideBoard(CommandSender sender, String boardId) {
         displayBoardService.hideFastMoneyBoard(boardId);
-        sender.sendMessage("Fast Money board cleared on " + boardId);
+        messages.success(sender, Msg.FAST_MONEY_BOARD_CLEARED, Placeholder.of("boardId", boardId));
     }
 
     private boolean usage(CommandSender sender) {

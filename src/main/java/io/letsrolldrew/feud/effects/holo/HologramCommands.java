@@ -29,7 +29,7 @@ public final class HologramCommands {
             return true;
         }
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need " + adminPermission + " to use hologram commands.");
+            messages.error(sender, Msg.NEED_PERMISSION, Placeholder.of("permission", adminPermission));
             return true;
         }
         if ("list".equalsIgnoreCase(args[0])) {
@@ -91,13 +91,13 @@ public final class HologramCommands {
             return;
         }
         if (service.exists(id)) {
-            sender.sendMessage("Hologram id already exists: " + id);
+            messages.error(sender, Msg.HOLOGRAM_ID_EXISTS, Placeholder.of("id", id));
             return;
         }
         String textRaw = joinArgs(args, 2);
         Component text = colored(textRaw);
         service.spawn(id, player, text);
-        sender.sendMessage("Spawned hologram '" + id + "'.");
+        messages.success(sender, Msg.HOLOGRAM_SPAWNED, Placeholder.of("id", id));
     }
 
     private void handleSet(CommandSender sender, String[] args) {
@@ -116,7 +116,7 @@ public final class HologramCommands {
         }
         String textRaw = joinArgs(args, 2);
         service.setText(id, colored(textRaw));
-        sender.sendMessage("Updated hologram '" + id + "'.");
+        messages.success(sender, Msg.HOLOGRAM_UPDATED, Placeholder.of("id", id));
     }
 
     private void handleMove(CommandSender sender, String[] args) {
@@ -138,7 +138,7 @@ public final class HologramCommands {
             return;
         }
         service.moveToPlayer(id, player);
-        sender.sendMessage("Moved hologram '" + id + "' to your location.");
+        messages.success(sender, Msg.HOLOGRAM_MOVED_TO_YOU, Placeholder.of("id", id));
     }
 
     private void handleRemove(CommandSender sender, String[] args) {
@@ -156,7 +156,7 @@ public final class HologramCommands {
             return;
         }
         service.remove(id);
-        sender.sendMessage("Removed hologram '" + id + "'.");
+        messages.success(sender, Msg.HOLOGRAM_REMOVED, Placeholder.of("id", id));
     }
 
     private void sendUsage(CommandSender sender) {
@@ -220,7 +220,8 @@ public final class HologramCommands {
         try {
             int cmd = Integer.parseInt(args[2]);
             service.spawnItem(id, player, material, cmd);
-            sender.sendMessage("Spawned item hologram '" + id + "' with CMD " + cmd + ".");
+            messages.success(
+                    sender, Msg.ITEM_HOLOGRAM_SPAWNED_WITH_CMD, Placeholder.of("id", id), Placeholder.of("cmd", cmd));
             return;
         } catch (NumberFormatException ignore) {
             // treat args[2] as material
@@ -232,13 +233,18 @@ public final class HologramCommands {
         try {
             material = Material.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException ex) {
-            sender.sendMessage("Unknown material: " + args[2]);
+            messages.error(sender, Msg.UNKNOWN_MATERIAL, Placeholder.of("material", args[2]));
             return;
         }
         try {
             int cmd = Integer.parseInt(args[3]);
             service.spawnItem(id, player, material, cmd);
-            sender.sendMessage("Spawned item hologram '" + id + "' (" + material + ", CMD " + cmd + ").");
+            messages.success(
+                    sender,
+                    Msg.ITEM_HOLOGRAM_SPAWNED_WITH_MATERIAL_CMD,
+                    Placeholder.of("id", id),
+                    Placeholder.of("material", material),
+                    Placeholder.of("cmd", cmd));
         } catch (NumberFormatException ex) {
             sender.sendMessage("CustomModelData must be a number.");
         }
@@ -263,7 +269,7 @@ public final class HologramCommands {
             return;
         }
         service.moveItemToPlayer(id, player);
-        sender.sendMessage("Moved item hologram '" + id + "' to your location.");
+        messages.success(sender, Msg.ITEM_HOLOGRAM_MOVED_TO_YOU, Placeholder.of("id", id));
     }
 
     private void handleItemRemove(CommandSender sender, String[] args) {
@@ -277,7 +283,7 @@ public final class HologramCommands {
             return;
         }
         service.removeItem(id);
-        sender.sendMessage("Removed item hologram '" + id + "'.");
+        messages.success(sender, Msg.ITEM_HOLOGRAM_REMOVED, Placeholder.of("id", id));
     }
 
     private void handleList(CommandSender sender) {

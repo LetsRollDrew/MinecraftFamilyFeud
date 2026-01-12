@@ -258,7 +258,7 @@ public final class DisplayBoardCommands {
         }
         String boardId = args[1];
         presenter.createBoard(boardId, player.getLocation(), player);
-        sender.sendMessage("Board '" + boardId + "' created at your location.");
+        messages.success(sender, Msg.BOARD_CREATED_AT_LOCATION, Placeholder.of("boardId", boardId));
     }
 
     private void handleCreateDynamic(CommandSender sender, String[] args) {
@@ -280,7 +280,7 @@ public final class DisplayBoardCommands {
             sender.sendMessage("Board id already exists or creation failed.");
             return;
         }
-        sender.sendMessage("Dynamic board '" + boardId + "' created.");
+        messages.success(sender, Msg.DYNAMIC_BOARD_CREATED, Placeholder.of("boardId", boardId));
     }
 
     private void handleRemove(CommandSender sender, String[] args) {
@@ -289,7 +289,7 @@ public final class DisplayBoardCommands {
             return;
         }
         presenter.destroyBoard(args[1]);
-        sender.sendMessage("Board '" + args[1] + "' removed.");
+        messages.success(sender, Msg.BOARD_REMOVED, Placeholder.of("boardId", args[1]));
     }
 
     private void handleSelectionSpawn(CommandSender sender, String[] args) {
@@ -314,7 +314,7 @@ public final class DisplayBoardCommands {
                 sender.sendMessage("Board id already exists or creation failed.");
                 return;
             }
-            sender.sendMessage("Dynamic board '" + boardId + "' created from selection.");
+            messages.success(sender, Msg.DYNAMIC_BOARD_CREATED_FROM_SELECTION, Placeholder.of("boardId", boardId));
             return;
         }
 
