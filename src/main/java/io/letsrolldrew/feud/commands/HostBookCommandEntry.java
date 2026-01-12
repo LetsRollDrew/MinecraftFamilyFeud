@@ -28,7 +28,7 @@ public final class HostBookCommandEntry {
             return true;
         }
 
-        String flavor = args.length >= 1 ? joinTail(args, 0) : "";
+        String flavor = args.length >= 1 ? CommandArgs.joinTail(args, 0) : "";
         String raw = flavor == null ? "" : flavor.trim();
         String head = raw.isBlank() ? "" : raw.split("\\s+", 2)[0].toLowerCase();
         String tail = raw.isBlank() ? "" : raw.replaceFirst("^\\S+\\s*", "");
@@ -43,12 +43,5 @@ public final class HostBookCommandEntry {
             default -> hostBookService.giveSelectorBook(player);
         }
         return true;
-    }
-
-    private static String joinTail(String[] args, int start) {
-        if (args == null || start >= args.length) {
-            return "";
-        }
-        return String.join(" ", java.util.Arrays.copyOfRange(args, start, args.length));
     }
 }

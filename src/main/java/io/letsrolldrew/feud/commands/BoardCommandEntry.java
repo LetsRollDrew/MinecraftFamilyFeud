@@ -43,7 +43,7 @@ public final class BoardCommandEntry {
         }
 
         String head = tokens[0].toLowerCase();
-        String[] tail = tail(tokens, 1);
+        String[] tail = CommandArgs.tail(tokens, 1);
 
         switch (head) {
             case "map":
@@ -105,14 +105,5 @@ public final class BoardCommandEntry {
             sender.sendMessage("Board map init failed (binding missing or world unloaded)");
         }
         return true;
-    }
-
-    private static String[] tail(String[] args, int start) {
-        if (start >= args.length) {
-            return new String[0];
-        }
-        String[] out = new String[args.length - start];
-        System.arraycopy(args, start, out, 0, args.length - start);
-        return out;
     }
 }

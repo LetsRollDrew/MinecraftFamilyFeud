@@ -27,7 +27,6 @@ import io.letsrolldrew.feud.ui.HostBookPage;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
-import java.util.Arrays;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -133,7 +132,7 @@ public final class FeudRootCommand implements CommandExecutor {
         }
 
         String head = args[0].toLowerCase();
-        String[] tail = tail(args, 1);
+        String[] tail = CommandArgs.tail(args, 1);
 
         switch (head) {
             case "help":
@@ -187,7 +186,7 @@ public final class FeudRootCommand implements CommandExecutor {
             hostBookAnchorStore.set(player.getUniqueId(), page);
         }
 
-        String actionId = joinTail(args, 3).trim();
+        String actionId = CommandArgs.joinTail(args, 3).trim();
         if (actionId.isBlank()) {
             sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
             return true;
@@ -242,21 +241,5 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud host book cleanup - cleanup remote");
         sender.sendMessage("/feud timer start|stop|reset|status");
         return true;
-    }
-
-    private static String[] tail(String[] args, int start) {
-        if (start >= args.length) {
-            return new String[0];
-        }
-        String[] out = new String[args.length - start];
-        System.arraycopy(args, start, out, 0, args.length - start);
-        return out;
-    }
-
-    private static String joinTail(String[] args, int start) {
-        if (args == null || start >= args.length) {
-            return "";
-        }
-        return String.join(" ", Arrays.copyOfRange(args, start, args.length));
     }
 }
