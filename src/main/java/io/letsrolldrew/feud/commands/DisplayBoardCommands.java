@@ -10,6 +10,8 @@ import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListene
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
@@ -73,7 +75,7 @@ public final class DisplayBoardCommands {
             return true;
         }
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permissions");
+            messages.error(sender, Msg.NEED_PERMISSION, Placeholder.of("permission", adminPermission));
             return true;
         }
         if (args.length == 0) {
@@ -96,11 +98,11 @@ public final class DisplayBoardCommands {
 
     private void handleRemote(CommandSender sender, String[] args) {
         if (hostPermission == null || !sender.hasPermission(hostPermission)) {
-            sender.sendMessage("Host only");
+            messages.error(sender, Msg.HOST_ONLY);
             return;
         }
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Players only");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
@@ -247,7 +249,7 @@ public final class DisplayBoardCommands {
 
     private void handleCreate(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can create a board");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
@@ -261,7 +263,7 @@ public final class DisplayBoardCommands {
 
     private void handleCreateDynamic(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can create a board");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
@@ -292,7 +294,7 @@ public final class DisplayBoardCommands {
 
     private void handleSelectionSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can spawn from a selection");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 3) {
@@ -389,7 +391,7 @@ public final class DisplayBoardCommands {
 
     private void handleWand(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the selector wand");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (selectionListener == null) {

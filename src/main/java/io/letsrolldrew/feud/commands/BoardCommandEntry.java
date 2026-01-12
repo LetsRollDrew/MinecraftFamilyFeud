@@ -7,6 +7,8 @@ import io.letsrolldrew.feud.board.render.BoardRenderer;
 import io.letsrolldrew.feud.board.render.MapIdStore;
 import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -76,12 +78,12 @@ public final class BoardCommandEntry {
 
     private boolean handleBoardWand(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to set up the board");
+            messages.error(sender, Msg.NEED_PERMISSION, Placeholder.of("permission", adminPermission));
             return true;
         }
 
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the board wand");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
         boardWandService.giveWand(player);
@@ -91,7 +93,7 @@ public final class BoardCommandEntry {
 
     private boolean handleBoardInitMaps(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to set up the board");
+            messages.error(sender, Msg.NEED_PERMISSION, Placeholder.of("permission", adminPermission));
             return true;
         }
         var bindingOpt = boardBindingStore.load();

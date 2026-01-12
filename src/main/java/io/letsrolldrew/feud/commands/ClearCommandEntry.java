@@ -7,6 +7,7 @@ import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -50,7 +51,7 @@ public final class ClearCommandEntry {
 
     private boolean handleClearAll(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("Admin only");
+            messages.error(sender, Msg.ADMIN_ONLY);
             return true;
         }
 
