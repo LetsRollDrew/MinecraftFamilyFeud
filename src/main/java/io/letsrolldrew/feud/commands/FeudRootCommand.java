@@ -20,6 +20,7 @@ import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
 import io.letsrolldrew.feud.team.TeamService;
@@ -182,7 +183,7 @@ public final class FeudRootCommand implements CommandExecutor {
 
     private boolean handleUiClick(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use the host book.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
         if (args.length < 4 || !"action".equalsIgnoreCase(args[2])) {
