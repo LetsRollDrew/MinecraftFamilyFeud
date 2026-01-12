@@ -1,16 +1,19 @@
 package io.letsrolldrew.feud.effects.timer;
 
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 
 public final class TimerCommands {
+    private final Messages messages;
     private final TimerService timerService;
     private final String hostPermission;
     private final String adminPermission;
 
-    public TimerCommands(TimerService timerService, String hostPermission, String adminPermission) {
+    public TimerCommands(Messages messages, TimerService timerService, String hostPermission, String adminPermission) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.timerService = Objects.requireNonNull(timerService, "timerService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");

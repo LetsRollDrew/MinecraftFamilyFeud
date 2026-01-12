@@ -1,25 +1,29 @@
 package io.letsrolldrew.feud.team;
 
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 
 public final class TeamCommands {
+    private final Messages messages;
     private final TeamService teamService;
     private final String hostPermission;
     private final String adminPermission;
     private final io.letsrolldrew.feud.effects.buzz.BuzzerCommands buzzerCommands;
 
-    public TeamCommands(TeamService teamService, String hostPermission, String adminPermission) {
-        this(teamService, hostPermission, adminPermission, null);
+    public TeamCommands(Messages messages, TeamService teamService, String hostPermission, String adminPermission) {
+        this(messages, teamService, hostPermission, adminPermission, null);
     }
 
     public TeamCommands(
+            Messages messages,
             TeamService teamService,
             String hostPermission,
             String adminPermission,
             io.letsrolldrew.feud.effects.buzz.BuzzerCommands buzzerCommands) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.teamService = Objects.requireNonNull(teamService, "teamService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");

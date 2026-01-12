@@ -1,5 +1,6 @@
 package io.letsrolldrew.feud.effects.buzz;
 
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.team.BlockRef;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
@@ -10,13 +11,19 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class BuzzerCommands {
+    private final Messages messages;
     private final BuzzerService buzzerService;
     private final TeamService teamService;
     private final String hostPermission;
     private final String adminPermission;
 
     public BuzzerCommands(
-            BuzzerService buzzerService, TeamService teamService, String hostPermission, String adminPermission) {
+            Messages messages,
+            BuzzerService buzzerService,
+            TeamService teamService,
+            String hostPermission,
+            String adminPermission) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.buzzerService = Objects.requireNonNull(buzzerService, "buzzerService");
         this.teamService = Objects.requireNonNull(teamService, "teamService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
