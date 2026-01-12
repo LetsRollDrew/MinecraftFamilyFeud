@@ -73,7 +73,7 @@ public final class UiCommand {
 
     private void handleReveal(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud ui reveal <1-8>");
+            messages.usage(sender, Msg.USAGE_UI_REVEAL);
             return;
         }
         int slot;
@@ -109,7 +109,7 @@ public final class UiCommand {
 
     private void handleAddPoints(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud ui add <points>");
+            messages.usage(sender, Msg.USAGE_UI_ADD);
             return;
         }
         int points;
@@ -130,7 +130,7 @@ public final class UiCommand {
 
     private void handleControl(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud ui control <red|blue>");
+            messages.usage(sender, Msg.USAGE_UI_CONTROL);
             return;
         }
         TeamControl team = TeamControl.fromString(args[1]);
@@ -163,7 +163,7 @@ public final class UiCommand {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud ui <reveal, strike, clearstrikes, add, control, award, reset>");
+        messages.usage(sender, Msg.USAGE_UI_ROOT);
     }
 
     private void refreshIfPlayer(CommandSender sender) {

@@ -187,7 +187,7 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
         if (args.length < 4 || !"action".equalsIgnoreCase(args[2])) {
-            sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            messages.usage(sender, Msg.USAGE_UI_CLICK);
             return true;
         }
 
@@ -198,7 +198,7 @@ public final class FeudRootCommand implements CommandExecutor {
 
         String actionId = CommandArgs.joinTail(args, 3).trim();
         if (actionId.isBlank()) {
-            sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            messages.usage(sender, Msg.USAGE_UI_CLICK);
             return true;
         }
 
@@ -227,29 +227,7 @@ public final class FeudRootCommand implements CommandExecutor {
     }
 
     private boolean handleHelp(CommandSender sender) {
-        sender.sendMessage("FamilyFeud commands:");
-        sender.sendMessage("/feud - show version");
-        sender.sendMessage("/feud help - this help");
-        sender.sendMessage("/feud version - show version");
-        sender.sendMessage("/feud survey ...");
-        sender.sendMessage("/feud team info - show teams");
-        sender.sendMessage("/feud team reset - reset teams");
-        sender.sendMessage("/feud team set <red|blue> name <new-name...>");
-        sender.sendMessage("/feud team buzzer bind|clear|test <red|blue>");
-        sender.sendMessage("/feud buzz reset");
-        sender.sendMessage("/feud host book - give host remote");
-        sender.sendMessage("/feud ui reveal <1-8> - reveal slot");
-        sender.sendMessage("/feud ui strike - add a strike");
-        sender.sendMessage("/feud ui clearstrikes - clear strikes");
-        sender.sendMessage("/feud ui add <points> - add points to round");
-        sender.sendMessage("/feud board wand - get Display Selector (admin)");
-        sender.sendMessage("/feud board initmaps - assign maps to board frames (admin)");
-        sender.sendMessage("/feud holo text spawn|set|move|remove ...");
-        sender.sendMessage("/feud holo item spawn|move|remove ...");
-        sender.sendMessage("/feud holo list");
-        sender.sendMessage("/feud clear all - remove all display entities");
-        sender.sendMessage("/feud host book cleanup - cleanup remote");
-        sender.sendMessage("/feud timer start|stop|reset|status");
+        messages.usage(sender, Msg.ROOT_HELP);
         return true;
     }
 }
