@@ -5,14 +5,17 @@ import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.util.Validation;
+import java.util.Objects;
 import java.util.function.Consumer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class UiCommand {
+    private final Messages messages;
     private final GameController controller;
     private final String hostPermission;
     private final Consumer<Player> bookRefresher;
@@ -23,6 +26,7 @@ public final class UiCommand {
     private final DisplayBoardPresenter displayBoardPresenter;
 
     public UiCommand(
+            Messages messages,
             GameController controller,
             String hostPermission,
             Consumer<Player> bookRefresher,
@@ -31,6 +35,7 @@ public final class UiCommand {
             ScorePanelPresenter scorePanelPresenter,
             ScorePanelStore scorePanelStore,
             DisplayBoardPresenter displayBoardPresenter) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.controller = controller;
         this.hostPermission = Validation.requireNonBlank(hostPermission, "host-permission");
         this.bookRefresher = bookRefresher;
