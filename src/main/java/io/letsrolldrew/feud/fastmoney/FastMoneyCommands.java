@@ -67,6 +67,36 @@ public final class FastMoneyCommands {
         };
     }
 
+    public boolean reveal(CommandSender sender, int questionIndex, int slot) {
+        if (!isHost(sender)) {
+            sender.sendMessage("You must be the host to run Fast Money commands");
+            return true;
+        }
+
+        if (questionIndex < 1 || slot < 1) {
+            sender.sendMessage("Question and slot must be positive.");
+            return true;
+        }
+
+        try {
+            FastMoneyPhase phase = service.state().phase();
+            if (phase == FastMoneyPhase.PLAYER1_TURN) {
+                service.awardPlayer1(questionIndex, slot);
+                sender.sendMessage("Awarded Player 1, question " + questionIndex + ", slot " + slot + ".");
+                return true;
+            }
+            if (phase == FastMoneyPhase.PLAYER2_TURN) {
+                service.awardPlayer2(questionIndex, slot);
+                sender.sendMessage("Awarded Player 2, question " + questionIndex + ", slot " + slot + ".");
+                return true;
+            }
+            sender.sendMessage("Fast Money round is not active.");
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            sender.sendMessage(ex.getMessage());
+        }
+        return true;
+    }
+
     private boolean set(CommandSender sender, String[] args) {
         if (args.length < 2) {
             sender.sendMessage("Usage: /feud fastmoney set <setId>");
