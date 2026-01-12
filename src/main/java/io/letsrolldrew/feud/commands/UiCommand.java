@@ -80,11 +80,11 @@ public final class UiCommand {
         try {
             slot = Integer.parseInt(args[1]);
         } catch (NumberFormatException ex) {
-            sender.sendMessage("Slot must be a number between 1 and 8.");
+            messages.error(sender, Msg.SLOT_MUST_BE_1_8);
             return;
         }
         if (slot < 1 || slot > 8) {
-            sender.sendMessage("Slot must be between 1 and 8.");
+            messages.error(sender, Msg.SLOT_MUST_BE_1_8);
             return;
         }
         controller.revealSlot(slot);
@@ -135,7 +135,7 @@ public final class UiCommand {
         }
         TeamControl team = TeamControl.fromString(args[1]);
         if (team == TeamControl.NONE) {
-            sender.sendMessage("Team must be red or blue.");
+            messages.error(sender, Msg.TEAM_MUST_BE_RED_BLUE);
             return;
         }
         controller.setControllingTeam(team);

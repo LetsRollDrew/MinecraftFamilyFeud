@@ -43,7 +43,7 @@ public final class BuzzerCommands {
         String action = args[0].toLowerCase(Locale.ROOT);
         TeamId team = TeamId.fromString(args[1]);
         if (team == null) {
-            sender.sendMessage("Team must be red or blue.");
+            messages.error(sender, Msg.TEAM_MUST_BE_RED_BLUE);
             return true;
         }
 

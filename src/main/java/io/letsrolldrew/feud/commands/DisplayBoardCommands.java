@@ -154,11 +154,11 @@ public final class DisplayBoardCommands {
         try {
             slot = Integer.parseInt(args[3]);
         } catch (NumberFormatException ex) {
-            sender.sendMessage("Slot must be 1-8");
+            messages.error(sender, Msg.SLOT_MUST_BE_1_8);
             return;
         }
         if (slot < 1 || slot > 8) {
-            sender.sendMessage("Slot must be 1-8");
+            messages.error(sender, Msg.SLOT_MUST_BE_1_8);
             return;
         }
 
@@ -179,7 +179,7 @@ public final class DisplayBoardCommands {
         }
         TeamControl team = TeamControl.fromString(args[3]);
         if (team == TeamControl.NONE) {
-            sender.sendMessage("Team must be red or blue");
+            messages.error(sender, Msg.TEAM_MUST_BE_RED_BLUE);
             return;
         }
         controller.setControllingTeam(team);

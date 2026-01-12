@@ -43,7 +43,7 @@ public final class TimerCommands {
     private void handleStart(CommandSender sender, String[] args) {
         Integer seconds = parseSeconds(args, 1);
         if (seconds != null && seconds < 0) {
-            sender.sendMessage("Seconds can't be negative");
+            messages.error(sender, Msg.SECONDS_CANNOT_BE_NEGATIVE);
             return;
         }
         if (seconds == null) {
@@ -63,7 +63,7 @@ public final class TimerCommands {
     private void handleReset(CommandSender sender, String[] args) {
         Integer seconds = parseSeconds(args, 1);
         if (seconds != null && seconds < 0) {
-            sender.sendMessage("Seconds can't be negative");
+            messages.error(sender, Msg.SECONDS_CANNOT_BE_NEGATIVE);
             return;
         }
         if (seconds == null) {

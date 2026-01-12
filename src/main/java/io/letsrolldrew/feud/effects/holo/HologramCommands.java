@@ -86,7 +86,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (service.exists(id)) {
@@ -106,7 +106,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
@@ -129,7 +129,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
@@ -147,7 +147,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
@@ -211,7 +211,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         Material material = Material.ECHO_SHARD; // default material justincase for testing
@@ -254,7 +254,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
@@ -272,7 +272,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         service.removeItem(id);

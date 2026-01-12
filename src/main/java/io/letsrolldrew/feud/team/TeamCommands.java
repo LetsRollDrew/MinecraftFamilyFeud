@@ -71,7 +71,7 @@ public final class TeamCommands {
 
         TeamId team = TeamId.fromString(args[1]);
         if (team == null) {
-            sender.sendMessage("Team must be red or blue.");
+            messages.error(sender, Msg.TEAM_MUST_BE_RED_BLUE);
             return;
         }
 
