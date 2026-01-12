@@ -15,6 +15,8 @@ import io.letsrolldrew.feud.commands.spec.CommandSpecificationNode;
 import io.letsrolldrew.feud.commands.spec.SpecificationDispatcher;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
+import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
@@ -29,12 +31,15 @@ import io.letsrolldrew.feud.ui.HostBookAnchorStore;
 import io.letsrolldrew.feud.ui.HostBookPage;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.ui.actions.ActionIds;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import java.util.Arrays;
+import java.util.Locale;
 import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -75,6 +80,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final ScorePanelStore scorePanelStore;
     private final TimerPanelStore timerPanelStore;
     private final HostBookAnchorStore hostBookAnchorStore;
+    private final DisplayBoardSelectionStore displayBoardSelectionStore;
     private final SpecificationDispatcher dispatcher;
     private final CommandSpecificationNode commandSpec;
 
@@ -102,7 +108,8 @@ public final class FeudRootCommand implements CommandExecutor {
             DisplayRegistry displayRegistry,
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore,
-            HostBookAnchorStore hostBookAnchorStore) {
+            HostBookAnchorStore hostBookAnchorStore,
+            DisplayBoardSelectionStore displayBoardSelectionStore) {
         this.plugin = plugin;
         this.surveyRepository = surveyRepository;
         this.hostBookUiBuilder = hostBookUiBuilder;
@@ -132,6 +139,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.scorePanelStore = scorePanelStore;
         this.timerPanelStore = timerPanelStore;
         this.hostBookAnchorStore = hostBookAnchorStore;
+        this.displayBoardSelectionStore = displayBoardSelectionStore;
         this.commandSpec = commandSpec;
         this.dispatcher = new SpecificationDispatcher(commandSpec);
         this.uiCommand = new UiCommand(
@@ -220,8 +228,182 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
 
+        if (executeUiAction(player, actionId.toLowerCase(Locale.ROOT))) {
+            giveOrReplaceHostBook(player);
+            return true;
+        }
+
         sender.sendMessage("Unknown UI action: " + actionId);
         giveOrReplaceHostBook(player);
+        return true;
+    }
+
+    private boolean executeUiAction(Player player, String actionId) {
+        if (actionId.startsWith("control.reveal.")) {
+            String slot = actionId.substring("control.reveal.".length());
+            return runPlayerCommand(player, "feud ui reveal " + slot);
+        }
+
+        if (actionId.equals(ActionIds.controlStrike())) {
+            return runPlayerCommand(player, "feud ui strike");
+        }
+
+        if (actionId.equals(ActionIds.controlClearStrikes())) {
+            return runPlayerCommand(player, "feud ui clearstrikes");
+        }
+
+        if (actionId.equals(ActionIds.controlControlRed())) {
+            return runPlayerCommand(player, "feud ui control red");
+        }
+
+        if (actionId.equals(ActionIds.controlControlBlue())) {
+            return runPlayerCommand(player, "feud ui control blue");
+        }
+
+        if (actionId.equals(ActionIds.controlAward())) {
+            return runPlayerCommand(player, "feud ui award");
+        }
+
+        if (actionId.equals(ActionIds.controlReset())) {
+            return runPlayerCommand(player, "feud ui reset");
+        }
+
+        if (actionId.startsWith("surveys.load.")) {
+            String surveyId = actionId.substring("surveys.load.".length());
+            return runPlayerCommand(player, "feud survey load " + surveyId);
+        }
+
+        if (actionId.equals(ActionIds.hostConfigTeamInfo())) {
+            return runPlayerCommand(player, "feud team info");
+        }
+
+        if (actionId.equals(ActionIds.hostConfigTimerStart())) {
+            return runPlayerCommand(player, "feud timer start");
+        }
+
+        if (actionId.equals(ActionIds.hostConfigTimerStop())) {
+            return runPlayerCommand(player, "feud timer stop");
+        }
+
+        if (actionId.equals(ActionIds.hostConfigTimerReset())) {
+            return runPlayerCommand(player, "feud timer reset");
+        }
+
+        if (actionId.equals(ActionIds.hostConfigTimerStatus())) {
+            return runPlayerCommand(player, "feud timer status");
+        }
+
+        if (actionId.equals(ActionIds.hostConfigBuzzReset())) {
+            return runPlayerCommand(player, "feud buzz reset");
+        }
+
+        if (actionId.equals(ActionIds.fastMoneyBindP1())) {
+            return runPlayerCommand(player, "feud fastmoney bind p1");
+        }
+
+        if (actionId.equals(ActionIds.fastMoneyBindP2())) {
+            return runPlayerCommand(player, "feud fastmoney bind p2");
+        }
+
+        if (actionId.equals(ActionIds.fastMoneyBindClear())) {
+            return runPlayerCommand(player, "feud fastmoney bind clear");
+        }
+
+        if (actionId.startsWith("fastmoney.set.")) {
+            String setId = actionId.substring("fastmoney.set.".length());
+            return runPlayerCommand(player, "feud fastmoney set " + setId);
+        }
+
+        if (actionId.equals(ActionIds.fastMoneyStart())) {
+            return runPlayerCommand(player, "feud fastmoney start");
+        }
+
+        if (actionId.equals(ActionIds.fastMoneyStop())) {
+            return runPlayerCommand(player, "feud fastmoney stop");
+        }
+
+        if (actionId.equals(ActionIds.fastMoneyStatus())) {
+            return runPlayerCommand(player, "feud fastmoney status");
+        }
+
+        if (actionId.startsWith("fastmoney.reveal.")) {
+            handleFastMoneyReveal(player, actionId);
+            return true;
+        }
+
+        if (actionId.equals(ActionIds.selectorGiveSelector())) {
+            return runPlayerCommand(player, "feud board display wand");
+        }
+
+        if (actionId.equals(ActionIds.selectorBindBlue())) {
+            return runPlayerCommand(player, "feud team buzzer bind blue");
+        }
+
+        if (actionId.equals(ActionIds.selectorBindRed())) {
+            return runPlayerCommand(player, "feud team buzzer bind red");
+        }
+
+        if (actionId.equals(ActionIds.selectorViewSelection())) {
+            describeSelection(player);
+            return true;
+        }
+
+        if (actionId.startsWith("selector.spawn.")) {
+            player.sendMessage("Selection spawn actions are not yet wired to commands.");
+            return true;
+        }
+
+        return false;
+    }
+
+    private void handleFastMoneyReveal(Player player, String actionId) {
+        if (player == null) {
+            return;
+        }
+
+        String suffix = actionId.substring("fastmoney.reveal.".length());
+        String[] parts = suffix.split("\\.");
+        if (parts.length != 2) {
+            player.sendMessage("Invalid Fast Money reveal action: " + actionId);
+            return;
+        }
+
+        int questionIndex;
+        int slot;
+        try {
+            questionIndex = Integer.parseInt(parts[0]);
+            slot = Integer.parseInt(parts[1]);
+        } catch (NumberFormatException ex) {
+            player.sendMessage("Invalid Fast Money indices in action: " + actionId);
+            return;
+        }
+
+        fastMoneyCommands.reveal(player, questionIndex, slot);
+    }
+
+    private void describeSelection(Player player) {
+        if (displayBoardSelectionStore == null) {
+            player.sendMessage("No selection information available.");
+            return;
+        }
+        DisplayBoardSelection selection = displayBoardSelectionStore.get(player.getUniqueId());
+        if (selection == null) {
+            player.sendMessage("No active display selection.");
+            return;
+        }
+        player.sendMessage("Selection: " + selection.cornerA() + " to " + selection.cornerB() + " facing "
+                + selection.facing().name());
+    }
+
+    private void senderRevealPlaceholder(Player player, String actionId) {
+        player.sendMessage("Fast Money reveal action '" + actionId + "' is not wired yet.");
+    }
+
+    private boolean runPlayerCommand(Player player, String command) {
+        if (player == null || command == null || command.isBlank()) {
+            return false;
+        }
+        Bukkit.dispatchCommand(player, command);
         return true;
     }
 

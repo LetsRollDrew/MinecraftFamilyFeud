@@ -252,7 +252,8 @@ public final class PluginBootstrap {
                 displayRegistry,
                 scorePanelStore,
                 timerPanelStore,
-                hostBookAnchorStore);
+                hostBookAnchorStore,
+                displayBoardSelectionStore);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand, commandSpec);
     }
