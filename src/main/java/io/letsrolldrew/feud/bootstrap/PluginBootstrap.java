@@ -232,7 +232,6 @@ public final class PluginBootstrap {
                 plugin,
                 surveyRepository,
                 hostBookUiBuilder,
-                displayHostBookUiBuilder,
                 hostRemoteService,
                 config.hostPermission(),
                 "familyfeud.admin",
