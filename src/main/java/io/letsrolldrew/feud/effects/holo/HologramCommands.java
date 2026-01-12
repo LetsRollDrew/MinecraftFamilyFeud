@@ -1,6 +1,8 @@
 package io.letsrolldrew.feud.effects.holo;
 
+import io.letsrolldrew.feud.messages.Messages;
 import java.util.Map;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -9,10 +11,12 @@ import org.bukkit.entity.Player;
 
 // Handles /feud holo subcommands
 public final class HologramCommands {
+    private final Messages messages;
     private final HologramService service;
     private final String adminPermission = "familyfeud.admin";
 
-    public HologramCommands(HologramService service) {
+    public HologramCommands(Messages messages, HologramService service) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.service = service;
     }
 

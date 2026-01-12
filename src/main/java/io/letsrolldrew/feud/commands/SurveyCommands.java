@@ -1,16 +1,21 @@
 package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.game.GameController;
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.survey.Survey;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import java.util.Objects;
 import org.bukkit.command.CommandSender;
 
 public final class SurveyCommands {
+    private final Messages messages;
     private final SurveyRepository surveyRepository;
     private final String hostPermission;
     private final GameController controller;
 
-    public SurveyCommands(SurveyRepository surveyRepository, String hostPermission, GameController controller) {
+    public SurveyCommands(
+            Messages messages, SurveyRepository surveyRepository, String hostPermission, GameController controller) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.surveyRepository = surveyRepository;
         this.hostPermission = hostPermission;
         this.controller = controller;
