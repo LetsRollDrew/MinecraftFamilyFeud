@@ -2,7 +2,6 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.BoardBindingStore;
 import io.letsrolldrew.feud.board.BoardWandService;
-import io.letsrolldrew.feud.board.MapWallBinder;
 import io.letsrolldrew.feud.board.display.DisplayBoardService;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelPresenter;
 import io.letsrolldrew.feud.board.display.panels.ScorePanelStore;
@@ -14,7 +13,6 @@ import io.letsrolldrew.feud.board.render.TileFramebufferStore;
 import io.letsrolldrew.feud.commands.spec.CommandSpecificationNode;
 import io.letsrolldrew.feud.commands.spec.SpecificationDispatcher;
 import io.letsrolldrew.feud.display.DisplayRegistry;
-import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
@@ -38,27 +36,16 @@ import org.bukkit.plugin.Plugin;
 
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
-    private final String hostPermission;
-    private final String adminPermission;
-    private final GameController gameController;
-    private final BoardWandService boardWandService;
-    private final BoardBindingStore boardBindingStore;
-    private final MapIdStore mapIdStore;
-    private final TileFramebufferStore framebufferStore;
-    private final BoardRenderer boardRenderer;
     private final UiCommand uiCommand;
     private final HologramCommands hologramCommands;
-    private final DisplayBoardCommands boardCommands;
-    private final io.letsrolldrew.feud.effects.holo.HologramService hologramService;
-    private final DisplayBoardService displayBoardPresenter;
+    private final BoardCommandEntry boardCommandEntry;
+    private final HostBookCommandEntry hostBookCommandEntry;
+    private final ClearCommandEntry clearCommandEntry;
     private final SurveyCommands surveyCommands;
     private final TeamCommands teamCommands;
     private final TimerCommands timerCommands;
     private final BuzzerCommands buzzerCommands;
     private final FastMoneyCommands fastMoneyCommands;
-    private final DisplayRegistry displayRegistry;
-    private final ScorePanelStore scorePanelStore;
-    private final TimerPanelStore timerPanelStore;
     private final HostBookAnchorStore hostBookAnchorStore;
     private final HostBookActionRouter hostBookActionRouter;
     private final HostBookService hostBookService;
@@ -90,31 +77,35 @@ public final class FeudRootCommand implements CommandExecutor {
             HostBookAnchorStore hostBookAnchorStore,
             DisplayBoardSelectionStore displayBoardSelectionStore) {
         this.plugin = plugin;
-        this.hostPermission = hostPermission;
-        this.adminPermission = adminPermission;
-        this.gameController = gameController;
-        this.boardWandService = boardWandService;
-        this.boardBindingStore = boardBindingStore;
-        this.mapIdStore = mapIdStore;
-        this.framebufferStore = framebufferStore;
-        this.boardRenderer = boardRenderer;
         this.hologramCommands = commandModules.hologramCommands();
-        this.boardCommands = commandModules.displayBoardCommands();
-        this.hologramService = hologramService;
-        this.displayBoardPresenter = displayBoardPresenter;
+        DisplayBoardCommands boardCommands = commandModules.displayBoardCommands();
         this.surveyCommands = commandModules.surveyCommands();
         this.teamCommands = commandModules.teamCommands();
         this.timerCommands = commandModules.timerCommands();
         this.buzzerCommands = commandModules.buzzerCommands();
         this.fastMoneyCommands = commandModules.fastMoneyCommands();
-        this.displayRegistry = displayRegistry;
-        this.scorePanelStore = scorePanelStore;
-        this.timerPanelStore = timerPanelStore;
         this.hostBookAnchorStore = hostBookAnchorStore;
         this.hostBookActionRouter =
                 new HostBookActionRouter(commandModules.fastMoneyCommands(), displayBoardSelectionStore);
         this.hostBookService = new HostBookService(
                 gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
+        this.boardCommandEntry = new BoardCommandEntry(
+                boardCommands,
+                adminPermission,
+                boardWandService,
+                boardBindingStore,
+                mapIdStore,
+                framebufferStore,
+                boardRenderer);
+        this.hostBookCommandEntry = new HostBookCommandEntry(hostPermission, hostBookService, displayBoardPresenter);
+        this.clearCommandEntry = new ClearCommandEntry(
+                plugin,
+                adminPermission,
+                displayRegistry,
+                displayBoardPresenter,
+                hologramService,
+                scorePanelStore,
+                timerPanelStore);
         this.dispatcher = new SpecificationDispatcher(commandSpec);
         this.uiCommand = new UiCommand(
                 gameController,
@@ -154,7 +145,7 @@ public final class FeudRootCommand implements CommandExecutor {
             case "holo":
                 return hologramCommands.handle(sender, tail);
             case "board":
-                return handleBoard(sender, args);
+                return boardCommandEntry.handle(sender, tail);
             case "survey":
                 return surveyCommands.handle(sender, tail);
             case "team":
@@ -166,9 +157,9 @@ public final class FeudRootCommand implements CommandExecutor {
             case "fastmoney":
                 return fastMoneyCommands.handle(sender, tail);
             case "host":
-                return handleHostArgs(sender, args);
+                return hostBookCommandEntry.handle(sender, tail);
             case "clear":
-                return handleClearArgs(sender, args);
+                return clearCommandEntry.handle(sender, tail);
             default:
                 return handleHelp(sender);
         }
@@ -218,45 +209,6 @@ public final class FeudRootCommand implements CommandExecutor {
         return handled ? 1 : 0;
     }
 
-    private boolean handleClearArgs(CommandSender sender, String[] args) {
-        if (args.length >= 2 && "all".equalsIgnoreCase(args[1])) {
-            return handleClearAll(sender);
-        }
-        sender.sendMessage("Usage: /feud clear all");
-        return true;
-    }
-
-    private boolean handleHostArgs(CommandSender sender, String[] args) {
-        if (args.length >= 2 && "book".equalsIgnoreCase(args[1])) {
-            String flavor = args.length >= 3 ? joinTail(args, 2) : "";
-            return handleHostBook(sender, flavor);
-        }
-        sender.sendMessage("Usage: /feud host book [map|display|cleanup]");
-        return true;
-    }
-
-    private boolean handleBoard(CommandSender sender, String[] args) {
-        if (args.length >= 2 && args[1].equalsIgnoreCase("map")) {
-            if (args.length >= 3 && args[2].equalsIgnoreCase("wand")) {
-                return handleBoardWand(sender);
-            }
-
-            if (args.length >= 3 && args[2].equalsIgnoreCase("initmaps")) {
-                return handleBoardInitMaps(sender);
-            }
-
-            sender.sendMessage("Board map commands: /feud board map wand | /feud board map initmaps");
-            return true;
-        }
-
-        if (args.length >= 2 && args[1].equalsIgnoreCase("display")) {
-            return boardCommands.handle(sender, tail(args, 2));
-        }
-
-        sender.sendMessage("Board commands: /feud board map ... | /feud board display ...");
-        return true;
-    }
-
     @SuppressWarnings("deprecation") // Plugin#getDescription is deprecated, fix later
     private boolean handleVersion(CommandSender sender) {
         String version = plugin.getDescription().getVersion();
@@ -290,106 +242,6 @@ public final class FeudRootCommand implements CommandExecutor {
         sender.sendMessage("/feud host book cleanup - cleanup remote");
         sender.sendMessage("/feud timer start|stop|reset|status");
         return true;
-    }
-
-    private boolean handleBoardWand(CommandSender sender) {
-
-        if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to set up the board.");
-            return true;
-        }
-
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the board wand.");
-            return true;
-        }
-        boardWandService.giveWand(player);
-        sender.sendMessage(
-                "Board wand given. Right-click the top-left frame, then right-click the bottom-right frame.");
-        return true;
-    }
-
-    private boolean handleBoardInitMaps(CommandSender sender) {
-        if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permission to set up the board.");
-            return true;
-        }
-        var bindingOpt = boardBindingStore.load();
-        if (bindingOpt.isEmpty()) {
-            sender.sendMessage("No board binding found. Use /feud board wand first.");
-            return true;
-        }
-        MapWallBinder binder = new MapWallBinder(bindingOpt.get(), mapIdStore, framebufferStore);
-        boolean ok = binder.bind();
-        if (ok) {
-            sender.sendMessage("Board maps initialized.");
-            boardRenderer.paintBase();
-            boardRenderer.paintHiddenCovers();
-            sender.sendMessage("Board base painted.");
-        } else {
-            sender.sendMessage("Board map init failed (binding missing or world unloaded).");
-        }
-        return true;
-    }
-
-    private boolean handleHostBook(CommandSender sender, String flavor) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the host book.");
-            return true;
-        }
-        if (!player.hasPermission(hostPermission)) {
-            sender.sendMessage("You must be the host to use this.");
-            return true;
-        }
-        String raw = flavor == null ? "" : flavor.trim();
-        String head = raw.isBlank() ? "" : raw.split("\\s+", 2)[0].toLowerCase();
-        String tail = raw.isBlank() ? "" : raw.replaceFirst("^\\S+\\s*", "");
-
-        switch (head) {
-            case "map" -> hostBookService.giveMapBook(player);
-            case "display" -> {
-                java.util.List<String> ids = new java.util.ArrayList<>(displayBoardPresenter.listBoards());
-                hostBookService.giveDisplayBook(player, ids, tail);
-            }
-            case "cleanup" -> hostBookService.giveCleanupBook(player);
-            default -> hostBookService.giveSelectorBook(player);
-        }
-        return true;
-    }
-
-    private boolean handleClearAll(CommandSender sender) {
-        if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("Admin only");
-            return true;
-        }
-
-        int removed = displayRegistry.removeAll();
-        removed += removeTaggedDisplays("board");
-
-        displayBoardPresenter.clearAll();
-        hologramService.clearAll();
-        if (scorePanelStore != null) {
-            scorePanelStore.clear();
-        }
-        if (timerPanelStore != null) {
-            timerPanelStore.clear();
-        }
-
-        sender.sendMessage("Cleared " + removed + " displays");
-        return true;
-    }
-
-    private int removeTaggedDisplays(String kind) {
-        int removed = 0;
-        for (var world : plugin.getServer().getWorlds()) {
-            for (org.bukkit.entity.Display display : world.getEntitiesByClass(org.bukkit.entity.Display.class)) {
-                if (DisplayTags.isManaged(display, kind)) {
-                    display.remove();
-                    removed++;
-                }
-            }
-        }
-        return removed;
     }
 
     private static String[] tail(String[] args, int start) {
