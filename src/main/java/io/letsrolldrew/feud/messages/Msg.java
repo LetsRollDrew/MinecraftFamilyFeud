@@ -37,6 +37,54 @@ public enum Msg {
     ITEM_HOLOGRAM_REMOVED("Removed item hologram '{id}'"),
     UNKNOWN_MATERIAL("Unknown material: {material}"),
 
+    ROOT_HELP("FamilyFeud commands:\n"
+            + "/feud - show version\n"
+            + "/feud help - this help\n"
+            + "/feud version - show version\n"
+            + "/feud survey ...\n"
+            + "/feud team info - show teams\n"
+            + "/feud team reset - reset teams\n"
+            + "/feud team set <red|blue> name <new-name...>\n"
+            + "/feud team buzzer bind|clear|test <red|blue>\n"
+            + "/feud buzz reset\n"
+            + "/feud host book - give host remote\n"
+            + "/feud ui reveal <1-8> - reveal slot\n"
+            + "/feud ui strike - add a strike\n"
+            + "/feud ui clearstrikes - clear strikes\n"
+            + "/feud ui add <points> - add points to round\n"
+            + "/feud board wand - get Display Selector (admin)\n"
+            + "/feud board initmaps - assign maps to board frames (admin)\n"
+            + "/feud holo text spawn|set|move|remove ...\n"
+            + "/feud holo item spawn|move|remove ...\n"
+            + "/feud holo list\n"
+            + "/feud clear all - remove all display entities\n"
+            + "/feud host book cleanup - cleanup remote\n"
+            + "/feud timer start|stop|reset|status"),
+
+    BOARD_ENTRY_HELP("Board commands: map | display ..."),
+    BOARD_MAP_HELP("Board map commands: /feud board map wand | /feud board map initmaps"),
+    BOARD_DISPLAY_HELP("Board commands: create/dynamic/list/remove/wand (selector)"),
+
+    TEAM_HELP("Team commands:\n"
+            + "/feud team info\n"
+            + "/feud team reset\n"
+            + "/feud team set <red|blue> name <new-name>\n"
+            + "/feud team buzzer bind|clear|test <red|blue>"),
+
+    SURVEY_HELP("Survey commands:\n" + "/feud survey list\n" + "/feud survey load <id>"),
+
+    HOLO_HELP("Usage: /feud holo text <spawn|set|move|remove> ...\n"
+            + "       /feud holo item <spawn|move|remove> ...\n"
+            + "       /feud holo list"),
+    HOLO_TEXT_USAGE("Usage: /feud holo text spawn <id> <text> | set <id> <text> | move <id> | remove <id>"),
+    HOLO_TEXT_SPAWN_USAGE("Usage: /feud holo text spawn <id> <text>"),
+    HOLO_TEXT_SET_USAGE("Usage: /feud holo text set <id> <text>"),
+    HOLO_TEXT_MOVE_USAGE("Usage: /feud holo text move <id>"),
+    HOLO_TEXT_REMOVE_USAGE("Usage: /feud holo text remove <id>"),
+    HOLO_ITEM_USAGE("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>"),
+
+    FAST_MONEY_HELP("Fast Money: set|start|stop|status|bind|answer|board"),
+
     USAGE_CLEAR_ALL("Usage: /feud clear all"),
     USAGE_HOST_BOOK("Usage: /feud host book [map|display|cleanup]"),
     USAGE_UI_ROOT("Usage: /feud ui <reveal, strike, clearstrikes, add, control, award, reset>"),
