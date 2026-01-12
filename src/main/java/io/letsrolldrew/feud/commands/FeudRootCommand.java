@@ -204,17 +204,17 @@ public final class FeudRootCommand implements CommandExecutor {
             sender.sendMessage("Only players can use the host book.");
             return true;
         }
-        if (args.length < 3 || !"action".equalsIgnoreCase(args[1])) {
+        if (args.length < 4 || !"action".equalsIgnoreCase(args[2])) {
             sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
             return true;
         }
 
-        HostBookPage page = HostBookPage.fromToken(args[0]);
+        HostBookPage page = HostBookPage.fromToken(args[1]);
         if (page != null) {
             hostBookAnchorStore.set(player.getUniqueId(), page);
         }
 
-        String actionId = joinTail(args, 2).replaceFirst("(?i)^action\\s*", "").trim();
+        String actionId = joinTail(args, 3).trim();
         if (actionId.isBlank()) {
             sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
             return true;
