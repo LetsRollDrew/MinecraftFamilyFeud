@@ -5,6 +5,7 @@ import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
 import java.util.Locale;
@@ -16,6 +17,7 @@ import org.bukkit.entity.Player;
 public final class FastMoneyCommands {
     private static final String DEFAULT_BOARD_ID = "board1";
 
+    private final Messages messages;
     private final FastMoneyService service;
     private final FastMoneySurveySetStore surveySetStore;
     private final FastMoneyPlayerBindService bindService;
@@ -26,6 +28,7 @@ public final class FastMoneyCommands {
     private final String adminPermission;
 
     public FastMoneyCommands(
+            Messages messages,
             FastMoneyService service,
             FastMoneySurveySetStore surveySetStore,
             FastMoneyPlayerBindService bindService,
@@ -34,6 +37,7 @@ public final class FastMoneyCommands {
             FastMoneyBackdropPresenter backdropPresenter,
             String hostPermission,
             String adminPermission) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.service = Objects.requireNonNull(service, "service");
         this.surveySetStore = Objects.requireNonNull(surveySetStore, "surveySetStore");
         this.bindService = Objects.requireNonNull(bindService, "bindService");

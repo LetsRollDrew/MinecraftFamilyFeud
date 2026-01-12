@@ -9,16 +9,19 @@ import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
+import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import java.util.Objects;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class DisplayBoardCommands {
+    private final Messages messages;
     private final DisplayBoardService presenter;
     private final String adminPermission;
     private final DisplayBoardSelectionListener selectionListener;
@@ -34,6 +37,7 @@ public final class DisplayBoardCommands {
     private final TimerPanelStore timerPanelStore;
 
     public DisplayBoardCommands(
+            Messages messages,
             DisplayBoardService presenter,
             String adminPermission,
             DisplayBoardSelectionListener selectionListener,
@@ -47,6 +51,7 @@ public final class DisplayBoardCommands {
             TimerPanelPresenter timerPanelPresenter,
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
