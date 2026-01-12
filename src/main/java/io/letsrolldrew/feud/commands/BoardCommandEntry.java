@@ -80,8 +80,7 @@ public final class BoardCommandEntry {
             return true;
         }
         boardWandService.giveWand(player);
-        sender.sendMessage(
-                "Board wand given. Right-click the top-left frame, then right-click the bottom-right frame");
+        sender.sendMessage("Board wand given. Right-click the top-left frame, then right-click the bottom-right frame");
         return true;
     }
 
