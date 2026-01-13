@@ -1,7 +1,11 @@
 package io.letsrolldrew.feud.effects.board.selection;
 
 import io.letsrolldrew.feud.board.display.BoardFacing;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -25,6 +29,7 @@ import org.joml.Vector3d;
 
 public final class DisplayBoardSelectionListener implements Listener {
 
+    private final Messages messages;
     private final Plugin plugin;
     private final NamespacedKey wandKey;
     private final DisplayBoardSelectionStore store;
@@ -32,10 +37,12 @@ public final class DisplayBoardSelectionListener implements Listener {
     private final Map<UUID, Partial> partials = new ConcurrentHashMap<>();
 
     public DisplayBoardSelectionListener(
+            Messages messages,
             Plugin plugin,
             NamespacedKey wandKey,
             DisplayBoardSelectionStore store,
             Consumer<Player> selectionRefresher) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.plugin = plugin;
         this.wandKey = wandKey;
         this.store = store;
@@ -76,7 +83,7 @@ public final class DisplayBoardSelectionListener implements Listener {
         BlockFace face = event.getBlockFace();
         BoardFacing facing = toBoardFacing(face);
         if (facing == null) {
-            player.sendMessage("Select a vertical face (north/east/south/west)");
+            messages.error(player, Msg.DISPLAY_SELECTOR_FACE_PROMPT);
             return;
         }
 
@@ -90,36 +97,37 @@ public final class DisplayBoardSelectionListener implements Listener {
         Partial first = partials.get(player.getUniqueId());
         if (first == null) {
             partials.put(player.getUniqueId(), new Partial(worldId, corner, facing, normal));
-            player.sendMessage("Corner 1 set. Click opposite corner on the same face.");
+            messages.info(player, Msg.DISPLAY_SELECTION_CORNER_1_SET);
             return;
         }
 
         if (!first.worldId.equals(worldId)) {
-            player.sendMessage("Selection failed: corners must be in the same world.");
+            messages.error(player, Msg.DISPLAY_SELECTION_FAILED_SAME_WORLD);
             partials.remove(player.getUniqueId());
             return;
         }
         if (first.facing != facing) {
-            player.sendMessage("Selection failed: corners must be on the same face.");
+            messages.error(player, Msg.DISPLAY_SELECTION_FAILED_SAME_FACE);
             partials.remove(player.getUniqueId());
             return;
         }
 
         // verify plane: for north/south, z should match, for east/west, x should match
         if ((facing == BoardFacing.NORTH || facing == BoardFacing.SOUTH) && first.corner.z != corner.z) {
-            player.sendMessage("Selection failed: not on the same wall (z mismatch).");
+            messages.error(player, Msg.DISPLAY_SELECTION_FAILED_Z_MISMATCH);
             partials.remove(player.getUniqueId());
             return;
         }
         if ((facing == BoardFacing.EAST || facing == BoardFacing.WEST) && first.corner.x != corner.x) {
-            player.sendMessage("Selection failed: not on the same wall (x mismatch).");
+            messages.error(player, Msg.DISPLAY_SELECTION_FAILED_X_MISMATCH);
             partials.remove(player.getUniqueId());
             return;
         }
 
         DisplayBoardSelection selection = new DisplayBoardSelection(worldId, first.corner, corner, facing, normal);
         if (selection.isInvalid()) {
-            player.sendMessage("Selection failed: " + selection.invalidReason());
+            messages.error(
+                    player, Msg.DISPLAY_SELECTION_FAILED_REASON, Placeholder.of("reason", selection.invalidReason()));
             partials.remove(player.getUniqueId());
             return;
         }
@@ -129,8 +137,12 @@ public final class DisplayBoardSelectionListener implements Listener {
 
         double width = Math.abs(first.corner.x - corner.x) + 1;
         double height = Math.abs(first.corner.y - corner.y) + 1;
-        player.sendMessage(
-                "Display selection saved: width=" + width + " height=" + height + " facing=" + facing.name());
+        messages.success(
+                player,
+                Msg.DISPLAY_SELECTION_SAVED,
+                Placeholder.of("width", width),
+                Placeholder.of("height", height),
+                Placeholder.of("facing", facing.name()));
         if (selectionRefresher != null) {
             selectionRefresher.accept(player);
         }

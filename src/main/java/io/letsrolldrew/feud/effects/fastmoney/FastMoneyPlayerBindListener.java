@@ -1,5 +1,8 @@
 package io.letsrolldrew.feud.effects.fastmoney;
 
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.Objects;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,9 +12,11 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public final class FastMoneyPlayerBindListener implements Listener {
+    private final Messages messages;
     private final FastMoneyPlayerBindService bindService;
 
-    public FastMoneyPlayerBindListener(FastMoneyPlayerBindService bindService) {
+    public FastMoneyPlayerBindListener(Messages messages, FastMoneyPlayerBindService bindService) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.bindService = Objects.requireNonNull(bindService, "bindService");
     }
 
@@ -27,7 +32,7 @@ public final class FastMoneyPlayerBindListener implements Listener {
 
         boolean bound = bindService.bindIfArmed(host.getUniqueId(), target.getUniqueId(), target.getName());
         if (bound) {
-            host.sendMessage("Fast Money: bound " + target.getName());
+            messages.success(host, Msg.FAST_MONEY_BOUND, Placeholder.of("player", target.getName()));
         }
     }
 
@@ -46,7 +51,7 @@ public final class FastMoneyPlayerBindListener implements Listener {
 
         boolean bound = bindService.bindIfArmed(host.getUniqueId(), host.getUniqueId(), host.getName());
         if (bound) {
-            host.sendMessage("Fast Money: bound " + host.getName());
+            messages.success(host, Msg.FAST_MONEY_BOUND, Placeholder.of("player", host.getName()));
         }
     }
 }
