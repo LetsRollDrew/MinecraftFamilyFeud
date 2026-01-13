@@ -102,7 +102,7 @@ public final class PluginBootstrap {
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
         this.boardBindingStore = new BoardBindingStore(plugin);
-        this.boardWandService = new BoardWandService(plugin, wandKey, boardBindingStore);
+        this.boardWandService = new BoardWandService(messages, plugin, wandKey, boardBindingStore);
         this.framebufferStore = new TileFramebufferStore();
         this.mapIdStore = new MapIdStore(new java.io.File(plugin.getDataFolder(), "map-ids.yml"));
         this.dirtyTracker = new DirtyTracker();
@@ -128,7 +128,7 @@ public final class PluginBootstrap {
                 new BuzzerCommands(messages, buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
         this.teamCommands =
                 new TeamCommands(messages, teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
-        this.buzzerListener = new BuzzerListener(buzzerService, teamService);
+        this.buzzerListener = new BuzzerListener(messages, buzzerService, teamService);
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
         this.timerService.setOnTick(seconds -> timerPanelPresenter.updateAll(seconds));
@@ -163,8 +163,8 @@ public final class PluginBootstrap {
                 fastMoneyBackdropPresenter,
                 config.hostPermission(),
                 "familyfeud.admin");
-        this.displayBoardSelectionListener =
-                new DisplayBoardSelectionListener(plugin, displayWandKey, displayBoardSelectionStore, player -> {
+        this.displayBoardSelectionListener = new DisplayBoardSelectionListener(
+                messages, plugin, displayWandKey, displayBoardSelectionStore, player -> {
                     var fresh = hostBookUiBuilder.createBookFor(
                             player,
                             gameController.slotHoverTexts(),
@@ -196,7 +196,7 @@ public final class PluginBootstrap {
         plugin.getServer().getPluginManager().registerEvents(buzzerListener, plugin);
         plugin.getServer()
                 .getPluginManager()
-                .registerEvents(new FastMoneyPlayerBindListener(fastMoneyPlayerBindService), plugin);
+                .registerEvents(new FastMoneyPlayerBindListener(messages, fastMoneyPlayerBindService), plugin);
         scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
         timerPanelPresenter.rehydrateStoredPanels(timerPanelStore);
         registerCommands();
