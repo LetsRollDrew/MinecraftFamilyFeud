@@ -41,109 +41,109 @@ public final class HostBookActionRouter {
             return false;
         }
 
-        String normalized = actionId.toLowerCase(Locale.ROOT);
+        String actionIdLower = actionId.toLowerCase(Locale.ROOT);
 
         // UI control actions
-        if (normalized.startsWith("control.reveal.")) {
-            String slot = normalized.substring("control.reveal.".length());
+        if (actionIdLower.startsWith("control.reveal.")) {
+            String slot = actionIdLower.substring("control.reveal.".length());
             return runPlayerCommand(player, "feud ui reveal " + slot);
         }
-        if (normalized.equals(ActionIds.controlStrike())) {
+        if (actionIdLower.equals(ActionIds.controlStrike())) {
             return runPlayerCommand(player, "feud ui strike");
         }
-        if (normalized.equals(ActionIds.controlClearStrikes())) {
+        if (actionIdLower.equals(ActionIds.controlClearStrikes())) {
             return runPlayerCommand(player, "feud ui clearstrikes");
         }
-        if (normalized.equals(ActionIds.controlControlRed())) {
+        if (actionIdLower.equals(ActionIds.controlControlRed())) {
             return runPlayerCommand(player, "feud ui control red");
         }
-        if (normalized.equals(ActionIds.controlControlBlue())) {
+        if (actionIdLower.equals(ActionIds.controlControlBlue())) {
             return runPlayerCommand(player, "feud ui control blue");
         }
-        if (normalized.equals(ActionIds.controlAward())) {
+        if (actionIdLower.equals(ActionIds.controlAward())) {
             return runPlayerCommand(player, "feud ui award");
         }
-        if (normalized.equals(ActionIds.controlReset())) {
+        if (actionIdLower.equals(ActionIds.controlReset())) {
             return runPlayerCommand(player, "feud ui reset");
         }
 
         // Survey load
-        if (normalized.startsWith("surveys.load.")) {
-            String surveyId = normalized.substring("surveys.load.".length());
+        if (actionIdLower.startsWith("surveys.load.")) {
+            String surveyId = actionIdLower.substring("surveys.load.".length());
             return runPlayerCommand(player, "feud survey load " + surveyId);
         }
 
         // Host config actions
-        if (normalized.equals(ActionIds.hostConfigTeamInfo())) {
+        if (actionIdLower.equals(ActionIds.hostConfigTeamInfo())) {
             return runPlayerCommand(player, "feud team info");
         }
-        if (normalized.equals(ActionIds.hostConfigTimerStart())) {
+        if (actionIdLower.equals(ActionIds.hostConfigTimerStart())) {
             return runPlayerCommand(player, "feud timer start");
         }
-        if (normalized.equals(ActionIds.hostConfigTimerStop())) {
+        if (actionIdLower.equals(ActionIds.hostConfigTimerStop())) {
             return runPlayerCommand(player, "feud timer stop");
         }
-        if (normalized.equals(ActionIds.hostConfigTimerReset())) {
+        if (actionIdLower.equals(ActionIds.hostConfigTimerReset())) {
             return runPlayerCommand(player, "feud timer reset");
         }
-        if (normalized.equals(ActionIds.hostConfigTimerStatus())) {
+        if (actionIdLower.equals(ActionIds.hostConfigTimerStatus())) {
             return runPlayerCommand(player, "feud timer status");
         }
-        if (normalized.equals(ActionIds.hostConfigBuzzReset())) {
+        if (actionIdLower.equals(ActionIds.hostConfigBuzzReset())) {
             return runPlayerCommand(player, "feud buzz reset");
         }
 
         // Fast Money
-        if (normalized.equals(ActionIds.fastMoneyBindP1())) {
+        if (actionIdLower.equals(ActionIds.fastMoneyBindP1())) {
             return runPlayerCommand(player, "feud fastmoney bind p1");
         }
-        if (normalized.equals(ActionIds.fastMoneyBindP2())) {
+        if (actionIdLower.equals(ActionIds.fastMoneyBindP2())) {
             return runPlayerCommand(player, "feud fastmoney bind p2");
         }
-        if (normalized.equals(ActionIds.fastMoneyBindClear())) {
+        if (actionIdLower.equals(ActionIds.fastMoneyBindClear())) {
             return runPlayerCommand(player, "feud fastmoney bind clear");
         }
-        if (normalized.startsWith("fastmoney.set.")) {
-            String setId = normalized.substring("fastmoney.set.".length());
+        if (actionIdLower.startsWith("fastmoney.set.")) {
+            String setId = actionIdLower.substring("fastmoney.set.".length());
             return runPlayerCommand(player, "feud fastmoney set " + setId);
         }
-        if (normalized.equals(ActionIds.fastMoneyStart())) {
+        if (actionIdLower.equals(ActionIds.fastMoneyStart())) {
             return runPlayerCommand(player, "feud fastmoney start");
         }
-        if (normalized.equals(ActionIds.fastMoneyStop())) {
+        if (actionIdLower.equals(ActionIds.fastMoneyStop())) {
             return runPlayerCommand(player, "feud fastmoney stop");
         }
-        if (normalized.equals(ActionIds.fastMoneyStatus())) {
+        if (actionIdLower.equals(ActionIds.fastMoneyStatus())) {
             return runPlayerCommand(player, "feud fastmoney status");
         }
-        if (normalized.startsWith("fastmoney.reveal.")) {
-            return handleFastMoneyReveal(player, normalized);
+        if (actionIdLower.startsWith("fastmoney.reveal.")) {
+            return handleFastMoneyReveal(player, actionIdLower);
         }
 
         // Selector
-        if (normalized.equals(ActionIds.selectorGiveSelector())) {
+        if (actionIdLower.equals(ActionIds.selectorGiveSelector())) {
             return runPlayerCommand(player, "feud board display wand");
         }
-        if (normalized.equals(ActionIds.selectorBindBlue())) {
+        if (actionIdLower.equals(ActionIds.selectorBindBlue())) {
             return runPlayerCommand(player, "feud team buzzer bind blue");
         }
-        if (normalized.equals(ActionIds.selectorBindRed())) {
+        if (actionIdLower.equals(ActionIds.selectorBindRed())) {
             return runPlayerCommand(player, "feud team buzzer bind red");
         }
-        if (normalized.equals(ActionIds.selectorViewSelection())) {
+        if (actionIdLower.equals(ActionIds.selectorViewSelection())) {
             describeSelection(player);
             return true;
         }
-        if (normalized.equals(ActionIds.selectorSpawnBoard())) {
+        if (actionIdLower.equals(ActionIds.selectorSpawnBoard())) {
             return spawnBoardFromSelection(player);
         }
-        if (normalized.equals(ActionIds.selectorSpawnPanelsRed())) {
+        if (actionIdLower.equals(ActionIds.selectorSpawnPanelsRed())) {
             return spawnPanelsFromSelection(player, "red");
         }
-        if (normalized.equals(ActionIds.selectorSpawnPanelsBlue())) {
+        if (actionIdLower.equals(ActionIds.selectorSpawnPanelsBlue())) {
             return spawnPanelsFromSelection(player, "blue");
         }
-        if (normalized.equals(ActionIds.selectorSpawnTimer())) {
+        if (actionIdLower.equals(ActionIds.selectorSpawnTimer())) {
             return spawnTimerFromSelection(player);
         }
 
