@@ -244,7 +244,7 @@ public final class HologramCommands {
                     Placeholder.of("material", material),
                     Placeholder.of("cmd", cmd));
         } catch (NumberFormatException ex) {
-            sender.sendMessage("CustomModelData must be a number.");
+            messages.error(sender, Msg.CUSTOM_MODEL_DATA_MUST_BE_NUMBER);
         }
     }
 
@@ -287,12 +287,12 @@ public final class HologramCommands {
     private void handleList(CommandSender sender) {
         var entries = service.entriesSnapshot();
         if (entries.isEmpty()) {
-            sender.sendMessage("No holograms are active.");
+            messages.info(sender, Msg.HOLOGRAM_LIST_EMPTY);
             return;
         }
         int textCount = 0;
         int itemCount = 0;
-        sender.sendMessage("Holograms:");
+        messages.info(sender, Msg.HOLOGRAM_LIST_HEADER);
         for (Map.Entry<String, HologramService.HologramEntry> e : entries.entrySet()) {
             String id = e.getKey();
             HologramType type = e.getValue().type();
@@ -301,8 +301,13 @@ public final class HologramCommands {
             } else if (type == HologramType.ITEM_DISPLAY) {
                 itemCount++;
             }
-            sender.sendMessage("- " + id + " (" + type.name().toLowerCase() + ")");
+            messages.info(
+                    sender,
+                    Msg.HOLOGRAM_LIST_ENTRY,
+                    Placeholder.of("id", id),
+                    Placeholder.of("type", type.name().toLowerCase()));
         }
-        sender.sendMessage("Totals: text=" + textCount + " item=" + itemCount);
+        messages.info(
+                sender, Msg.HOLOGRAM_LIST_TOTALS, Placeholder.of("text", textCount), Placeholder.of("item", itemCount));
     }
 }
