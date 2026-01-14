@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.effects.timer;
 
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
@@ -48,16 +49,16 @@ public final class TimerCommands {
         }
         if (seconds == null) {
             timerService.start();
-            sender.sendMessage("Timer started.");
+            messages.success(sender, Msg.TIMER_STARTED);
         } else {
             timerService.start(seconds);
-            sender.sendMessage("Timer started for " + seconds + "s.");
+            messages.success(sender, Msg.TIMER_STARTED_FOR, Placeholder.of("seconds", seconds));
         }
     }
 
     private void handleStop(CommandSender sender) {
         timerService.stop();
-        sender.sendMessage("Timer stopped.");
+        messages.success(sender, Msg.TIMER_STOPPED);
     }
 
     private void handleReset(CommandSender sender, String[] args) {
@@ -68,17 +69,21 @@ public final class TimerCommands {
         }
         if (seconds == null) {
             timerService.reset();
-            sender.sendMessage("Timer reset to default");
+            messages.success(sender, Msg.TIMER_RESET_DEFAULT);
         } else {
             timerService.reset(seconds);
-            sender.sendMessage("Timer reset to " + seconds + "s");
+            messages.success(sender, Msg.TIMER_RESET_TO, Placeholder.of("seconds", seconds));
         }
     }
 
     private void handleStatus(CommandSender sender) {
         TimerService.TimerStatus status = timerService.status();
         String running = status.running() ? "running" : "stopped";
-        sender.sendMessage("Timer " + running + " (" + status.remainingSeconds() + "s remaining)");
+        messages.info(
+                sender,
+                Msg.TIMER_STATUS,
+                Placeholder.of("state", running),
+                Placeholder.of("seconds", status.remainingSeconds()));
     }
 
     private boolean help(CommandSender sender) {
