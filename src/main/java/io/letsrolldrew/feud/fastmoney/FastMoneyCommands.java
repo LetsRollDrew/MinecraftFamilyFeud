@@ -80,7 +80,7 @@ public final class FastMoneyCommands {
         }
 
         if (questionIndex < 1 || slot < 1) {
-            sender.sendMessage("Question and slot must be positive.");
+            messages.error(sender, Msg.FAST_MONEY_QUESTION_AND_SLOT_MUST_BE_POSITIVE);
             return true;
         }
 
@@ -88,15 +88,23 @@ public final class FastMoneyCommands {
             FastMoneyPhase phase = service.state().phase();
             if (phase == FastMoneyPhase.PLAYER1_TURN) {
                 service.awardPlayer1(questionIndex, slot);
-                sender.sendMessage("Awarded Player 1, question " + questionIndex + ", slot " + slot + ".");
+                messages.success(
+                        sender,
+                        Msg.FAST_MONEY_AWARDED_P1,
+                        Placeholder.of("question", questionIndex),
+                        Placeholder.of("slot", slot));
                 return true;
             }
             if (phase == FastMoneyPhase.PLAYER2_TURN) {
                 service.awardPlayer2(questionIndex, slot);
-                sender.sendMessage("Awarded Player 2, question " + questionIndex + ", slot " + slot + ".");
+                messages.success(
+                        sender,
+                        Msg.FAST_MONEY_AWARDED_P2,
+                        Placeholder.of("question", questionIndex),
+                        Placeholder.of("slot", slot));
                 return true;
             }
-            sender.sendMessage("Fast Money round is not active.");
+            messages.error(sender, Msg.FAST_MONEY_ROUND_NOT_ACTIVE);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
         }
@@ -105,7 +113,7 @@ public final class FastMoneyCommands {
 
     private boolean set(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney set <setId>");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_SET);
             return true;
         }
 
@@ -128,7 +136,7 @@ public final class FastMoneyCommands {
         try {
             service.startRound();
             showBoard(sender, boardId);
-            sender.sendMessage("Fast Money: Player 1 turn started");
+            messages.success(sender, Msg.FAST_MONEY_P1_TURN_STARTED);
         } catch (IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
         }
@@ -140,29 +148,32 @@ public final class FastMoneyCommands {
         String boardId = boardIdOrDefault(args, 1);
         service.stop();
         hideBoard(sender, boardId);
-        sender.sendMessage("Fast Money stopped");
+        messages.success(sender, Msg.FAST_MONEY_STOPPED);
 
         return true;
     }
 
     private boolean status(CommandSender sender) {
         FastMoneyRoundState state = service.state();
-        sender.sendMessage("Fast Money status: phase=" + state.phase()
-                + " set=" + state.surveySetId()
-                + " q=" + state.activeQuestionIndex());
+        messages.info(
+                sender,
+                Msg.FAST_MONEY_STATUS,
+                Placeholder.of("phase", state.phase()),
+                Placeholder.of("set", state.surveySetId()),
+                Placeholder.of("question", state.activeQuestionIndex()));
         return true;
     }
 
     private boolean bind(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney bind <p1|p2|clear>");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_BIND);
             return true;
         }
 
         String target = args[1].toLowerCase(Locale.ROOT);
         if (target.equals("clear")) {
             bindService.clear();
-            sender.sendMessage("Fast Money bindings cleared");
+            messages.success(sender, Msg.FAST_MONEY_BINDINGS_CLEARED);
             return true;
         }
 
@@ -173,17 +184,17 @@ public final class FastMoneyCommands {
 
         if (target.equals("p1")) {
             bindService.armPlayer1(host.getUniqueId());
-            sender.sendMessage("Fast Money: bind P1 armed. Right-click a player.");
+            messages.info(sender, Msg.FAST_MONEY_BIND_P1_ARMED);
             return true;
         }
 
         if (target.equals("p2")) {
             bindService.armPlayer2(host.getUniqueId());
-            sender.sendMessage("Fast Money: bind P2 armed. Right-click a player.");
+            messages.info(sender, Msg.FAST_MONEY_BIND_P2_ARMED);
             return true;
         }
 
-        sender.sendMessage("Usage: /feud fastmoney bind <p1|p2|clear>");
+        messages.usage(sender, Msg.USAGE_FAST_MONEY_BIND);
         return true;
     }
 
@@ -194,7 +205,7 @@ public final class FastMoneyCommands {
         }
 
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney answer <text...>");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_ANSWER);
             return true;
         }
 
@@ -202,7 +213,7 @@ public final class FastMoneyCommands {
                 String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
         try {
             service.submitAnswer(player.getUniqueId(), answer);
-            sender.sendMessage("Answer recorded");
+            messages.success(sender, Msg.FAST_MONEY_ANSWER_RECORDED);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
         }
@@ -212,7 +223,7 @@ public final class FastMoneyCommands {
 
     private boolean board(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney board <show|hide> [boardId]");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_BOARD);
             return true;
         }
 
@@ -229,7 +240,7 @@ public final class FastMoneyCommands {
             return true;
         }
 
-        sender.sendMessage("Usage: /feud fastmoney board <show|hide> [boardId]");
+        messages.usage(sender, Msg.USAGE_FAST_MONEY_BOARD);
         return true;
     }
 
