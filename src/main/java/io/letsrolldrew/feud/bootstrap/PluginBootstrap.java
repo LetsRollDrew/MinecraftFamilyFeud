@@ -96,9 +96,10 @@ public final class PluginBootstrap {
         this.displayBoardSelectionStore = new DisplayBoardSelectionStore();
         NamespacedKey displayWandKey = new NamespacedKey(plugin, "display_board_wand");
         this.hostBookAnchorStore = new io.letsrolldrew.feud.ui.HostBookAnchorStore();
-        this.hostBookUiBuilder =
-                new HostBookUiBuilder("/feud ui", surveyRepository, null, hostKey, displayBoardSelectionStore);
-        this.displayHostBookUiBuilder = new HostBookUiBuilder("/feud board display", surveyRepository, null, hostKey);
+        this.hostBookUiBuilder = new HostBookUiBuilder(
+                "/feud ui", surveyRepository, null, hostKey, displayBoardSelectionStore, HostRemoteKind.MAP);
+        this.displayHostBookUiBuilder = new HostBookUiBuilder(
+                "/feud board display", surveyRepository, null, hostKey, null, HostRemoteKind.DISPLAY);
         this.hostRemoteService = new HostRemoteService(plugin, hostKey, false);
         NamespacedKey wandKey = new NamespacedKey(plugin, "board_wand");
         this.boardBindingStore = new BoardBindingStore(plugin);
