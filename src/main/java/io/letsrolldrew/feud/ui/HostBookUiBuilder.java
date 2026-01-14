@@ -41,13 +41,14 @@ public final class HostBookUiBuilder {
     private final List<String> fallbackHovers;
     private final NamespacedKey hostKey;
     private final DisplayBoardSelectionStore selectionStore;
+    private final HostRemoteKind hostRemoteKind;
     private final BookButtonFactory buttons;
     private boolean openBookEnabled;
     private FastMoneyHoverResolver fastMoneyHoverResolver;
     private HostBookAnchorStore hostBookAnchorStore;
 
     public HostBookUiBuilder(String commandPrefix) {
-        this(commandPrefix, null, null, null, null);
+        this(commandPrefix, null, null, null, null, HostRemoteKind.MAP);
     }
 
     public HostBookUiBuilder(
@@ -55,7 +56,7 @@ public final class HostBookUiBuilder {
             SurveyRepository surveyRepository,
             List<String> fallbackHovers,
             NamespacedKey hostKey) {
-        this(commandPrefix, surveyRepository, fallbackHovers, hostKey, null);
+        this(commandPrefix, surveyRepository, fallbackHovers, hostKey, null, HostRemoteKind.MAP);
     }
 
     public HostBookUiBuilder(
@@ -64,11 +65,22 @@ public final class HostBookUiBuilder {
             List<String> fallbackHovers,
             NamespacedKey hostKey,
             DisplayBoardSelectionStore selectionStore) {
+        this(commandPrefix, surveyRepository, fallbackHovers, hostKey, selectionStore, HostRemoteKind.MAP);
+    }
+
+    public HostBookUiBuilder(
+            String commandPrefix,
+            SurveyRepository surveyRepository,
+            List<String> fallbackHovers,
+            NamespacedKey hostKey,
+            DisplayBoardSelectionStore selectionStore,
+            HostRemoteKind hostRemoteKind) {
         Validation.requireNonBlank(commandPrefix, "commandPrefix");
         this.surveyRepository = surveyRepository;
         this.fallbackHovers = fallbackHovers;
         this.hostKey = hostKey;
         this.selectionStore = selectionStore;
+        this.hostRemoteKind = hostRemoteKind == null ? HostRemoteKind.MAP : hostRemoteKind;
         this.buttons = new BookButtonFactory(UI_CLICK_PREFIX);
     }
 
@@ -102,7 +114,7 @@ public final class HostBookUiBuilder {
         Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        BookTagger.tagHostRemote(meta, hostKey);
+        BookTagger.tagHostRemote(meta, hostKey, hostRemoteKind);
         try {
             meta.title(titleComponent());
             meta.author(authorComponent());
@@ -188,7 +200,7 @@ public final class HostBookUiBuilder {
         Book adventureBook = BookFactory.create(titleComponent(), authorComponent(), pages);
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        BookTagger.tagHostRemote(meta, hostKey);
+        BookTagger.tagHostRemote(meta, hostKey, hostRemoteKind);
         try {
             meta.title(titleComponent());
             meta.author(authorComponent());

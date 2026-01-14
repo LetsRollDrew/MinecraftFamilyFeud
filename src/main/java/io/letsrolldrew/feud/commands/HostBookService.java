@@ -9,6 +9,7 @@ import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.ui.BookTagger;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
+import io.letsrolldrew.feud.ui.HostRemoteKind;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,7 +79,7 @@ public final class HostBookService {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
+        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey(), HostRemoteKind.SELECTOR);
         meta.setTitle("Remote Selector");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
@@ -128,7 +129,7 @@ public final class HostBookService {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
-        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
+        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey(), HostRemoteKind.CLEANUP);
         try {
             meta.title(Component.text("Cleanup Remote", NamedTextColor.GRAY));
             meta.author(Component.text("FamilyFeud", NamedTextColor.GRAY));
