@@ -87,7 +87,7 @@ public final class BoardCommandEntry {
             return true;
         }
         boardWandService.giveWand(player);
-        sender.sendMessage("Board wand given. Right-click the top-left frame, then right-click the bottom-right frame");
+        messages.success(sender, Msg.BOARD_WAND_GIVEN);
         return true;
     }
 
@@ -98,18 +98,18 @@ public final class BoardCommandEntry {
         }
         var bindingOpt = boardBindingStore.load();
         if (bindingOpt.isEmpty()) {
-            sender.sendMessage("No board binding found. Use /feud board map wand first");
+            messages.error(sender, Msg.BOARD_BINDING_MISSING);
             return true;
         }
         MapWallBinder binder = new MapWallBinder(bindingOpt.get(), mapIdStore, framebufferStore);
         boolean ok = binder.bind();
         if (ok) {
-            sender.sendMessage("Board maps initialized");
+            messages.success(sender, Msg.BOARD_MAPS_INITIALIZED);
             boardRenderer.paintBase();
             boardRenderer.paintHiddenCovers();
-            sender.sendMessage("Board base painted");
+            messages.success(sender, Msg.BOARD_BASE_PAINTED);
         } else {
-            sender.sendMessage("Board map init failed (binding missing or world unloaded)");
+            messages.error(sender, Msg.BOARD_MAP_INIT_FAILED);
         }
         return true;
     }
