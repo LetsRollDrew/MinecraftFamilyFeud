@@ -7,6 +7,7 @@ import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.util.Validation;
@@ -88,7 +89,7 @@ public final class UiCommand {
             return;
         }
         controller.revealSlot(slot);
-        sender.sendMessage("Revealed slot " + slot + ".");
+        messages.success(sender, Msg.UI_REVEALED_SLOT, Placeholder.of("slot", slot));
         if (revealCallback != null) {
             revealCallback.accept(slot);
         }
@@ -97,13 +98,17 @@ public final class UiCommand {
 
     private void handleStrike(CommandSender sender) {
         controller.strike();
-        sender.sendMessage("Strike recorded (" + controller.strikeCount() + "/" + controller.maxStrikes() + ").");
+        messages.success(
+                sender,
+                Msg.UI_STRIKE_RECORDED,
+                Placeholder.of("count", controller.strikeCount()),
+                Placeholder.of("max", controller.maxStrikes()));
         refreshIfPlayer(sender);
     }
 
     private void handleClearStrikes(CommandSender sender) {
         controller.clearStrikes();
-        sender.sendMessage("Strikes cleared.");
+        messages.success(sender, Msg.UI_STRIKES_CLEARED);
         refreshIfPlayer(sender);
     }
 
@@ -116,15 +121,19 @@ public final class UiCommand {
         try {
             points = Integer.parseInt(args[1]);
         } catch (NumberFormatException ex) {
-            sender.sendMessage("Points must be a positive number.");
+            messages.error(sender, Msg.UI_POINTS_MUST_BE_POSITIVE);
             return;
         }
         if (points <= 0) {
-            sender.sendMessage("Points must be positive.");
+            messages.error(sender, Msg.UI_POINTS_MUST_BE_POSITIVE);
             return;
         }
         controller.addPoints(points);
-        sender.sendMessage("Added " + points + " points. Round total: " + controller.roundPoints());
+        messages.success(
+                sender,
+                Msg.UI_ADDED_POINTS,
+                Placeholder.of("points", points),
+                Placeholder.of("total", controller.roundPoints()));
         refreshIfPlayer(sender);
     }
 
@@ -139,26 +148,27 @@ public final class UiCommand {
             return;
         }
         controller.setControllingTeam(team);
-        sender.sendMessage("Control set to " + team.name());
+        messages.success(sender, Msg.UI_CONTROL_SET, Placeholder.of("team", team.name()));
         refreshIfPlayer(sender);
     }
 
     private void handleAward(CommandSender sender) {
-        if (controller.controllingTeam() == TeamControl.NONE) {
-            sender.sendMessage("Set a team in control before awarding points.");
+        TeamControl team = controller.controllingTeam();
+        if (team == TeamControl.NONE) {
+            messages.error(sender, Msg.UI_CONTROL_REQUIRED_TO_AWARD);
             return;
         }
         int before = controller.roundPoints();
         controller.awardRoundPoints();
-        sender.sendMessage("Awarded " + before + " points to "
-                + controller.controllingTeam().name() + ".");
-        awardToTeam(before, controller.controllingTeam());
+        messages.success(
+                sender, Msg.UI_AWARDED_POINTS, Placeholder.of("points", before), Placeholder.of("team", team.name()));
+        awardToTeam(before, team);
         refreshIfPlayer(sender);
     }
 
     private void handleReset(CommandSender sender) {
         controller.resetRoundState();
-        sender.sendMessage("Round state reset.");
+        messages.success(sender, Msg.UI_ROUND_RESET);
         refreshIfPlayer(sender);
     }
 
