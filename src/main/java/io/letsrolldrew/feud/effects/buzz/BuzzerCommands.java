@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.effects.buzz;
 
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.team.BlockRef;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
@@ -37,7 +38,7 @@ public final class BuzzerCommands {
             return true;
         }
         if (args == null || args.length < 2) {
-            sender.sendMessage("Usage: /feud team buzzer <bind|clear|test> <red|blue>");
+            messages.usage(sender, Msg.USAGE_TEAM_BUZZER);
             return true;
         }
         String action = args[0].toLowerCase(Locale.ROOT);
@@ -51,7 +52,7 @@ public final class BuzzerCommands {
             case "bind" -> handleBind(sender, team);
             case "clear" -> handleClear(sender, team);
             case "test" -> handleTest(sender, team);
-            default -> sender.sendMessage("Usage: /feud team buzzer <bind|clear|test> <red|blue>");
+            default -> messages.usage(sender, Msg.USAGE_TEAM_BUZZER);
         }
         return true;
     }
@@ -62,7 +63,7 @@ public final class BuzzerCommands {
             return true;
         }
         buzzerService.resetLock();
-        sender.sendMessage("Buzz lock reset.");
+        messages.success(sender, Msg.BUZZ_LOCK_RESET);
         return true;
     }
 
@@ -72,21 +73,27 @@ public final class BuzzerCommands {
             return;
         }
         buzzerService.beginBind(player, team);
-        sender.sendMessage("Binding buzzer for " + team.name() + ". Right-click a block to bind.");
+        messages.info(sender, Msg.BUZZER_BIND_PROMPT, Placeholder.of("team", team.name()));
     }
 
     private void handleClear(CommandSender sender, TeamId team) {
         buzzerService.clearBind(team);
-        sender.sendMessage("Cleared buzzer for " + team.name() + ".");
+        messages.success(sender, Msg.BUZZER_CLEARED, Placeholder.of("team", team.name()));
     }
 
     private void handleTest(CommandSender sender, TeamId team) {
         BlockRef ref = teamService.getBuzzer(team);
         if (ref == null) {
-            sender.sendMessage("No buzzer bound for " + team.name() + ".");
+            messages.error(sender, Msg.BUZZER_NOT_BOUND, Placeholder.of("team", team.name()));
             return;
         }
-        sender.sendMessage("Buzzer for " + team.name() + " at " + ref.x() + "," + ref.y() + "," + ref.z() + ".");
+        messages.info(
+                sender,
+                Msg.BUZZER_LOCATION,
+                Placeholder.of("team", team.name()),
+                Placeholder.of("x", ref.x()),
+                Placeholder.of("y", ref.y()),
+                Placeholder.of("z", ref.z()));
     }
 
     private boolean isAuthorized(CommandSender sender) {
