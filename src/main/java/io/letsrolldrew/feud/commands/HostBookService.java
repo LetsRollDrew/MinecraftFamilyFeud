@@ -6,6 +6,7 @@ import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.ui.BookTagger;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
@@ -77,6 +78,7 @@ public final class HostBookService {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
+        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
         meta.setTitle("Remote Selector");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
@@ -126,6 +128,7 @@ public final class HostBookService {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
+        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey());
         try {
             meta.title(Component.text("Cleanup Remote", NamedTextColor.GRAY));
             meta.author(Component.text("FamilyFeud", NamedTextColor.GRAY));
@@ -151,7 +154,7 @@ public final class HostBookService {
                 .build();
         meta.pages(List.of(page1, page2));
         book.setItemMeta(meta);
-        player.getInventory().addItem(book);
+        hostRemoteService.giveOrReplace(player, book);
         messages.success(player, Msg.CLEANUP_BOOK_GIVEN);
     }
 
