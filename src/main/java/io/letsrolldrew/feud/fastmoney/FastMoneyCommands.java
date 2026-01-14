@@ -5,6 +5,9 @@ import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
 import java.util.Locale;
@@ -16,6 +19,7 @@ import org.bukkit.entity.Player;
 public final class FastMoneyCommands {
     private static final String DEFAULT_BOARD_ID = "board1";
 
+    private final Messages messages;
     private final FastMoneyService service;
     private final FastMoneySurveySetStore surveySetStore;
     private final FastMoneyPlayerBindService bindService;
@@ -26,6 +30,7 @@ public final class FastMoneyCommands {
     private final String adminPermission;
 
     public FastMoneyCommands(
+            Messages messages,
             FastMoneyService service,
             FastMoneySurveySetStore surveySetStore,
             FastMoneyPlayerBindService bindService,
@@ -34,6 +39,7 @@ public final class FastMoneyCommands {
             FastMoneyBackdropPresenter backdropPresenter,
             String hostPermission,
             String adminPermission) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.service = Objects.requireNonNull(service, "service");
         this.surveySetStore = Objects.requireNonNull(surveySetStore, "surveySetStore");
         this.bindService = Objects.requireNonNull(bindService, "bindService");
@@ -46,7 +52,7 @@ public final class FastMoneyCommands {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!isHost(sender)) {
-            sender.sendMessage("You must be the host to run Fast Money commands");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 
@@ -69,12 +75,12 @@ public final class FastMoneyCommands {
 
     public boolean reveal(CommandSender sender, int questionIndex, int slot) {
         if (!isHost(sender)) {
-            sender.sendMessage("You must be the host to run Fast Money commands");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 
         if (questionIndex < 1 || slot < 1) {
-            sender.sendMessage("Question and slot must be positive.");
+            messages.error(sender, Msg.FAST_MONEY_QUESTION_AND_SLOT_MUST_BE_POSITIVE);
             return true;
         }
 
@@ -82,15 +88,23 @@ public final class FastMoneyCommands {
             FastMoneyPhase phase = service.state().phase();
             if (phase == FastMoneyPhase.PLAYER1_TURN) {
                 service.awardPlayer1(questionIndex, slot);
-                sender.sendMessage("Awarded Player 1, question " + questionIndex + ", slot " + slot + ".");
+                messages.success(
+                        sender,
+                        Msg.FAST_MONEY_AWARDED_P1,
+                        Placeholder.of("question", questionIndex),
+                        Placeholder.of("slot", slot));
                 return true;
             }
             if (phase == FastMoneyPhase.PLAYER2_TURN) {
                 service.awardPlayer2(questionIndex, slot);
-                sender.sendMessage("Awarded Player 2, question " + questionIndex + ", slot " + slot + ".");
+                messages.success(
+                        sender,
+                        Msg.FAST_MONEY_AWARDED_P2,
+                        Placeholder.of("question", questionIndex),
+                        Placeholder.of("slot", slot));
                 return true;
             }
-            sender.sendMessage("Fast Money round is not active.");
+            messages.error(sender, Msg.FAST_MONEY_ROUND_NOT_ACTIVE);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
         }
@@ -99,20 +113,20 @@ public final class FastMoneyCommands {
 
     private boolean set(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney set <setId>");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_SET);
             return true;
         }
 
         String setId = args[1];
         Optional<FastMoneySurveySet> setOpt = surveySetStore.findById(setId);
         if (setOpt.isEmpty()) {
-            sender.sendMessage("Fast Money set not found: " + setId);
+            messages.error(sender, Msg.FAST_MONEY_SET_NOT_FOUND, Placeholder.of("setId", setId));
             return true;
         }
 
         FastMoneySurveySet set = setOpt.get();
         service.loadSurveySet(set.id(), set.surveyIds());
-        sender.sendMessage("Fast Money set loaded: " + set.id());
+        messages.success(sender, Msg.FAST_MONEY_SET_LOADED, Placeholder.of("setId", set.id()));
 
         return true;
     }
@@ -122,7 +136,7 @@ public final class FastMoneyCommands {
         try {
             service.startRound();
             showBoard(sender, boardId);
-            sender.sendMessage("Fast Money: Player 1 turn started");
+            messages.success(sender, Msg.FAST_MONEY_P1_TURN_STARTED);
         } catch (IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
         }
@@ -134,61 +148,64 @@ public final class FastMoneyCommands {
         String boardId = boardIdOrDefault(args, 1);
         service.stop();
         hideBoard(sender, boardId);
-        sender.sendMessage("Fast Money stopped");
+        messages.success(sender, Msg.FAST_MONEY_STOPPED);
 
         return true;
     }
 
     private boolean status(CommandSender sender) {
         FastMoneyRoundState state = service.state();
-        sender.sendMessage("Fast Money status: phase=" + state.phase()
-                + " set=" + state.surveySetId()
-                + " q=" + state.activeQuestionIndex());
+        messages.info(
+                sender,
+                Msg.FAST_MONEY_STATUS,
+                Placeholder.of("phase", state.phase()),
+                Placeholder.of("set", state.surveySetId()),
+                Placeholder.of("question", state.activeQuestionIndex()));
         return true;
     }
 
     private boolean bind(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney bind <p1|p2|clear>");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_BIND);
             return true;
         }
 
         String target = args[1].toLowerCase(Locale.ROOT);
         if (target.equals("clear")) {
             bindService.clear();
-            sender.sendMessage("Fast Money bindings cleared");
+            messages.success(sender, Msg.FAST_MONEY_BINDINGS_CLEARED);
             return true;
         }
 
         if (!(sender instanceof Player host)) {
-            sender.sendMessage("Only players can arm binding");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
 
         if (target.equals("p1")) {
             bindService.armPlayer1(host.getUniqueId());
-            sender.sendMessage("Fast Money: bind P1 armed. Right-click a player.");
+            messages.info(sender, Msg.FAST_MONEY_BIND_P1_ARMED);
             return true;
         }
 
         if (target.equals("p2")) {
             bindService.armPlayer2(host.getUniqueId());
-            sender.sendMessage("Fast Money: bind P2 armed. Right-click a player.");
+            messages.info(sender, Msg.FAST_MONEY_BIND_P2_ARMED);
             return true;
         }
 
-        sender.sendMessage("Usage: /feud fastmoney bind <p1|p2|clear>");
+        messages.usage(sender, Msg.USAGE_FAST_MONEY_BIND);
         return true;
     }
 
     private boolean answer(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can submit answers");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
 
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney answer <text...>");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_ANSWER);
             return true;
         }
 
@@ -196,7 +213,7 @@ public final class FastMoneyCommands {
                 String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
         try {
             service.submitAnswer(player.getUniqueId(), answer);
-            sender.sendMessage("Answer recorded");
+            messages.success(sender, Msg.FAST_MONEY_ANSWER_RECORDED);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             sender.sendMessage(ex.getMessage());
         }
@@ -206,7 +223,7 @@ public final class FastMoneyCommands {
 
     private boolean board(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud fastmoney board <show|hide> [boardId]");
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_BOARD);
             return true;
         }
 
@@ -223,28 +240,28 @@ public final class FastMoneyCommands {
             return true;
         }
 
-        sender.sendMessage("Usage: /feud fastmoney board <show|hide> [boardId]");
+        messages.usage(sender, Msg.USAGE_FAST_MONEY_BOARD);
         return true;
     }
 
     private void showBoard(CommandSender sender, String boardId) {
         DynamicBoardLayout layout = displayBoardService.resolveLayoutOrNull(boardId);
         if (layout == null) {
-            sender.sendMessage("Fast Money board not spawned: no layout for " + boardId);
+            messages.error(sender, Msg.FAST_MONEY_BOARD_NO_LAYOUT, Placeholder.of("boardId", boardId));
             return;
         }
 
         displayBoardService.showFastMoneyBoard(boardId, layout, boardPresenter, backdropPresenter);
-        sender.sendMessage("Fast Money board shown on " + boardId);
+        messages.success(sender, Msg.FAST_MONEY_BOARD_SHOWN, Placeholder.of("boardId", boardId));
     }
 
     private void hideBoard(CommandSender sender, String boardId) {
         displayBoardService.hideFastMoneyBoard(boardId);
-        sender.sendMessage("Fast Money board cleared on " + boardId);
+        messages.success(sender, Msg.FAST_MONEY_BOARD_CLEARED, Placeholder.of("boardId", boardId));
     }
 
     private boolean usage(CommandSender sender) {
-        sender.sendMessage("Fast Money: set|start|stop|status|bind|answer|board");
+        messages.usage(sender, Msg.FAST_MONEY_HELP);
         return true;
     }
 

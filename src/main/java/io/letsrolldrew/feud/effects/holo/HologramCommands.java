@@ -1,6 +1,10 @@
 package io.letsrolldrew.feud.effects.holo;
 
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.Map;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -9,10 +13,12 @@ import org.bukkit.entity.Player;
 
 // Handles /feud holo subcommands
 public final class HologramCommands {
+    private final Messages messages;
     private final HologramService service;
     private final String adminPermission = "familyfeud.admin";
 
-    public HologramCommands(HologramService service) {
+    public HologramCommands(Messages messages, HologramService service) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.service = service;
     }
 
@@ -23,7 +29,7 @@ public final class HologramCommands {
             return true;
         }
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need " + adminPermission + " to use hologram commands.");
+            messages.error(sender, Msg.NEED_PERMISSION, Placeholder.of("permission", adminPermission));
             return true;
         }
         if ("list".equalsIgnoreCase(args[0])) {
@@ -72,99 +78,97 @@ public final class HologramCommands {
 
     private void handleSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can spawn holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud holo text spawn <id> <text>");
+            messages.usage(sender, Msg.HOLO_TEXT_SPAWN_USAGE);
             return;
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (service.exists(id)) {
-            sender.sendMessage("Hologram id already exists: " + id);
+            messages.error(sender, Msg.HOLOGRAM_ID_EXISTS, Placeholder.of("id", id));
             return;
         }
         String textRaw = joinArgs(args, 2);
         Component text = colored(textRaw);
         service.spawn(id, player, text);
-        sender.sendMessage("Spawned hologram '" + id + "'.");
+        messages.success(sender, Msg.HOLOGRAM_SPAWNED, Placeholder.of("id", id));
     }
 
     private void handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud holo text set <id> <text>");
+            messages.usage(sender, Msg.HOLO_TEXT_SET_USAGE);
             return;
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         String textRaw = joinArgs(args, 2);
         service.setText(id, colored(textRaw));
-        sender.sendMessage("Updated hologram '" + id + "'.");
+        messages.success(sender, Msg.HOLOGRAM_UPDATED, Placeholder.of("id", id));
     }
 
     private void handleMove(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can move holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud holo text move <id>");
+            messages.usage(sender, Msg.HOLO_TEXT_MOVE_USAGE);
             return;
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         service.moveToPlayer(id, player);
-        sender.sendMessage("Moved hologram '" + id + "' to your location.");
+        messages.success(sender, Msg.HOLOGRAM_MOVED_TO_YOU, Placeholder.of("id", id));
     }
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud holo text remove <id>");
+            messages.usage(sender, Msg.HOLO_TEXT_REMOVE_USAGE);
             return;
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         service.remove(id);
-        sender.sendMessage("Removed hologram '" + id + "'.");
+        messages.success(sender, Msg.HOLOGRAM_REMOVED, Placeholder.of("id", id));
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo text <spawn|set|move|remove> ...");
-        sender.sendMessage("       /feud holo item <spawn|move|remove> ...");
-        sender.sendMessage("       /feud holo list");
+        messages.usage(sender, Msg.HOLO_HELP);
     }
 
     private void sendTextUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo text spawn <id> <text> | set <id> <text> | move <id> | remove <id>");
+        messages.usage(sender, Msg.HOLO_TEXT_USAGE);
     }
 
     private void sendItemUsage(CommandSender sender) {
-        sender.sendMessage("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>");
+        messages.usage(sender, Msg.HOLO_ITEM_USAGE);
     }
 
     private String[] sliceArgs(String[] args) {
@@ -197,7 +201,7 @@ public final class HologramCommands {
 
     private void handleItemSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can spawn item holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 3) {
@@ -206,7 +210,7 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         Material material = Material.ECHO_SHARD; // default material justincase for testing
@@ -214,7 +218,8 @@ public final class HologramCommands {
         try {
             int cmd = Integer.parseInt(args[2]);
             service.spawnItem(id, player, material, cmd);
-            sender.sendMessage("Spawned item hologram '" + id + "' with CMD " + cmd + ".");
+            messages.success(
+                    sender, Msg.ITEM_HOLOGRAM_SPAWNED_WITH_CMD, Placeholder.of("id", id), Placeholder.of("cmd", cmd));
             return;
         } catch (NumberFormatException ignore) {
             // treat args[2] as material
@@ -226,21 +231,26 @@ public final class HologramCommands {
         try {
             material = Material.valueOf(args[2].toUpperCase());
         } catch (IllegalArgumentException ex) {
-            sender.sendMessage("Unknown material: " + args[2]);
+            messages.error(sender, Msg.UNKNOWN_MATERIAL, Placeholder.of("material", args[2]));
             return;
         }
         try {
             int cmd = Integer.parseInt(args[3]);
             service.spawnItem(id, player, material, cmd);
-            sender.sendMessage("Spawned item hologram '" + id + "' (" + material + ", CMD " + cmd + ").");
+            messages.success(
+                    sender,
+                    Msg.ITEM_HOLOGRAM_SPAWNED_WITH_MATERIAL_CMD,
+                    Placeholder.of("id", id),
+                    Placeholder.of("material", material),
+                    Placeholder.of("cmd", cmd));
         } catch (NumberFormatException ex) {
-            sender.sendMessage("CustomModelData must be a number.");
+            messages.error(sender, Msg.CUSTOM_MODEL_DATA_MUST_BE_NUMBER);
         }
     }
 
     private void handleItemMove(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can move item holograms.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
@@ -249,15 +259,15 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         if (!service.exists(id)) {
-            sender.sendMessage("Hologram not found: " + id);
+            messages.error(sender, Msg.HOLOGRAM_NOT_FOUND, Placeholder.of("id", id));
             return;
         }
         service.moveItemToPlayer(id, player);
-        sender.sendMessage("Moved item hologram '" + id + "' to your location.");
+        messages.success(sender, Msg.ITEM_HOLOGRAM_MOVED_TO_YOU, Placeholder.of("id", id));
     }
 
     private void handleItemRemove(CommandSender sender, String[] args) {
@@ -267,22 +277,22 @@ public final class HologramCommands {
         }
         String id = args[1];
         if (!isValidId(id)) {
-            sender.sendMessage("Invalid id. Use letters, numbers, _ or -.");
+            messages.error(sender, Msg.INVALID_ID_HOLO);
             return;
         }
         service.removeItem(id);
-        sender.sendMessage("Removed item hologram '" + id + "'.");
+        messages.success(sender, Msg.ITEM_HOLOGRAM_REMOVED, Placeholder.of("id", id));
     }
 
     private void handleList(CommandSender sender) {
         var entries = service.entriesSnapshot();
         if (entries.isEmpty()) {
-            sender.sendMessage("No holograms are active.");
+            messages.info(sender, Msg.HOLOGRAM_LIST_EMPTY);
             return;
         }
         int textCount = 0;
         int itemCount = 0;
-        sender.sendMessage("Holograms:");
+        messages.info(sender, Msg.HOLOGRAM_LIST_HEADER);
         for (Map.Entry<String, HologramService.HologramEntry> e : entries.entrySet()) {
             String id = e.getKey();
             HologramType type = e.getValue().type();
@@ -291,8 +301,13 @@ public final class HologramCommands {
             } else if (type == HologramType.ITEM_DISPLAY) {
                 itemCount++;
             }
-            sender.sendMessage("- " + id + " (" + type.name().toLowerCase() + ")");
+            messages.info(
+                    sender,
+                    Msg.HOLOGRAM_LIST_ENTRY,
+                    Placeholder.of("id", id),
+                    Placeholder.of("type", type.name().toLowerCase()));
         }
-        sender.sendMessage("Totals: text=" + textCount + " item=" + itemCount);
+        messages.info(
+                sender, Msg.HOLOGRAM_LIST_TOTALS, Placeholder.of("text", textCount), Placeholder.of("item", itemCount));
     }
 }

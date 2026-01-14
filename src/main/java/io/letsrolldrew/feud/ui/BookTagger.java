@@ -12,10 +12,17 @@ public final class BookTagger {
     private BookTagger() {}
 
     public static void tagHostRemote(BookMeta meta, NamespacedKey hostKey) {
+        tagHostRemote(meta, hostKey, HostRemoteKind.MAP);
+    }
+
+    public static void tagHostRemote(BookMeta meta, NamespacedKey hostKey, HostRemoteKind kind) {
         if (meta == null || hostKey == null) {
             return;
         }
+        if (kind == null) {
+            kind = HostRemoteKind.MAP;
+        }
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        pdc.set(hostKey, PersistentDataType.INTEGER, 1);
+        pdc.set(hostKey, PersistentDataType.INTEGER, kind.tag());
     }
 }

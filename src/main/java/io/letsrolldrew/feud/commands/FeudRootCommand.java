@@ -19,6 +19,9 @@ import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
 import io.letsrolldrew.feud.team.TeamService;
@@ -27,6 +30,7 @@ import io.letsrolldrew.feud.ui.HostBookPage;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import java.util.Objects;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,6 +39,7 @@ import org.bukkit.plugin.Plugin;
 
 public final class FeudRootCommand implements CommandExecutor {
     private final Plugin plugin;
+    private final Messages messages;
     private final UiCommand uiCommand;
     private final HologramCommands hologramCommands;
     private final BoardCommandEntry boardCommandEntry;
@@ -52,6 +57,7 @@ public final class FeudRootCommand implements CommandExecutor {
 
     public FeudRootCommand(
             Plugin plugin,
+            Messages messages,
             SurveyRepository surveyRepository,
             HostBookUiBuilder hostBookUiBuilder,
             HostRemoteService hostRemoteService,
@@ -76,6 +82,7 @@ public final class FeudRootCommand implements CommandExecutor {
             HostBookAnchorStore hostBookAnchorStore,
             DisplayBoardSelectionStore displayBoardSelectionStore) {
         this.plugin = plugin;
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.hologramCommands = commandModules.hologramCommands();
         DisplayBoardCommands boardCommands = commandModules.displayBoardCommands();
         this.surveyCommands = commandModules.surveyCommands();
@@ -84,11 +91,12 @@ public final class FeudRootCommand implements CommandExecutor {
         this.buzzerCommands = commandModules.buzzerCommands();
         this.fastMoneyCommands = commandModules.fastMoneyCommands();
         this.hostBookAnchorStore = hostBookAnchorStore;
-        this.hostBookActionRouter =
-                new HostBookActionRouter(commandModules.fastMoneyCommands(), displayBoardSelectionStore);
+        this.hostBookActionRouter = new HostBookActionRouter(
+                messages, commandModules.fastMoneyCommands(), displayBoardSelectionStore, displayBoardPresenter);
         this.hostBookService = new HostBookService(
-                gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
+                messages, gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
         this.boardCommandEntry = new BoardCommandEntry(
+                messages,
                 boardCommands,
                 adminPermission,
                 boardWandService,
@@ -96,8 +104,10 @@ public final class FeudRootCommand implements CommandExecutor {
                 mapIdStore,
                 framebufferStore,
                 boardRenderer);
-        this.hostBookCommandEntry = new HostBookCommandEntry(hostPermission, hostBookService, displayBoardPresenter);
+        this.hostBookCommandEntry =
+                new HostBookCommandEntry(messages, hostPermission, hostBookService, displayBoardPresenter);
         this.clearCommandEntry = new ClearCommandEntry(
+                messages,
                 plugin,
                 adminPermission,
                 displayRegistry,
@@ -105,8 +115,9 @@ public final class FeudRootCommand implements CommandExecutor {
                 hologramService,
                 scorePanelStore,
                 timerPanelStore);
-        this.dispatcher = new SpecificationDispatcher(commandSpec);
+        this.dispatcher = new SpecificationDispatcher(messages, commandSpec);
         this.uiCommand = new UiCommand(
+                messages,
                 gameController,
                 hostPermission,
                 hostBookService::giveOrReplaceHostBook,
@@ -173,11 +184,11 @@ public final class FeudRootCommand implements CommandExecutor {
 
     private boolean handleUiClick(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use the host book.");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return true;
         }
         if (args.length < 4 || !"action".equalsIgnoreCase(args[2])) {
-            sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            messages.usage(sender, Msg.USAGE_UI_CLICK);
             return true;
         }
 
@@ -188,7 +199,7 @@ public final class FeudRootCommand implements CommandExecutor {
 
         String actionId = CommandArgs.joinTail(args, 3).trim();
         if (actionId.isBlank()) {
-            sender.sendMessage("Usage: /feud ui click <page> action <actionId>");
+            messages.usage(sender, Msg.USAGE_UI_CLICK);
             return true;
         }
 
@@ -197,7 +208,7 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
 
-        sender.sendMessage("Unknown UI action: " + actionId);
+        messages.error(sender, Msg.UNKNOWN_UI_ACTION, Placeholder.of("actionId", actionId));
         hostBookService.giveOrReplaceHostBook(player);
         return true;
     }
@@ -211,35 +222,12 @@ public final class FeudRootCommand implements CommandExecutor {
     @SuppressWarnings("deprecation") // Plugin#getDescription is deprecated, fix later
     private boolean handleVersion(CommandSender sender) {
         String version = plugin.getDescription().getVersion();
-        sender.sendMessage("FamilyFeud v" + version + " - game state: not started");
-        sender.sendMessage("Use /feud help for commands.");
+        messages.info(sender, Msg.VERSION_OUTPUT, Placeholder.of("version", version));
         return true;
     }
 
     private boolean handleHelp(CommandSender sender) {
-        sender.sendMessage("FamilyFeud commands:");
-        sender.sendMessage("/feud - show version");
-        sender.sendMessage("/feud help - this help");
-        sender.sendMessage("/feud version - show version");
-        sender.sendMessage("/feud survey ...");
-        sender.sendMessage("/feud team info - show teams");
-        sender.sendMessage("/feud team reset - reset teams");
-        sender.sendMessage("/feud team set <red|blue> name <new-name...>");
-        sender.sendMessage("/feud team buzzer bind|clear|test <red|blue>");
-        sender.sendMessage("/feud buzz reset");
-        sender.sendMessage("/feud host book - give host remote");
-        sender.sendMessage("/feud ui reveal <1-8> - reveal slot");
-        sender.sendMessage("/feud ui strike - add a strike");
-        sender.sendMessage("/feud ui clearstrikes - clear strikes");
-        sender.sendMessage("/feud ui add <points> - add points to round");
-        sender.sendMessage("/feud board wand - get Display Selector (admin)");
-        sender.sendMessage("/feud board initmaps - assign maps to board frames (admin)");
-        sender.sendMessage("/feud holo text spawn|set|move|remove ...");
-        sender.sendMessage("/feud holo item spawn|move|remove ...");
-        sender.sendMessage("/feud holo list");
-        sender.sendMessage("/feud clear all - remove all display entities");
-        sender.sendMessage("/feud host book cleanup - cleanup remote");
-        sender.sendMessage("/feud timer start|stop|reset|status");
+        messages.usage(sender, Msg.ROOT_HELP);
         return true;
     }
 }

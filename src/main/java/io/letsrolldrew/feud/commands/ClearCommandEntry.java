@@ -6,10 +6,15 @@ import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.holo.HologramService;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
+import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
 public final class ClearCommandEntry {
+    private final Messages messages;
     private final Plugin plugin;
     private final String adminPermission;
     private final DisplayRegistry displayRegistry;
@@ -19,6 +24,7 @@ public final class ClearCommandEntry {
     private final TimerPanelStore timerPanelStore;
 
     public ClearCommandEntry(
+            Messages messages,
             Plugin plugin,
             String adminPermission,
             DisplayRegistry displayRegistry,
@@ -26,6 +32,7 @@ public final class ClearCommandEntry {
             HologramService hologramService,
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.plugin = plugin;
         this.adminPermission = adminPermission;
         this.displayRegistry = displayRegistry;
@@ -39,13 +46,13 @@ public final class ClearCommandEntry {
         if (args.length >= 1 && "all".equalsIgnoreCase(args[0])) {
             return handleClearAll(sender);
         }
-        sender.sendMessage("Usage: /feud clear all");
+        messages.usage(sender, Msg.USAGE_CLEAR_ALL);
         return true;
     }
 
     private boolean handleClearAll(CommandSender sender) {
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("Admin only");
+            messages.error(sender, Msg.ADMIN_ONLY);
             return true;
         }
 
@@ -61,7 +68,7 @@ public final class ClearCommandEntry {
             timerPanelStore.clear();
         }
 
-        sender.sendMessage("Cleared " + removed + " displays");
+        messages.success(sender, Msg.CLEARED_DISPLAYS, Placeholder.of("count", removed));
         return true;
     }
 

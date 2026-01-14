@@ -26,21 +26,27 @@ public final class HostRemoteService {
     }
 
     public void giveOrReplace(Player player, ItemStack book) {
+        if (player == null || book == null) {
+            return;
+        }
         PlayerInventory inv = player.getInventory();
-        Count before = countRemotes(inv);
+        Integer kindTag = readHostRemoteTag(book);
+        Count before = countRemotes(inv, kindTag);
 
         boolean replaced = false;
 
-        if (isHostRemote(inv.getItemInOffHand())) {
-            inv.setItemInOffHand(book);
-            replaced = true;
-            log("Placed host remote in offhand for " + player.getName());
-        } else {
-            int slot = findFirstHostRemoteSlot(inv);
-            if (slot != -1) {
-                inv.setItem(slot, book);
+        if (kindTag != null) {
+            if (isHostRemote(inv.getItemInOffHand(), kindTag)) {
+                inv.setItemInOffHand(book);
                 replaced = true;
-                log("Replaced host remote in slot " + slot + " for " + player.getName());
+                log("Placed host remote in offhand for " + player.getName());
+            } else {
+                int slot = findFirstHostRemoteSlot(inv, kindTag);
+                if (slot != -1) {
+                    inv.setItem(slot, book);
+                    replaced = true;
+                    log("Replaced host remote in slot " + slot + " for " + player.getName());
+                }
             }
         }
 
@@ -54,37 +60,44 @@ public final class HostRemoteService {
             }
         }
 
-        Count after = countRemotes(inv);
+        Count after = countRemotes(inv, kindTag);
         log("Host remote counts before=" + before + " after=" + after + " for " + player.getName());
     }
 
-    private boolean isHostRemote(ItemStack stack) {
+    private Integer readHostRemoteTag(ItemStack stack) {
         if (stack == null || !stack.hasItemMeta()) {
-            return false;
+            return null;
         }
         ItemMeta meta = stack.getItemMeta();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        Integer tag = pdc.get(hostKey, PersistentDataType.INTEGER);
-        return tag != null && tag == 1;
+        return pdc.get(hostKey, PersistentDataType.INTEGER);
     }
 
-    private int findFirstHostRemoteSlot(PlayerInventory inv) {
+    private boolean isHostRemote(ItemStack stack, int kindTag) {
+        Integer tag = readHostRemoteTag(stack);
+        return tag != null && tag == kindTag;
+    }
+
+    private int findFirstHostRemoteSlot(PlayerInventory inv, int kindTag) {
         for (int i = 0; i < inv.getSize(); i++) {
-            if (isHostRemote(inv.getItem(i))) {
+            if (isHostRemote(inv.getItem(i), kindTag)) {
                 return i;
             }
         }
         return -1;
     }
 
-    private Count countRemotes(PlayerInventory inv) {
+    private Count countRemotes(PlayerInventory inv, Integer kindTag) {
+        if (kindTag == null) {
+            return new Count(0, 0);
+        }
         int slots = 0;
         for (int i = 0; i < inv.getSize(); i++) {
-            if (isHostRemote(inv.getItem(i))) {
+            if (isHostRemote(inv.getItem(i), kindTag)) {
                 slots++;
             }
         }
-        int off = isHostRemote(inv.getItemInOffHand()) ? 1 : 0;
+        int off = isHostRemote(inv.getItemInOffHand(), kindTag) ? 1 : 0;
         return new Count(slots, off);
     }
 

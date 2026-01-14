@@ -1,5 +1,8 @@
 package io.letsrolldrew.feud.effects.buzz;
 
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import java.util.Objects;
@@ -11,10 +14,12 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public final class BuzzerListener implements Listener {
+    private final Messages messages;
     private final BuzzerService buzzerService;
     private final TeamService teamService;
 
-    public BuzzerListener(BuzzerService buzzerService, TeamService teamService) {
+    public BuzzerListener(Messages messages, BuzzerService buzzerService, TeamService teamService) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.buzzerService = Objects.requireNonNull(buzzerService, "buzzerService");
         this.teamService = Objects.requireNonNull(teamService, "teamService");
     }
@@ -32,7 +37,7 @@ public final class BuzzerListener implements Listener {
 
         if (buzzerService.isBinding(event.getPlayer())) {
             buzzerService.bindTo(event.getPlayer(), loc);
-            event.getPlayer().sendMessage("Buzzer bound");
+            messages.success(event.getPlayer(), Msg.BUZZER_BOUND);
             event.setCancelled(true);
             return;
         }
@@ -46,7 +51,7 @@ public final class BuzzerListener implements Listener {
         // just a block note for now
         // use family feud buzzer sound later
         event.getPlayer().getWorld().playSound(loc, org.bukkit.Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.0f);
-        event.getPlayer().sendMessage("Buzz accepted: " + name);
+        messages.success(event.getPlayer(), Msg.BUZZ_ACCEPTED, Placeholder.of("team", name));
         event.setCancelled(true);
     }
 }

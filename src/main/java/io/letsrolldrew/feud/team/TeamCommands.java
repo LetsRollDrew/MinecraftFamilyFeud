@@ -1,25 +1,31 @@
 package io.letsrolldrew.feud.team;
 
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 
 public final class TeamCommands {
+    private final Messages messages;
     private final TeamService teamService;
     private final String hostPermission;
     private final String adminPermission;
     private final io.letsrolldrew.feud.effects.buzz.BuzzerCommands buzzerCommands;
 
-    public TeamCommands(TeamService teamService, String hostPermission, String adminPermission) {
-        this(teamService, hostPermission, adminPermission, null);
+    public TeamCommands(Messages messages, TeamService teamService, String hostPermission, String adminPermission) {
+        this(messages, teamService, hostPermission, adminPermission, null);
     }
 
     public TeamCommands(
+            Messages messages,
             TeamService teamService,
             String hostPermission,
             String adminPermission,
             io.letsrolldrew.feud.effects.buzz.BuzzerCommands buzzerCommands) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.teamService = Objects.requireNonNull(teamService, "teamService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
@@ -28,7 +34,7 @@ public final class TeamCommands {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!isAuthorized(sender)) {
-            sender.sendMessage("You must be the host to do that.");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
 
@@ -48,55 +54,55 @@ public final class TeamCommands {
     }
 
     private void handleInfo(CommandSender sender) {
-        sender.sendMessage("Teams:");
-        sender.sendMessage(formatTeamLine(TeamId.RED));
-        sender.sendMessage(formatTeamLine(TeamId.BLUE));
+        messages.info(sender, Msg.TEAM_INFO_HEADER);
+        sendTeamLine(sender, TeamId.RED);
+        sendTeamLine(sender, TeamId.BLUE);
     }
 
     private void handleReset(CommandSender sender) {
         teamService.reset();
-        sender.sendMessage("Teams reset.");
+        messages.success(sender, Msg.TEAMS_RESET);
     }
 
     private void handleSet(CommandSender sender, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage("Usage: /feud team set <red|blue> name <new-name>");
+            messages.usage(sender, Msg.USAGE_TEAM_SET_NAME);
             return;
         }
 
         TeamId team = TeamId.fromString(args[1]);
         if (team == null) {
-            sender.sendMessage("Team must be red or blue.");
+            messages.error(sender, Msg.TEAM_MUST_BE_RED_BLUE);
             return;
         }
 
         String field = args[2].toLowerCase(Locale.ROOT);
         if (!field.equals("name")) {
-            sender.sendMessage("Usage: /feud team set <red|blue> name <new-name>");
+            messages.usage(sender, Msg.USAGE_TEAM_SET_NAME);
             return;
         }
 
         String newName = joinArgs(args, 3);
         if (newName.isBlank()) {
-            sender.sendMessage("Name must be non-blank.");
+            messages.error(sender, Msg.TEAM_NAME_MUST_BE_NON_BLANK);
             return;
         }
 
         boolean changed = teamService.setName(team, newName);
         if (!changed) {
-            sender.sendMessage("Name unchanged.");
+            messages.info(sender, Msg.TEAM_NAME_UNCHANGED);
             return;
         }
 
-        sender.sendMessage("Team " + team.name() + " name set to '" + teamService.getName(team) + "'.");
+        messages.success(
+                sender,
+                Msg.TEAM_NAME_SET,
+                Placeholder.of("team", team.name()),
+                Placeholder.of("name", teamService.getName(team)));
     }
 
     private boolean help(CommandSender sender) {
-        sender.sendMessage("Team commands:");
-        sender.sendMessage("/feud team info");
-        sender.sendMessage("/feud team reset");
-        sender.sendMessage("/feud team set <red|blue> name <new-name>");
-        sender.sendMessage("/feud team buzzer bind|clear|test <red|blue>");
+        messages.usage(sender, Msg.TEAM_HELP);
         return true;
     }
 
@@ -114,7 +120,7 @@ public final class TeamCommands {
 
     private void handleBuzzer(CommandSender sender, String[] args) {
         if (buzzerCommands == null) {
-            sender.sendMessage("Buzzer commands are not available");
+            messages.error(sender, Msg.BUZZER_COMMANDS_NOT_AVAILABLE);
             return;
         }
         String[] tail = tail(args, 1);
@@ -130,21 +136,24 @@ public final class TeamCommands {
         return out;
     }
 
-    private String formatTeamLine(TeamId team) {
-        if (team == null) {
-            return "(unknown team)";
+    private void sendTeamLine(CommandSender sender, TeamId team) {
+        if (sender == null || team == null) {
+            return;
         }
 
         String name = teamService.getName(team);
         int score = teamService.getScore(team);
         BlockRef buzzer = teamService.getBuzzer(team);
 
-        String buzzerLabel = "unbound";
-        if (buzzer != null) {
-            buzzerLabel = formatBlockRef(buzzer);
-        }
+        String buzzerLabel = buzzer == null ? "unbound" : formatBlockRef(buzzer);
 
-        return team.name() + ": " + name + " | score=" + score + " | buzzer=" + buzzerLabel;
+        messages.info(
+                sender,
+                Msg.TEAM_INFO_LINE,
+                Placeholder.of("team", team.name()),
+                Placeholder.of("name", name),
+                Placeholder.of("score", score),
+                Placeholder.of("buzzer", buzzerLabel));
     }
 
     private static String formatBlockRef(BlockRef ref) {

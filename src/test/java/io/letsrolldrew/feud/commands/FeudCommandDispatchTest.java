@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.command.CommandSender;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -136,6 +138,7 @@ final class FeudCommandDispatchTest {
     }
 
     private static final class CapturingSender {
+        private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
         private final List<String> messages = new ArrayList<>();
         private final Set<String> perms;
         private final boolean allowAll;
@@ -175,6 +178,8 @@ final class FeudCommandDispatchTest {
 
                                 if (a0 instanceof String s) {
                                     messages.add(s);
+                                } else if (a0 instanceof Component c) {
+                                    messages.add(PLAIN.serialize(c));
                                 } else if (a0 instanceof String[] arr) {
                                     for (String s : arr) {
                                         if (s != null) {

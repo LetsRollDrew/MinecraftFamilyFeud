@@ -2,9 +2,14 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
 import io.letsrolldrew.feud.game.GameController;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.SurveyRepository;
+import io.letsrolldrew.feud.ui.BookTagger;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
+import io.letsrolldrew.feud.ui.HostRemoteKind;
 import io.letsrolldrew.feud.ui.HostRemoteService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 public final class HostBookService {
+    private final Messages messages;
     private final GameController gameController;
     private final HostBookUiBuilder hostBookUiBuilder;
     private final HostRemoteService hostRemoteService;
@@ -25,11 +31,13 @@ public final class HostBookService {
     private final SlotRevealPainter slotRevealPainter;
 
     public HostBookService(
+            Messages messages,
             GameController gameController,
             HostBookUiBuilder hostBookUiBuilder,
             HostRemoteService hostRemoteService,
             SurveyRepository surveyRepository,
             SlotRevealPainter slotRevealPainter) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.gameController = Objects.requireNonNull(gameController, "gameController");
         this.hostBookUiBuilder = Objects.requireNonNull(hostBookUiBuilder, "hostBookUiBuilder");
         this.hostRemoteService = Objects.requireNonNull(hostRemoteService, "hostRemoteService");
@@ -71,6 +79,7 @@ public final class HostBookService {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
+        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey(), HostRemoteKind.SELECTOR);
         meta.setTitle("Remote Selector");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
@@ -89,7 +98,7 @@ public final class HostBookService {
         meta.pages(bookPages);
         book.setItemMeta(meta);
         hostRemoteService.giveOrReplace(player, book);
-        player.sendMessage("Host remote selector given.");
+        messages.success(player, Msg.HOST_REMOTE_SELECTOR_GIVEN);
     }
 
     public void giveDisplayBook(Player player, List<String> boardIds, String boardId) {
@@ -107,7 +116,11 @@ public final class HostBookService {
         ItemStack fresh = DisplayHostRemoteBookBuilder.create(
                 target, ids, surveyRepository, hostBookUiBuilder.getHostKey(), gameController);
         hostRemoteService.giveOrReplace(player, fresh);
-        player.sendMessage(ids.isEmpty() ? "Display remote (no boards yet)" : "Display remote: " + target);
+        if (ids.isEmpty()) {
+            messages.info(player, Msg.DISPLAY_REMOTE_GIVEN_EMPTY);
+            return;
+        }
+        messages.info(player, Msg.DISPLAY_REMOTE_GIVEN, Placeholder.of("boardId", target));
     }
 
     public void giveCleanupBook(Player player) {
@@ -116,6 +129,7 @@ public final class HostBookService {
         }
         ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
+        BookTagger.tagHostRemote(meta, hostBookUiBuilder.getHostKey(), HostRemoteKind.CLEANUP);
         try {
             meta.title(Component.text("Cleanup Remote", NamedTextColor.GRAY));
             meta.author(Component.text("FamilyFeud", NamedTextColor.GRAY));
@@ -141,8 +155,8 @@ public final class HostBookService {
                 .build();
         meta.pages(List.of(page1, page2));
         book.setItemMeta(meta);
-        player.getInventory().addItem(book);
-        player.sendMessage("Cleanup book given.");
+        hostRemoteService.giveOrReplace(player, book);
+        messages.success(player, Msg.CLEANUP_BOOK_GIVEN);
     }
 
     public void giveMapBook(Player player) {
@@ -170,7 +184,7 @@ public final class HostBookService {
             fresh.setItemMeta(meta);
         }
         hostRemoteService.giveOrReplace(player, fresh);
-        player.sendMessage("Map board remote given.");
+        messages.success(player, Msg.MAP_BOARD_REMOTE_GIVEN);
     }
 
     private Component button(String label, String command) {

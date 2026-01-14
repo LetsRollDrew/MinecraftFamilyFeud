@@ -9,16 +9,21 @@ import io.letsrolldrew.feud.board.display.panels.TimerPanelStore;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionListener;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.game.TeamControl;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamId;
 import io.letsrolldrew.feud.team.TeamService;
 import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import java.util.Objects;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class DisplayBoardCommands {
+    private final Messages messages;
     private final DisplayBoardService presenter;
     private final String adminPermission;
     private final DisplayBoardSelectionListener selectionListener;
@@ -34,6 +39,7 @@ public final class DisplayBoardCommands {
     private final TimerPanelStore timerPanelStore;
 
     public DisplayBoardCommands(
+            Messages messages,
             DisplayBoardService presenter,
             String adminPermission,
             DisplayBoardSelectionListener selectionListener,
@@ -47,6 +53,7 @@ public final class DisplayBoardCommands {
             TimerPanelPresenter timerPanelPresenter,
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.presenter = presenter;
         this.adminPermission = adminPermission;
         this.selectionListener = selectionListener;
@@ -68,7 +75,7 @@ public final class DisplayBoardCommands {
             return true;
         }
         if (!sender.hasPermission(adminPermission)) {
-            sender.sendMessage("You need admin permissions");
+            messages.error(sender, Msg.NEED_PERMISSION, Placeholder.of("permission", adminPermission));
             return true;
         }
         if (args.length == 0) {
@@ -91,30 +98,30 @@ public final class DisplayBoardCommands {
 
     private void handleRemote(CommandSender sender, String[] args) {
         if (hostPermission == null || !sender.hasPermission(hostPermission)) {
-            sender.sendMessage("Host only");
+            messages.error(sender, Msg.HOST_ONLY);
             return;
         }
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Players only");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board display remote <id> ...");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOTE);
             return;
         }
         String boardId = args[1];
         if (boardId == null || boardId.isBlank()) {
-            sender.sendMessage("Missing board id");
+            messages.error(sender, Msg.MISSING_BOARD_ID);
             return;
         }
         if (presenter == null || controller == null) {
-            sender.sendMessage("Not ready");
+            messages.error(sender, Msg.NOT_READY);
             return;
         }
 
         if (args.length < 3) {
             refreshRemote(player, boardId);
-            sender.sendMessage("Remote refreshed");
+            messages.success(sender, Msg.DISPLAY_REMOTE_REFRESHED);
             return;
         }
 
@@ -123,35 +130,39 @@ public final class DisplayBoardCommands {
             case "reveal" -> handleRemoteReveal(sender, player, boardId, args);
             case "strike" -> {
                 controller.strike();
-                sender.sendMessage("Strike " + controller.strikeCount() + "/" + controller.maxStrikes());
+                messages.info(
+                        sender,
+                        Msg.DISPLAY_REMOTE_STRIKE,
+                        Placeholder.of("count", controller.strikeCount()),
+                        Placeholder.of("max", controller.maxStrikes()));
                 refreshRemote(player, boardId);
             }
             case "clearstrikes" -> {
                 controller.clearStrikes();
-                sender.sendMessage("Strikes cleared");
+                messages.success(sender, Msg.UI_STRIKES_CLEARED);
                 refreshRemote(player, boardId);
             }
             case "control" -> handleRemoteControl(sender, player, boardId, args);
             case "award" -> handleRemoteAward(sender, player, boardId);
             case "reset" -> handleRemoteReset(sender, player, boardId);
-            default -> sender.sendMessage("Remote: reveal/strike/clearstrikes/control/award/reset");
+            default -> messages.usage(sender, Msg.DISPLAY_REMOTE_HELP);
         }
     }
 
     private void handleRemoteReveal(CommandSender sender, Player player, String boardId, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage("Usage: /feud board display remote " + boardId + " reveal <1-8>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOTE_REVEAL, Placeholder.of("boardId", boardId));
             return;
         }
         int slot;
         try {
             slot = Integer.parseInt(args[3]);
         } catch (NumberFormatException ex) {
-            sender.sendMessage("Slot must be 1-8");
+            messages.error(sender, Msg.SLOT_MUST_BE_1_8);
             return;
         }
         if (slot < 1 || slot > 8) {
-            sender.sendMessage("Slot must be 1-8");
+            messages.error(sender, Msg.SLOT_MUST_BE_1_8);
             return;
         }
 
@@ -161,33 +172,33 @@ public final class DisplayBoardCommands {
             var answer = survey.answers().get(slot - 1);
             presenter.revealSlot(boardId, slot, answer.text(), answer.points());
         }
-        sender.sendMessage("Revealed " + slot);
+        messages.success(sender, Msg.DISPLAY_REMOTE_REVEALED, Placeholder.of("slot", slot));
         refreshRemote(player, boardId);
     }
 
     private void handleRemoteControl(CommandSender sender, Player player, String boardId, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage("Usage: /feud board display remote " + boardId + " control <red|blue>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOTE_CONTROL, Placeholder.of("boardId", boardId));
             return;
         }
         TeamControl team = TeamControl.fromString(args[3]);
         if (team == TeamControl.NONE) {
-            sender.sendMessage("Team must be red or blue");
+            messages.error(sender, Msg.TEAM_MUST_BE_RED_BLUE);
             return;
         }
         controller.setControllingTeam(team);
-        sender.sendMessage("Control " + team.name());
+        messages.success(sender, Msg.DISPLAY_REMOTE_CONTROL, Placeholder.of("team", team.name()));
         refreshRemote(player, boardId);
     }
 
     private void handleRemoteAward(CommandSender sender, Player player, String boardId) {
         if (controller.controllingTeam() == TeamControl.NONE) {
-            sender.sendMessage("Set control first");
+            messages.error(sender, Msg.UI_CONTROL_REQUIRED_TO_AWARD);
             return;
         }
         int before = controller.roundPoints();
         controller.awardRoundPoints();
-        sender.sendMessage("Awarded " + before);
+        messages.success(sender, Msg.DISPLAY_REMOTE_AWARDED, Placeholder.of("points", before));
         awardToTeam(before, controller.controllingTeam(), boardId);
         refreshRemote(player, boardId);
     }
@@ -197,7 +208,7 @@ public final class DisplayBoardCommands {
         for (int i = 1; i <= 8; i++) {
             presenter.hideSlot(boardId, i);
         }
-        sender.sendMessage("Reset");
+        messages.success(sender, Msg.DISPLAY_REMOTE_RESET);
         refreshRemote(player, boardId);
     }
 
@@ -242,56 +253,56 @@ public final class DisplayBoardCommands {
 
     private void handleCreate(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can create a board");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board create <boardId>");
+            messages.usage(sender, Msg.USAGE_BOARD_CREATE);
             return;
         }
         String boardId = args[1];
         presenter.createBoard(boardId, player.getLocation(), player);
-        sender.sendMessage("Board '" + boardId + "' created at your location.");
+        messages.success(sender, Msg.BOARD_CREATED_AT_LOCATION, Placeholder.of("boardId", boardId));
     }
 
     private void handleCreateDynamic(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can create a board");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board display dynamic <boardId>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_DYNAMIC);
             return;
         }
         var boardResult = presenter.resolveDynamicLayout(args[1], player, false, true);
         if (!boardResult.success()) {
-            sender.sendMessage("Selection invalid: " + boardResult.error());
+            messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", boardResult.error()));
             return;
         }
         String boardId = args[1];
         if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
-            sender.sendMessage("Board id already exists or creation failed.");
+            messages.error(sender, Msg.BOARD_CREATE_FAILED_OR_EXISTS);
             return;
         }
-        sender.sendMessage("Dynamic board '" + boardId + "' created.");
+        messages.success(sender, Msg.DYNAMIC_BOARD_CREATED, Placeholder.of("boardId", boardId));
     }
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board display remove <boardId>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOVE);
             return;
         }
         presenter.destroyBoard(args[1]);
-        sender.sendMessage("Board '" + args[1] + "' removed.");
+        messages.success(sender, Msg.BOARD_REMOVED, Placeholder.of("boardId", args[1]));
     }
 
     private void handleSelectionSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can spawn from a selection");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId> [team]");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_SELECTION);
             return;
         }
         String target = args[1].toLowerCase();
@@ -300,27 +311,26 @@ public final class DisplayBoardCommands {
         if (target.equals("board")) {
             var boardResult = presenter.resolveDynamicLayout(boardId, player, false, true);
             if (!boardResult.success()) {
-                sender.sendMessage("Selection invalid: " + boardResult.error());
+                messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", boardResult.error()));
                 return;
             }
             if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
-                sender.sendMessage("Board id already exists or creation failed.");
+                messages.error(sender, Msg.BOARD_CREATE_FAILED_OR_EXISTS);
                 return;
             }
-            sender.sendMessage("Dynamic board '" + boardId + "' created from selection.");
+            messages.success(sender, Msg.DYNAMIC_BOARD_CREATED_FROM_SELECTION, Placeholder.of("boardId", boardId));
             return;
         }
 
         if (target.equals("panels")) {
             if (scorePanelPresenter == null || scorePanelStore == null) {
-                sender.sendMessage("Score panels are not available.");
+                messages.error(sender, Msg.SCORE_PANELS_NOT_AVAILABLE);
                 return;
             }
             boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
             int teamIndex = isRemove ? 4 : 3;
             if (teamIndex >= args.length) {
-                sender.sendMessage("Usage: /feud board display selection panels <boardId> <red|blue|both> [remove]");
-                sender.sendMessage("       /feud board display selection panels <boardId> remove <red|blue|both>");
+                messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_SELECTION_PANELS);
                 return;
             }
             String teamArg = args[teamIndex].toLowerCase();
@@ -334,69 +344,77 @@ public final class DisplayBoardCommands {
             if (isRemove) {
                 removePanels(boardId, team);
                 String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
-                sender.sendMessage("Removed " + targetLabel + " for '" + boardId + "'.");
+                messages.success(
+                        sender,
+                        Msg.PANELS_REMOVED_FOR_BOARD,
+                        Placeholder.of("target", targetLabel),
+                        Placeholder.of("boardId", boardId));
                 return;
             }
 
             var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
-                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", layoutResult.error()));
                 return;
             }
             spawnPanels(boardId, layoutResult.layout(), team);
             String targetLabel = panelLabel(team);
-            sender.sendMessage("Spawned " + targetLabel + " for '" + boardId + "' using selection.");
+            messages.success(
+                    sender,
+                    Msg.PANELS_SPAWNED_FOR_BOARD,
+                    Placeholder.of("target", targetLabel),
+                    Placeholder.of("boardId", boardId));
             return;
         }
 
         if (target.equals("timer")) {
             if (timerPanelPresenter == null || timerPanelStore == null) {
-                sender.sendMessage("Timer panel is not available.");
+                messages.error(sender, Msg.TIMER_PANEL_NOT_AVAILABLE);
                 return;
             }
             boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
             if (isRemove) {
                 removeTimerPanel(boardId);
-                sender.sendMessage("Removed timer panel for '" + boardId + "'.");
+                messages.success(sender, Msg.TIMER_PANEL_REMOVED_FOR_BOARD, Placeholder.of("boardId", boardId));
                 return;
             }
             var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
-                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", layoutResult.error()));
                 return;
             }
             spawnTimerPanel(boardId, layoutResult.layout());
-            sender.sendMessage("Timer panel spawned for '" + boardId + "' using selection.");
+            messages.success(sender, Msg.TIMER_PANEL_SPAWNED_FOR_BOARD, Placeholder.of("boardId", boardId));
             return;
         }
 
-        sender.sendMessage("Unknown selection target. Use board/panels/timer.");
+        messages.error(sender, Msg.UNKNOWN_SELECTION_TARGET);
     }
 
     private void handleList(CommandSender sender) {
         var ids = presenter.listBoards();
         if (ids.isEmpty()) {
-            sender.sendMessage("No boards active.");
+            messages.info(sender, Msg.BOARD_LIST_EMPTY);
             return;
         }
-        sender.sendMessage("Boards: " + String.join(", ", ids));
+        messages.info(sender, Msg.BOARD_LIST_LINE, Placeholder.of("boards", String.join(", ", ids)));
     }
 
     private void handleWand(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can receive the selector wand");
+            messages.error(sender, Msg.PLAYER_ONLY);
             return;
         }
         if (selectionListener == null) {
-            sender.sendMessage("Selector wand is not available");
+            messages.error(sender, Msg.SELECTOR_WAND_NOT_AVAILABLE);
             return;
         }
         selectionListener.giveWand(player);
-        sender.sendMessage("Display selector given.");
+        messages.success(sender, Msg.DISPLAY_SELECTOR_GIVEN);
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("Board commands: create/dynamic/list/remove/wand (selector)");
+        messages.usage(sender, Msg.BOARD_DISPLAY_HELP);
     }
 
     private void spawnPanels(String boardId, DynamicBoardLayout layout, TeamId team) {

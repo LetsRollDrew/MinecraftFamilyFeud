@@ -1,6 +1,9 @@
 package io.letsrolldrew.feud.board;
 
 import io.letsrolldrew.feud.board.layout.TilePos;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,12 +34,14 @@ public final class BoardWandService implements Listener {
     private static final int EXPECTED_WIDTH = 10;
     private static final int EXPECTED_HEIGHT = 6;
 
+    private final Messages messages;
     private final Plugin plugin;
     private final NamespacedKey wandKey;
     private final BoardBindingStore store;
     private final Map<UUID, Selection> selections = new HashMap<>();
 
-    public BoardWandService(Plugin plugin, NamespacedKey wandKey, BoardBindingStore store) {
+    public BoardWandService(Messages messages, Plugin plugin, NamespacedKey wandKey, BoardBindingStore store) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.plugin = plugin;
         this.wandKey = wandKey;
         this.store = store;
@@ -92,24 +97,28 @@ public final class BoardWandService implements Listener {
         Selection first = selections.get(player.getUniqueId());
         if (first == null) {
             selections.put(player.getUniqueId(), Selection.from(frame));
-            player.sendMessage("Top-left set. Now click the bottom-right frame.");
+            messages.info(player, Msg.BOARD_WAND_TOP_LEFT_SET);
             return;
         }
 
         BoardBinding binding = buildBinding(first, Selection.from(frame));
         if (binding == null) {
-            player.sendMessage("Selection invalid. Ensure a 10x6 rectangle on the same wall (consistent facing).");
+            messages.error(player, Msg.BOARD_WAND_SELECTION_INVALID);
             selections.remove(player.getUniqueId());
             return;
         }
 
         try {
             store.save(binding);
-            player.sendMessage("Board binding saved (" + EXPECTED_WIDTH + "x" + EXPECTED_HEIGHT + ").");
+            messages.success(
+                    player,
+                    Msg.BOARD_WAND_BINDING_SAVED,
+                    Placeholder.of("width", EXPECTED_WIDTH),
+                    Placeholder.of("height", EXPECTED_HEIGHT));
             selections.remove(player.getUniqueId());
         } catch (IOException e) {
             plugin.getLogger().severe("Failed to save board binding: " + e.getMessage());
-            player.sendMessage("Error saving board binding. See console.");
+            messages.error(player, Msg.BOARD_WAND_SAVE_ERROR);
         }
     }
 

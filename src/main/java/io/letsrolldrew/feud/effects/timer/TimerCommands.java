@@ -1,16 +1,21 @@
 package io.letsrolldrew.feud.effects.timer;
 
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Locale;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 
 public final class TimerCommands {
+    private final Messages messages;
     private final TimerService timerService;
     private final String hostPermission;
     private final String adminPermission;
 
-    public TimerCommands(TimerService timerService, String hostPermission, String adminPermission) {
+    public TimerCommands(Messages messages, TimerService timerService, String hostPermission, String adminPermission) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.timerService = Objects.requireNonNull(timerService, "timerService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
@@ -18,7 +23,7 @@ public final class TimerCommands {
 
     public boolean handle(CommandSender sender, String[] args) {
         if (!isAuthorized(sender)) {
-            sender.sendMessage("You must be the host to do that");
+            messages.error(sender, Msg.HOST_ONLY);
             return true;
         }
         if (args == null || args.length == 0) {
@@ -39,50 +44,50 @@ public final class TimerCommands {
     private void handleStart(CommandSender sender, String[] args) {
         Integer seconds = parseSeconds(args, 1);
         if (seconds != null && seconds < 0) {
-            sender.sendMessage("Seconds can't be negative");
+            messages.error(sender, Msg.SECONDS_CANNOT_BE_NEGATIVE);
             return;
         }
         if (seconds == null) {
             timerService.start();
-            sender.sendMessage("Timer started.");
+            messages.success(sender, Msg.TIMER_STARTED);
         } else {
             timerService.start(seconds);
-            sender.sendMessage("Timer started for " + seconds + "s.");
+            messages.success(sender, Msg.TIMER_STARTED_FOR, Placeholder.of("seconds", seconds));
         }
     }
 
     private void handleStop(CommandSender sender) {
         timerService.stop();
-        sender.sendMessage("Timer stopped.");
+        messages.success(sender, Msg.TIMER_STOPPED);
     }
 
     private void handleReset(CommandSender sender, String[] args) {
         Integer seconds = parseSeconds(args, 1);
         if (seconds != null && seconds < 0) {
-            sender.sendMessage("Seconds can't be negative");
+            messages.error(sender, Msg.SECONDS_CANNOT_BE_NEGATIVE);
             return;
         }
         if (seconds == null) {
             timerService.reset();
-            sender.sendMessage("Timer reset to default");
+            messages.success(sender, Msg.TIMER_RESET_DEFAULT);
         } else {
             timerService.reset(seconds);
-            sender.sendMessage("Timer reset to " + seconds + "s");
+            messages.success(sender, Msg.TIMER_RESET_TO, Placeholder.of("seconds", seconds));
         }
     }
 
     private void handleStatus(CommandSender sender) {
         TimerService.TimerStatus status = timerService.status();
         String running = status.running() ? "running" : "stopped";
-        sender.sendMessage("Timer " + running + " (" + status.remainingSeconds() + "s remaining)");
+        messages.info(
+                sender,
+                Msg.TIMER_STATUS,
+                Placeholder.of("state", running),
+                Placeholder.of("seconds", status.remainingSeconds()));
     }
 
     private boolean help(CommandSender sender) {
-        sender.sendMessage("Timer commands:");
-        sender.sendMessage("/feud timer start [seconds]");
-        sender.sendMessage("/feud timer stop");
-        sender.sendMessage("/feud timer reset [seconds]");
-        sender.sendMessage("/feud timer status");
+        messages.usage(sender, Msg.TIMER_HELP);
         return true;
     }
 

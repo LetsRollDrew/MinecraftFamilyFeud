@@ -28,8 +28,13 @@ public final class DisplayHostRemoteBookBuilder {
         }
         String targetId = (boardId == null || boardId.isBlank()) ? "(none)" : boardId;
 
-        HostBookUiBuilder base =
-                new HostBookUiBuilder("/feud board display remote " + targetId, surveyRepository, null, hostKey);
+        HostBookUiBuilder base = new HostBookUiBuilder(
+                "/feud board display remote " + targetId,
+                surveyRepository,
+                null,
+                hostKey,
+                null,
+                HostRemoteKind.DISPLAY);
 
         ItemStack book = base.createBook(
                 controller.slotHoverTexts(),
