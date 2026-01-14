@@ -106,7 +106,7 @@ public final class DisplayBoardCommands {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board display remote <id> ...");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOTE);
             return;
         }
         String boardId = args[1];
@@ -121,7 +121,7 @@ public final class DisplayBoardCommands {
 
         if (args.length < 3) {
             refreshRemote(player, boardId);
-            sender.sendMessage("Remote refreshed");
+            messages.success(sender, Msg.DISPLAY_REMOTE_REFRESHED);
             return;
         }
 
@@ -130,24 +130,28 @@ public final class DisplayBoardCommands {
             case "reveal" -> handleRemoteReveal(sender, player, boardId, args);
             case "strike" -> {
                 controller.strike();
-                sender.sendMessage("Strike " + controller.strikeCount() + "/" + controller.maxStrikes());
+                messages.info(
+                        sender,
+                        Msg.DISPLAY_REMOTE_STRIKE,
+                        Placeholder.of("count", controller.strikeCount()),
+                        Placeholder.of("max", controller.maxStrikes()));
                 refreshRemote(player, boardId);
             }
             case "clearstrikes" -> {
                 controller.clearStrikes();
-                sender.sendMessage("Strikes cleared");
+                messages.success(sender, Msg.UI_STRIKES_CLEARED);
                 refreshRemote(player, boardId);
             }
             case "control" -> handleRemoteControl(sender, player, boardId, args);
             case "award" -> handleRemoteAward(sender, player, boardId);
             case "reset" -> handleRemoteReset(sender, player, boardId);
-            default -> sender.sendMessage("Remote: reveal/strike/clearstrikes/control/award/reset");
+            default -> messages.usage(sender, Msg.DISPLAY_REMOTE_HELP);
         }
     }
 
     private void handleRemoteReveal(CommandSender sender, Player player, String boardId, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage("Usage: /feud board display remote " + boardId + " reveal <1-8>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOTE_REVEAL, Placeholder.of("boardId", boardId));
             return;
         }
         int slot;
@@ -168,13 +172,13 @@ public final class DisplayBoardCommands {
             var answer = survey.answers().get(slot - 1);
             presenter.revealSlot(boardId, slot, answer.text(), answer.points());
         }
-        sender.sendMessage("Revealed " + slot);
+        messages.success(sender, Msg.DISPLAY_REMOTE_REVEALED, Placeholder.of("slot", slot));
         refreshRemote(player, boardId);
     }
 
     private void handleRemoteControl(CommandSender sender, Player player, String boardId, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage("Usage: /feud board display remote " + boardId + " control <red|blue>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOTE_CONTROL, Placeholder.of("boardId", boardId));
             return;
         }
         TeamControl team = TeamControl.fromString(args[3]);
@@ -183,18 +187,18 @@ public final class DisplayBoardCommands {
             return;
         }
         controller.setControllingTeam(team);
-        sender.sendMessage("Control " + team.name());
+        messages.success(sender, Msg.DISPLAY_REMOTE_CONTROL, Placeholder.of("team", team.name()));
         refreshRemote(player, boardId);
     }
 
     private void handleRemoteAward(CommandSender sender, Player player, String boardId) {
         if (controller.controllingTeam() == TeamControl.NONE) {
-            sender.sendMessage("Set control first");
+            messages.error(sender, Msg.UI_CONTROL_REQUIRED_TO_AWARD);
             return;
         }
         int before = controller.roundPoints();
         controller.awardRoundPoints();
-        sender.sendMessage("Awarded " + before);
+        messages.success(sender, Msg.DISPLAY_REMOTE_AWARDED, Placeholder.of("points", before));
         awardToTeam(before, controller.controllingTeam(), boardId);
         refreshRemote(player, boardId);
     }
@@ -204,7 +208,7 @@ public final class DisplayBoardCommands {
         for (int i = 1; i <= 8; i++) {
             presenter.hideSlot(boardId, i);
         }
-        sender.sendMessage("Reset");
+        messages.success(sender, Msg.DISPLAY_REMOTE_RESET);
         refreshRemote(player, boardId);
     }
 
@@ -253,7 +257,7 @@ public final class DisplayBoardCommands {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board create <boardId>");
+            messages.usage(sender, Msg.USAGE_BOARD_CREATE);
             return;
         }
         String boardId = args[1];
@@ -267,17 +271,17 @@ public final class DisplayBoardCommands {
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board display dynamic <boardId>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_DYNAMIC);
             return;
         }
         var boardResult = presenter.resolveDynamicLayout(args[1], player, false, true);
         if (!boardResult.success()) {
-            sender.sendMessage("Selection invalid: " + boardResult.error());
+            messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", boardResult.error()));
             return;
         }
         String boardId = args[1];
         if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
-            sender.sendMessage("Board id already exists or creation failed.");
+            messages.error(sender, Msg.BOARD_CREATE_FAILED_OR_EXISTS);
             return;
         }
         messages.success(sender, Msg.DYNAMIC_BOARD_CREATED, Placeholder.of("boardId", boardId));
@@ -285,7 +289,7 @@ public final class DisplayBoardCommands {
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /feud board display remove <boardId>");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_REMOVE);
             return;
         }
         presenter.destroyBoard(args[1]);
@@ -298,7 +302,7 @@ public final class DisplayBoardCommands {
             return;
         }
         if (args.length < 3) {
-            sender.sendMessage("Usage: /feud board display selection <board|panels|timer> <boardId> [team]");
+            messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_SELECTION);
             return;
         }
         String target = args[1].toLowerCase();
@@ -307,11 +311,11 @@ public final class DisplayBoardCommands {
         if (target.equals("board")) {
             var boardResult = presenter.resolveDynamicLayout(boardId, player, false, true);
             if (!boardResult.success()) {
-                sender.sendMessage("Selection invalid: " + boardResult.error());
+                messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", boardResult.error()));
                 return;
             }
             if (presenter.createDynamicBoard(boardId, boardResult.layout()) == null) {
-                sender.sendMessage("Board id already exists or creation failed.");
+                messages.error(sender, Msg.BOARD_CREATE_FAILED_OR_EXISTS);
                 return;
             }
             messages.success(sender, Msg.DYNAMIC_BOARD_CREATED_FROM_SELECTION, Placeholder.of("boardId", boardId));
@@ -320,14 +324,13 @@ public final class DisplayBoardCommands {
 
         if (target.equals("panels")) {
             if (scorePanelPresenter == null || scorePanelStore == null) {
-                sender.sendMessage("Score panels are not available.");
+                messages.error(sender, Msg.SCORE_PANELS_NOT_AVAILABLE);
                 return;
             }
             boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
             int teamIndex = isRemove ? 4 : 3;
             if (teamIndex >= args.length) {
-                sender.sendMessage("Usage: /feud board display selection panels <boardId> <red|blue|both> [remove]");
-                sender.sendMessage("       /feud board display selection panels <boardId> remove <red|blue|both>");
+                messages.usage(sender, Msg.USAGE_BOARD_DISPLAY_SELECTION_PANELS);
                 return;
             }
             String teamArg = args[teamIndex].toLowerCase();
@@ -341,52 +344,60 @@ public final class DisplayBoardCommands {
             if (isRemove) {
                 removePanels(boardId, team);
                 String targetLabel = team == null ? "both panels" : team == TeamId.RED ? "red panel" : "blue panel";
-                sender.sendMessage("Removed " + targetLabel + " for '" + boardId + "'.");
+                messages.success(
+                        sender,
+                        Msg.PANELS_REMOVED_FOR_BOARD,
+                        Placeholder.of("target", targetLabel),
+                        Placeholder.of("boardId", boardId));
                 return;
             }
 
             var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
-                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", layoutResult.error()));
                 return;
             }
             spawnPanels(boardId, layoutResult.layout(), team);
             String targetLabel = panelLabel(team);
-            sender.sendMessage("Spawned " + targetLabel + " for '" + boardId + "' using selection.");
+            messages.success(
+                    sender,
+                    Msg.PANELS_SPAWNED_FOR_BOARD,
+                    Placeholder.of("target", targetLabel),
+                    Placeholder.of("boardId", boardId));
             return;
         }
 
         if (target.equals("timer")) {
             if (timerPanelPresenter == null || timerPanelStore == null) {
-                sender.sendMessage("Timer panel is not available.");
+                messages.error(sender, Msg.TIMER_PANEL_NOT_AVAILABLE);
                 return;
             }
             boolean isRemove = args.length >= 4 && "remove".equalsIgnoreCase(args[3]);
             if (isRemove) {
                 removeTimerPanel(boardId);
-                sender.sendMessage("Removed timer panel for '" + boardId + "'.");
+                messages.success(sender, Msg.TIMER_PANEL_REMOVED_FOR_BOARD, Placeholder.of("boardId", boardId));
                 return;
             }
             var layoutResult = presenter.resolveDynamicLayout(boardId, player, true, true);
             if (!layoutResult.success()) {
-                sender.sendMessage("Selection invalid: " + layoutResult.error());
+                messages.error(sender, Msg.SELECTION_INVALID_REASON, Placeholder.of("reason", layoutResult.error()));
                 return;
             }
             spawnTimerPanel(boardId, layoutResult.layout());
-            sender.sendMessage("Timer panel spawned for '" + boardId + "' using selection.");
+            messages.success(sender, Msg.TIMER_PANEL_SPAWNED_FOR_BOARD, Placeholder.of("boardId", boardId));
             return;
         }
 
-        sender.sendMessage("Unknown selection target. Use board/panels/timer.");
+        messages.error(sender, Msg.UNKNOWN_SELECTION_TARGET);
     }
 
     private void handleList(CommandSender sender) {
         var ids = presenter.listBoards();
         if (ids.isEmpty()) {
-            sender.sendMessage("No boards active.");
+            messages.info(sender, Msg.BOARD_LIST_EMPTY);
             return;
         }
-        sender.sendMessage("Boards: " + String.join(", ", ids));
+        messages.info(sender, Msg.BOARD_LIST_LINE, Placeholder.of("boards", String.join(", ", ids)));
     }
 
     private void handleWand(CommandSender sender) {
@@ -395,11 +406,11 @@ public final class DisplayBoardCommands {
             return;
         }
         if (selectionListener == null) {
-            sender.sendMessage("Selector wand is not available");
+            messages.error(sender, Msg.SELECTOR_WAND_NOT_AVAILABLE);
             return;
         }
         selectionListener.giveWand(player);
-        sender.sendMessage("Display selector given.");
+        messages.success(sender, Msg.DISPLAY_SELECTOR_GIVEN);
     }
 
     private void sendUsage(CommandSender sender) {
