@@ -21,6 +21,7 @@ import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.team.TeamCommands;
 import io.letsrolldrew.feud.team.TeamService;
@@ -91,9 +92,9 @@ public final class FeudRootCommand implements CommandExecutor {
         this.fastMoneyCommands = commandModules.fastMoneyCommands();
         this.hostBookAnchorStore = hostBookAnchorStore;
         this.hostBookActionRouter =
-                new HostBookActionRouter(commandModules.fastMoneyCommands(), displayBoardSelectionStore);
+                new HostBookActionRouter(messages, commandModules.fastMoneyCommands(), displayBoardSelectionStore);
         this.hostBookService = new HostBookService(
-                gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
+                messages, gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
         this.boardCommandEntry = new BoardCommandEntry(
                 messages,
                 boardCommands,
@@ -114,7 +115,7 @@ public final class FeudRootCommand implements CommandExecutor {
                 hologramService,
                 scorePanelStore,
                 timerPanelStore);
-        this.dispatcher = new SpecificationDispatcher(commandSpec);
+        this.dispatcher = new SpecificationDispatcher(messages, commandSpec);
         this.uiCommand = new UiCommand(
                 messages,
                 gameController,
@@ -207,7 +208,7 @@ public final class FeudRootCommand implements CommandExecutor {
             return true;
         }
 
-        sender.sendMessage("Unknown UI action: " + actionId);
+        messages.error(sender, Msg.UNKNOWN_UI_ACTION, Placeholder.of("actionId", actionId));
         hostBookService.giveOrReplaceHostBook(player);
         return true;
     }
@@ -221,8 +222,7 @@ public final class FeudRootCommand implements CommandExecutor {
     @SuppressWarnings("deprecation") // Plugin#getDescription is deprecated, fix later
     private boolean handleVersion(CommandSender sender) {
         String version = plugin.getDescription().getVersion();
-        sender.sendMessage("FamilyFeud v" + version + " - game state: not started");
-        sender.sendMessage("Use /feud help for commands.");
+        messages.info(sender, Msg.VERSION_OUTPUT, Placeholder.of("version", version));
         return true;
     }
 

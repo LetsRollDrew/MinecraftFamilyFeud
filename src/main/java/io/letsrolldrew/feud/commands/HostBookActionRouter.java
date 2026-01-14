@@ -3,18 +3,26 @@ package io.letsrolldrew.feud.commands;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.ui.actions.ActionIds;
 import java.util.Locale;
+import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public final class HostBookActionRouter {
+    private final Messages messages;
     private final FastMoneyCommands fastMoneyCommands;
     private final DisplayBoardSelectionStore displayBoardSelectionStore;
 
     public HostBookActionRouter(
-            FastMoneyCommands fastMoneyCommands, DisplayBoardSelectionStore displayBoardSelectionStore) {
+            Messages messages,
+            FastMoneyCommands fastMoneyCommands,
+            DisplayBoardSelectionStore displayBoardSelectionStore) {
+        this.messages = Objects.requireNonNull(messages, "messages");
         this.fastMoneyCommands = fastMoneyCommands;
         this.displayBoardSelectionStore = displayBoardSelectionStore;
     }
@@ -118,7 +126,7 @@ public final class HostBookActionRouter {
             return true;
         }
         if (normalized.startsWith("selector.spawn.")) {
-            player.sendMessage("Selection spawn actions are not yet wired to commands");
+            messages.info(player, Msg.SELECTION_SPAWN_NOT_WIRED);
             return true;
         }
 
@@ -129,7 +137,7 @@ public final class HostBookActionRouter {
         String suffix = actionId.substring("fastmoney.reveal.".length());
         String[] parts = suffix.split("\\.");
         if (parts.length != 2) {
-            player.sendMessage("Invalid Fast Money reveal action: " + actionId);
+            messages.error(player, Msg.INVALID_FAST_MONEY_REVEAL_ACTION, Placeholder.of("actionId", actionId));
             return true;
         }
 
@@ -139,7 +147,7 @@ public final class HostBookActionRouter {
             questionIndex = Integer.parseInt(parts[0]);
             slot = Integer.parseInt(parts[1]);
         } catch (NumberFormatException ex) {
-            player.sendMessage("Invalid Fast Money indices in action: " + actionId);
+            messages.error(player, Msg.INVALID_FAST_MONEY_INDICES_ACTION, Placeholder.of("actionId", actionId));
             return true;
         }
 
@@ -149,21 +157,25 @@ public final class HostBookActionRouter {
 
     private void describeSelection(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("No active display selection");
+            messages.error(sender, Msg.DISPLAY_SELECTION_NONE);
             return;
         }
 
         if (displayBoardSelectionStore == null) {
-            sender.sendMessage("No selection information available");
+            messages.error(sender, Msg.DISPLAY_SELECTION_INFO_UNAVAILABLE);
             return;
         }
         DisplayBoardSelection selection = displayBoardSelectionStore.get(player.getUniqueId());
         if (selection == null) {
-            sender.sendMessage("No active display selection");
+            messages.error(sender, Msg.DISPLAY_SELECTION_NONE);
             return;
         }
-        sender.sendMessage("Selection: " + selection.cornerA() + " to " + selection.cornerB() + " facing "
-                + selection.facing().name());
+        messages.info(
+                sender,
+                Msg.DISPLAY_SELECTION_STATUS,
+                Placeholder.of("cornerA", selection.cornerA()),
+                Placeholder.of("cornerB", selection.cornerB()),
+                Placeholder.of("facing", selection.facing().name()));
     }
 
     private boolean runPlayerCommand(Player player, String command) {

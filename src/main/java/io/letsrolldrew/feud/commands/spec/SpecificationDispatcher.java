@@ -1,5 +1,7 @@
 package io.letsrolldrew.feud.commands.spec;
 
+import io.letsrolldrew.feud.messages.Messages;
+import io.letsrolldrew.feud.messages.Msg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,12 +12,17 @@ import org.bukkit.command.CommandSender;
 // so callers can route to module handlers as needed
 
 public final class SpecificationDispatcher {
+    private final Messages messages;
     private final CommandSpecificationNode root;
 
-    public SpecificationDispatcher(CommandSpecificationNode root) {
+    public SpecificationDispatcher(Messages messages, CommandSpecificationNode root) {
+        if (messages == null) {
+            throw new IllegalArgumentException("messages");
+        }
         if (root == null) {
             throw new IllegalArgumentException("root");
         }
+        this.messages = messages;
         this.root = root;
     }
 
@@ -107,8 +114,16 @@ public final class SpecificationDispatcher {
         for (Requirement requirement : requirements) {
             if (!requirement.test(sender)) {
                 if (sender != null) {
-                    String msg = requirement.message().orElse("You cannot use this command.");
-                    sender.sendMessage(msg);
+                    if (requirement instanceof RequirementMessageProvider provider) {
+                        RequirementMessage message = provider.requirementMessage();
+                        if (message != null) {
+                            messages.error(sender, message.msg(), message.placeholders());
+                        } else {
+                            messages.error(sender, Msg.REQUIREMENT_DENIED);
+                        }
+                    } else {
+                        messages.error(sender, Msg.REQUIREMENT_DENIED);
+                    }
                 }
                 return false;
             }

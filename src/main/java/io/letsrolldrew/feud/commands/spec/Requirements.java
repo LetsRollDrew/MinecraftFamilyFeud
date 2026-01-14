@@ -1,5 +1,7 @@
 package io.letsrolldrew.feud.commands.spec;
 
+import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,14 +19,17 @@ public final class Requirements {
         Predicate<CommandSender> predicate = sender -> sender != null && sender.hasPermission(permission);
         Optional<String> message = Optional.of("You need permission: " + permission);
 
-        return new BasicRequirement(predicate, message);
+        return new BasicRequirement(
+                predicate,
+                message,
+                new RequirementMessage(Msg.NEED_PERMISSION, Placeholder.of("permission", permission)));
     }
 
     public static Requirement playerOnly() {
         Predicate<CommandSender> predicate = sender -> sender instanceof Player;
-        Optional<String> message = Optional.of("Only players can use this command.");
+        Optional<String> message = Optional.of("Only players can use this command");
 
-        return new BasicRequirement(predicate, message);
+        return new BasicRequirement(predicate, message, new RequirementMessage(Msg.PLAYER_ONLY));
     }
 
     // anyOf combinator, passes when a SINGLE requirement in the group passes
@@ -40,7 +45,7 @@ public final class Requirements {
             return false;
         };
 
-        return new BasicRequirement(predicate, firstMessage(requirementList));
+        return new BasicRequirement(predicate, firstMessage(requirementList), firstRequirementMessage(requirementList));
     }
 
     // allOf combinator, passing only when EVERY requirement in the group passes
@@ -56,7 +61,7 @@ public final class Requirements {
             return true;
         };
 
-        return new BasicRequirement(predicate, firstMessage(requirementList));
+        return new BasicRequirement(predicate, firstMessage(requirementList), firstRequirementMessage(requirementList));
     }
 
     private static List<Requirement> copyRequirements(Requirement... requirements) {
@@ -78,13 +83,25 @@ public final class Requirements {
         return Optional.empty();
     }
 
-    private static final class BasicRequirement implements Requirement {
+    private static RequirementMessage firstRequirementMessage(List<Requirement> requirements) {
+        for (Requirement requirement : requirements) {
+            if (requirement instanceof RequirementMessageProvider provider) {
+                return provider.requirementMessage();
+            }
+        }
+        return null;
+    }
+
+    private static final class BasicRequirement implements Requirement, RequirementMessageProvider {
         private final Predicate<CommandSender> predicate;
         private final Optional<String> message;
+        private final RequirementMessage requirementMessage;
 
-        private BasicRequirement(Predicate<CommandSender> predicate, Optional<String> message) {
+        private BasicRequirement(
+                Predicate<CommandSender> predicate, Optional<String> message, RequirementMessage requirementMessage) {
             this.predicate = Objects.requireNonNull(predicate, "predicate");
             this.message = Objects.requireNonNull(message, "message");
+            this.requirementMessage = requirementMessage;
         }
 
         @Override
@@ -95,6 +112,14 @@ public final class Requirements {
         @Override
         public Optional<String> message() {
             return message;
+        }
+
+        @Override
+        public RequirementMessage requirementMessage() {
+            if (requirementMessage != null) {
+                return requirementMessage;
+            }
+            return new RequirementMessage(Msg.REQUIREMENT_DENIED);
         }
     }
 }
