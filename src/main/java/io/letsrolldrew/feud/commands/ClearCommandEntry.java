@@ -8,6 +8,7 @@ import io.letsrolldrew.feud.display.DisplayTags;
 import io.letsrolldrew.feud.effects.holo.HologramService;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
+import io.letsrolldrew.feud.messages.Placeholder;
 import java.util.Objects;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -67,7 +68,7 @@ public final class ClearCommandEntry {
             timerPanelStore.clear();
         }
 
-        sender.sendMessage("Cleared " + removed + " displays");
+        messages.success(sender, Msg.CLEARED_DISPLAYS, Placeholder.of("count", removed));
         return true;
     }
 
