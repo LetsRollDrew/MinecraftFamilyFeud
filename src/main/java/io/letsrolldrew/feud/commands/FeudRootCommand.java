@@ -91,8 +91,8 @@ public final class FeudRootCommand implements CommandExecutor {
         this.buzzerCommands = commandModules.buzzerCommands();
         this.fastMoneyCommands = commandModules.fastMoneyCommands();
         this.hostBookAnchorStore = hostBookAnchorStore;
-        this.hostBookActionRouter =
-                new HostBookActionRouter(messages, commandModules.fastMoneyCommands(), displayBoardSelectionStore);
+        this.hostBookActionRouter = new HostBookActionRouter(
+                messages, commandModules.fastMoneyCommands(), displayBoardSelectionStore, displayBoardPresenter);
         this.hostBookService = new HostBookService(
                 messages, gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
         this.boardCommandEntry = new BoardCommandEntry(

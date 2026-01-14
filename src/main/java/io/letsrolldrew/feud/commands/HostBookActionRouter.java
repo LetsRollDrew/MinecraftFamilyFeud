@@ -1,5 +1,6 @@
 package io.letsrolldrew.feud.commands;
 
+import io.letsrolldrew.feud.board.display.DisplayBoardPresenter;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelection;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
@@ -7,8 +8,13 @@ import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.messages.Placeholder;
 import io.letsrolldrew.feud.ui.actions.ActionIds;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -17,14 +23,17 @@ public final class HostBookActionRouter {
     private final Messages messages;
     private final FastMoneyCommands fastMoneyCommands;
     private final DisplayBoardSelectionStore displayBoardSelectionStore;
+    private final DisplayBoardPresenter displayBoardPresenter;
 
     public HostBookActionRouter(
             Messages messages,
             FastMoneyCommands fastMoneyCommands,
-            DisplayBoardSelectionStore displayBoardSelectionStore) {
+            DisplayBoardSelectionStore displayBoardSelectionStore,
+            DisplayBoardPresenter displayBoardPresenter) {
         this.messages = Objects.requireNonNull(messages, "messages");
         this.fastMoneyCommands = fastMoneyCommands;
         this.displayBoardSelectionStore = displayBoardSelectionStore;
+        this.displayBoardPresenter = displayBoardPresenter;
     }
 
     public boolean handle(Player player, String actionId) {
@@ -125,9 +134,17 @@ public final class HostBookActionRouter {
             describeSelection(player);
             return true;
         }
-        if (normalized.startsWith("selector.spawn.")) {
-            messages.info(player, Msg.SELECTION_SPAWN_NOT_WIRED);
-            return true;
+        if (normalized.equals(ActionIds.selectorSpawnBoard())) {
+            return spawnBoardFromSelection(player);
+        }
+        if (normalized.equals(ActionIds.selectorSpawnPanelsRed())) {
+            return spawnPanelsFromSelection(player, "red");
+        }
+        if (normalized.equals(ActionIds.selectorSpawnPanelsBlue())) {
+            return spawnPanelsFromSelection(player, "blue");
+        }
+        if (normalized.equals(ActionIds.selectorSpawnTimer())) {
+            return spawnTimerFromSelection(player);
         }
 
         return false;
@@ -184,5 +201,53 @@ public final class HostBookActionRouter {
         }
         Bukkit.dispatchCommand(player, command);
         return true;
+    }
+
+    private boolean spawnBoardFromSelection(Player player) {
+        String boardId = chooseNewBoardId();
+        return runPlayerCommand(player, "feud board display selection board " + boardId);
+    }
+
+    private boolean spawnPanelsFromSelection(Player player, String team) {
+        String boardId = firstBoardIdOrNull();
+        if (boardId == null) {
+            messages.error(player, Msg.BOARD_LIST_EMPTY);
+            return true;
+        }
+        return runPlayerCommand(player, "feud board display selection panels " + boardId + " " + team);
+    }
+
+    private boolean spawnTimerFromSelection(Player player) {
+        String boardId = firstBoardIdOrNull();
+        if (boardId == null) {
+            messages.error(player, Msg.BOARD_LIST_EMPTY);
+            return true;
+        }
+        return runPlayerCommand(player, "feud board display selection timer " + boardId);
+    }
+
+    private String firstBoardIdOrNull() {
+        if (displayBoardPresenter == null) {
+            return null;
+        }
+        List<String> ids = new ArrayList<>(displayBoardPresenter.listBoards());
+        Collections.sort(ids);
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    private String chooseNewBoardId() {
+        Set<String> existing = new HashSet<>();
+        if (displayBoardPresenter != null) {
+            existing.addAll(displayBoardPresenter.listBoards());
+        }
+
+        for (int i = 1; i <= 10_000; i++) {
+            String candidate = "board" + i;
+            if (!existing.contains(candidate)) {
+                return candidate;
+            }
+        }
+
+        return "board" + System.currentTimeMillis();
     }
 }
