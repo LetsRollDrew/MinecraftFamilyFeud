@@ -33,7 +33,7 @@ public final class SurveyCommands {
         }
         if (sub.equals("load")) {
             if (args.length < 2) {
-                sender.sendMessage("Usage: /feud survey load <id>");
+                messages.usage(sender, Msg.USAGE_SURVEY_LOAD);
                 return true;
             }
             return handleLoad(sender, args[1]);
@@ -47,12 +47,16 @@ public final class SurveyCommands {
             return true;
         }
         if (surveyRepository.listAll().isEmpty()) {
-            sender.sendMessage("No surveys loaded.");
+            messages.info(sender, Msg.SURVEY_LIST_EMPTY);
             return true;
         }
-        sender.sendMessage("Loaded surveys:");
+        messages.info(sender, Msg.SURVEY_LIST_HEADER);
         for (Survey survey : surveyRepository.listAll()) {
-            sender.sendMessage("- " + survey.id() + ": " + survey.question());
+            messages.info(
+                    sender,
+                    Msg.SURVEY_LIST_ENTRY,
+                    Placeholder.of("id", survey.id()),
+                    Placeholder.of("question", survey.question()));
         }
         return true;
     }
@@ -73,10 +77,8 @@ public final class SurveyCommands {
         }
         if (controller != null) {
             controller.setActiveSurvey(survey);
-            sender.sendMessage("Loaded survey: " + surveyId);
-        } else {
-            sender.sendMessage("Loaded survey: " + surveyId);
         }
+        messages.success(sender, Msg.SURVEY_LOADED, Placeholder.of("id", surveyId));
         return true;
     }
 
