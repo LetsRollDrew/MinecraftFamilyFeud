@@ -116,6 +116,9 @@ public final class HostBookActionRouter {
         if (actionIdLower.equals(ActionIds.fastMoneyStatus())) {
             return runPlayerCommand(player, "feud fastmoney status");
         }
+        if (actionIdLower.equals(ActionIds.fastMoneyNext())) {
+            return runPlayerCommand(player, "feud fastmoney next");
+        }
         if (actionIdLower.startsWith("fastmoney.reveal.")) {
             return handleFastMoneyReveal(player, actionIdLower);
         }

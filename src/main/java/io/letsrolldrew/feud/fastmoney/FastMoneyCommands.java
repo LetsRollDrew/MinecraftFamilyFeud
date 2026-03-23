@@ -5,14 +5,19 @@ import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBackdropPresenter;
 import io.letsrolldrew.feud.board.display.fastmoney.FastMoneyBoardPresenter;
 import io.letsrolldrew.feud.effects.fastmoney.FastMoneyPlayerBindService;
+import io.letsrolldrew.feud.effects.timer.TimerService;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
 import io.letsrolldrew.feud.messages.Placeholder;
+import io.letsrolldrew.feud.survey.AnswerOption;
+import io.letsrolldrew.feud.survey.Survey;
+import io.letsrolldrew.feud.survey.SurveyRepository;
 import io.letsrolldrew.feud.util.Validation;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -26,8 +31,12 @@ public final class FastMoneyCommands {
     private final DisplayBoardService displayBoardService;
     private final FastMoneyBoardPresenter boardPresenter;
     private final FastMoneyBackdropPresenter backdropPresenter;
+    private final SurveyRepository surveyRepository;
+    private final TimerService timerService;
     private final String hostPermission;
     private final String adminPermission;
+
+    private String activeBoardId;
 
     public FastMoneyCommands(
             Messages messages,
@@ -37,6 +46,8 @@ public final class FastMoneyCommands {
             DisplayBoardService displayBoardService,
             FastMoneyBoardPresenter boardPresenter,
             FastMoneyBackdropPresenter backdropPresenter,
+            SurveyRepository surveyRepository,
+            TimerService timerService,
             String hostPermission,
             String adminPermission) {
         this.messages = Objects.requireNonNull(messages, "messages");
@@ -46,6 +57,8 @@ public final class FastMoneyCommands {
         this.displayBoardService = Objects.requireNonNull(displayBoardService, "displayBoardService");
         this.boardPresenter = Objects.requireNonNull(boardPresenter, "boardPresenter");
         this.backdropPresenter = Objects.requireNonNull(backdropPresenter, "backdropPresenter");
+        this.surveyRepository = Objects.requireNonNull(surveyRepository, "surveyRepository");
+        this.timerService = Objects.requireNonNull(timerService, "timerService");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
     }
@@ -66,6 +79,7 @@ public final class FastMoneyCommands {
             case "start" -> start(sender, args);
             case "stop" -> stop(sender, args);
             case "status" -> status(sender);
+            case "next" -> next(sender, args);
             case "bind" -> bind(sender, args);
             case "answer" -> answer(sender, args);
             case "board" -> board(sender, args);
@@ -84,10 +98,20 @@ public final class FastMoneyCommands {
             return true;
         }
 
+        if (resolveAwardedAnswer(questionIndex, slot).isEmpty()) {
+            messages.error(
+                    sender,
+                    Msg.FAST_MONEY_SLOT_NOT_DEFINED,
+                    Placeholder.of("question", questionIndex),
+                    Placeholder.of("slot", slot));
+            return true;
+        }
+
         try {
             FastMoneyPhase phase = service.state().phase();
             if (phase == FastMoneyPhase.PLAYER1_TURN) {
                 service.awardPlayer1(questionIndex, slot);
+                refreshBoard();
                 messages.success(
                         sender,
                         Msg.FAST_MONEY_AWARDED_P1,
@@ -97,6 +121,7 @@ public final class FastMoneyCommands {
             }
             if (phase == FastMoneyPhase.PLAYER2_TURN) {
                 service.awardPlayer2(questionIndex, slot);
+                refreshBoard();
                 messages.success(
                         sender,
                         Msg.FAST_MONEY_AWARDED_P2,
@@ -109,6 +134,25 @@ public final class FastMoneyCommands {
             sender.sendMessage(ex.getMessage());
         }
         return true;
+    }
+
+    public boolean acceptsResponseFrom(UUID playerId) {
+        if (playerId == null) {
+            return false;
+        }
+
+        FastMoneyRoundState state = service.state();
+        if (state.phase() == FastMoneyPhase.PLAYER1_TURN && state.player1().isBound()) {
+            return playerId.equals(state.player1().playerId());
+        }
+        if (state.phase() == FastMoneyPhase.PLAYER2_TURN && state.player2().isBound()) {
+            return playerId.equals(state.player2().playerId());
+        }
+        return false;
+    }
+
+    public void captureChatAnswer(Player player, String answer) {
+        captureAnswer(player, answer, false);
     }
 
     private boolean set(CommandSender sender, String[] args) {
@@ -126,6 +170,8 @@ public final class FastMoneyCommands {
 
         FastMoneySurveySet set = setOpt.get();
         service.loadSurveySet(set.id(), set.surveyIds());
+        timerService.reset(set.player1Seconds());
+        refreshBoard();
         messages.success(sender, Msg.FAST_MONEY_SET_LOADED, Placeholder.of("setId", set.id()));
 
         return true;
@@ -135,6 +181,7 @@ public final class FastMoneyCommands {
         String boardId = boardIdOrDefault(args, 1);
         try {
             service.startRound();
+            timerService.start(currentSurveySet().map(FastMoneySurveySet::player1Seconds).orElse(0));
             showBoard(sender, boardId);
             messages.success(sender, Msg.FAST_MONEY_P1_TURN_STARTED);
         } catch (IllegalStateException ex) {
@@ -147,6 +194,7 @@ public final class FastMoneyCommands {
     private boolean stop(CommandSender sender, String[] args) {
         String boardId = boardIdOrDefault(args, 1);
         service.stop();
+        timerService.stop();
         hideBoard(sender, boardId);
         messages.success(sender, Msg.FAST_MONEY_STOPPED);
 
@@ -160,7 +208,59 @@ public final class FastMoneyCommands {
                 Msg.FAST_MONEY_STATUS,
                 Placeholder.of("phase", state.phase()),
                 Placeholder.of("set", state.surveySetId()),
-                Placeholder.of("question", state.activeQuestionIndex()));
+                Placeholder.of("question", state.activeQuestionIndex()),
+                Placeholder.of("p1", totalPoints(state, true)),
+                Placeholder.of("p2", totalPoints(state, false)),
+                Placeholder.of("total", totalPoints(state)),
+                Placeholder.of("target", currentSurveySet().map(FastMoneySurveySet::targetScore).orElse(0)));
+        return true;
+    }
+
+    private boolean next(CommandSender sender, String[] args) {
+        if (args.length > 1) {
+            messages.usage(sender, Msg.USAGE_FAST_MONEY_NEXT);
+            return true;
+        }
+
+        FastMoneyRoundState before = service.state();
+        int totalQuestions = before.questions().size();
+
+        try {
+            if (before.phase() == FastMoneyPhase.PLAYER1_TURN || before.phase() == FastMoneyPhase.PLAYER2_TURN) {
+                if (before.activeQuestionIndex() < totalQuestions) {
+                    service.advanceQuestion();
+                    refreshBoard();
+                    messages.success(
+                            sender,
+                            Msg.FAST_MONEY_ADVANCED_TO_QUESTION,
+                            Placeholder.of("question", service.state().activeQuestionIndex()));
+                    return true;
+                }
+
+                if (before.phase() == FastMoneyPhase.PLAYER1_TURN) {
+                    service.beginPlayer2Turn();
+                    timerService.start(currentSurveySet().map(FastMoneySurveySet::player2Seconds).orElse(0));
+                    refreshBoard();
+                    messages.success(sender, Msg.FAST_MONEY_P2_TURN_STARTED);
+                    return true;
+                }
+
+                service.completeRound();
+                timerService.stop();
+                refreshBoard();
+                messages.success(
+                        sender,
+                        Msg.FAST_MONEY_COMPLETE,
+                        Placeholder.of("total", totalPoints(service.state())),
+                        Placeholder.of("target", currentSurveySet().map(FastMoneySurveySet::targetScore).orElse(0)));
+                return true;
+            }
+
+            messages.error(sender, Msg.FAST_MONEY_ROUND_NOT_ACTIVE);
+        } catch (IllegalStateException ex) {
+            sender.sendMessage(ex.getMessage());
+        }
+
         return true;
     }
 
@@ -211,13 +311,7 @@ public final class FastMoneyCommands {
 
         String answer =
                 String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
-        try {
-            service.submitAnswer(player.getUniqueId(), answer);
-            messages.success(sender, Msg.FAST_MONEY_ANSWER_RECORDED);
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            sender.sendMessage(ex.getMessage());
-        }
-
+        captureAnswer(player, answer, true);
         return true;
     }
 
@@ -251,13 +345,87 @@ public final class FastMoneyCommands {
             return;
         }
 
-        displayBoardService.showFastMoneyBoard(boardId, layout, boardPresenter, backdropPresenter);
-        messages.success(sender, Msg.FAST_MONEY_BOARD_SHOWN, Placeholder.of("boardId", boardId));
+        activeBoardId = normalizeBoardId(boardId);
+        displayBoardService.showFastMoneyBoard(activeBoardId, layout, boardPresenter, backdropPresenter);
+        refreshBoard();
+        messages.success(sender, Msg.FAST_MONEY_BOARD_SHOWN, Placeholder.of("boardId", activeBoardId));
     }
 
     private void hideBoard(CommandSender sender, String boardId) {
-        displayBoardService.hideFastMoneyBoard(boardId);
-        messages.success(sender, Msg.FAST_MONEY_BOARD_CLEARED, Placeholder.of("boardId", boardId));
+        String normalizedBoardId = normalizeBoardId(boardId);
+        displayBoardService.hideFastMoneyBoard(normalizedBoardId);
+        if (normalizedBoardId.equals(activeBoardId)) {
+            activeBoardId = null;
+        }
+        messages.success(sender, Msg.FAST_MONEY_BOARD_CLEARED, Placeholder.of("boardId", normalizedBoardId));
+    }
+
+    private void captureAnswer(Player player, String answer, boolean usageOnBlank) {
+        if (player == null) {
+            return;
+        }
+
+        String trimmed = answer == null ? "" : answer.trim();
+        if (trimmed.isEmpty()) {
+            if (usageOnBlank) {
+                messages.usage(player, Msg.USAGE_FAST_MONEY_ANSWER);
+            }
+            return;
+        }
+
+        int question = service.state().activeQuestionIndex();
+        try {
+            service.submitAnswer(player.getUniqueId(), trimmed);
+            refreshBoard();
+            messages.success(player, Msg.FAST_MONEY_ANSWER_RECORDED, Placeholder.of("question", question));
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            player.sendMessage(ex.getMessage());
+        }
+    }
+
+    private void refreshBoard() {
+        if (activeBoardId == null || activeBoardId.isBlank()) {
+            return;
+        }
+
+        boardPresenter.render(activeBoardId, service.state(), surveyRepository);
+    }
+
+    private Optional<FastMoneySurveySet> currentSurveySet() {
+        String surveySetId = service.state().surveySetId();
+        if (surveySetId == null || surveySetId.isBlank()) {
+            return Optional.empty();
+        }
+        return surveySetStore.findById(surveySetId);
+    }
+
+    private Optional<AnswerOption> resolveAwardedAnswer(int questionIndex, int slot) {
+        if (questionIndex < 1 || questionIndex > service.state().questions().size()) {
+            return Optional.empty();
+        }
+
+        FastMoneyQuestionState question = service.state().questions().get(questionIndex - 1);
+        return surveyRepository.findById(question.surveyId())
+                .map(Survey::answers)
+                .filter(answers -> slot <= answers.size())
+                .map(answers -> answers.get(slot - 1));
+    }
+
+    private int totalPoints(FastMoneyRoundState state) {
+        return totalPoints(state, true) + totalPoints(state, false);
+    }
+
+    private int totalPoints(FastMoneyRoundState state, boolean player1) {
+        int total = 0;
+        for (FastMoneyQuestionState question : state.questions()) {
+            int awardedSlot = player1 ? question.player1AwardedSlot() : question.player2AwardedSlot();
+            total += surveyRepository.findById(question.surveyId())
+                    .map(Survey::answers)
+                    .filter(answers -> awardedSlot > 0 && awardedSlot <= answers.size())
+                    .map(answers -> answers.get(awardedSlot - 1).points())
+                    .orElse(0);
+        }
+        return total;
     }
 
     private boolean usage(CommandSender sender) {
@@ -285,5 +453,12 @@ public final class FastMoneyCommands {
             }
         }
         return DEFAULT_BOARD_ID;
+    }
+
+    private static String normalizeBoardId(String boardId) {
+        if (boardId == null || boardId.isBlank()) {
+            return DEFAULT_BOARD_ID;
+        }
+        return boardId;
     }
 }

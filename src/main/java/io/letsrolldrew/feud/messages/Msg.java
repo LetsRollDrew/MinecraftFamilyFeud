@@ -92,12 +92,16 @@ public enum Msg {
     FAST_MONEY_AWARDED_P2("Awarded Player 2, question {question}, slot {slot}"),
     FAST_MONEY_ROUND_NOT_ACTIVE("Fast Money round is not active"),
     FAST_MONEY_P1_TURN_STARTED("Fast Money: Player 1 turn started"),
+    FAST_MONEY_P2_TURN_STARTED("Fast Money: Player 2 turn started"),
+    FAST_MONEY_ADVANCED_TO_QUESTION("Fast Money: advanced to question {question}"),
+    FAST_MONEY_COMPLETE("Fast Money complete: total={total} target={target}"),
     FAST_MONEY_STOPPED("Fast Money stopped"),
-    FAST_MONEY_STATUS("Fast Money status: phase={phase} set={set} q={question}"),
+    FAST_MONEY_STATUS("Fast Money status: phase={phase} set={set} q={question} p1={p1} p2={p2} total={total} target={target}"),
     FAST_MONEY_BINDINGS_CLEARED("Fast Money bindings cleared"),
     FAST_MONEY_BIND_P1_ARMED("Fast Money: bind P1 armed, right-click a player"),
     FAST_MONEY_BIND_P2_ARMED("Fast Money: bind P2 armed, right-click a player"),
-    FAST_MONEY_ANSWER_RECORDED("Answer recorded"),
+    FAST_MONEY_ANSWER_RECORDED("Answer recorded for question {question}"),
+    FAST_MONEY_SLOT_NOT_DEFINED("Fast Money question {question} has no survey answer in slot {slot}"),
 
     // board display (remote + selection spawn) confirmations / status
     BOARD_LIST_EMPTY("No boards active"),
@@ -195,7 +199,7 @@ public enum Msg {
     HOLO_TEXT_REMOVE_USAGE("Usage: /feud holo text remove <id>"),
     HOLO_ITEM_USAGE("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>"),
 
-    FAST_MONEY_HELP("Fast Money: set|start|stop|status|bind|answer|board"),
+    FAST_MONEY_HELP("Fast Money: set|start|stop|status|next|bind|answer|board"),
 
     // listener / gameplay feedback
     BOARD_WAND_TOP_LEFT_SET("Top-left set, now click the bottom-right frame"),
@@ -231,6 +235,7 @@ public enum Msg {
     USAGE_FAST_MONEY_SET("Usage: /feud fastmoney set <setId>"),
     USAGE_FAST_MONEY_BIND("Usage: /feud fastmoney bind <p1|p2|clear>"),
     USAGE_FAST_MONEY_ANSWER("Usage: /feud fastmoney answer <text...>"),
+    USAGE_FAST_MONEY_NEXT("Usage: /feud fastmoney next"),
     USAGE_FAST_MONEY_BOARD("Usage: /feud fastmoney board <show|hide> [boardId]"),
     USAGE_BOARD_CREATE("Usage: /feud board create <boardId>"),
     USAGE_BOARD_DISPLAY_DYNAMIC("Usage: /feud board display dynamic <boardId>"),

@@ -105,8 +105,8 @@ public final class FastMoneyPageBuilder {
                         .action(
                                 HostBookPage.FAST_MONEY,
                                 "N",
-                                ActionIds.fastMoneyStatus(),
-                                "Next",
+                                ActionIds.fastMoneyNext(),
+                                "Advance",
                                 NamedTextColor.BLUE,
                                 true)));
         for (int q = 1; q <= 5; q++) {

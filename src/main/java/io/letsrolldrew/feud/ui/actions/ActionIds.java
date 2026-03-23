@@ -124,6 +124,10 @@ public final class ActionIds {
         return "fastmoney.status";
     }
 
+    public static String fastMoneyNext() {
+        return "fastmoney.next";
+    }
+
     public static String fastMoneyReveal(int questionIndex, int slot) {
         return "fastmoney.reveal." + questionIndex + "." + slot;
     }

@@ -327,6 +327,8 @@ public final class FeudCommandSpecificationFactory {
                 .build();
         CommandSpecificationNode status =
                 CommandSpecificationNode.builder(ArgType.LITERAL, "status").build();
+        CommandSpecificationNode next =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "next").build();
         CommandSpecificationNode bind = CommandSpecificationNode.builder(ArgType.LITERAL, "bind")
                 .requirements(List.of(Requirements.playerOnly()))
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "target").build())
@@ -353,7 +355,7 @@ public final class FeudCommandSpecificationFactory {
         return CommandSpecificationNode.builder(ArgType.LITERAL, "fastmoney")
                 .requirements(List.of(Requirements.anyOf(
                         Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
-                .children(List.of(set, start, stop, status, bind, answer, board))
+                .children(List.of(set, start, stop, status, next, bind, answer, board))
                 .build();
     }
 
