@@ -735,7 +735,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         displayRegistry.removeByGroup("fastmoney", group);
         displayRegistry.removeByGroup("board", group);
         backdropPresenter.spawn(group, layout);
-        boardPresenter.spawn(group, layout);
+        boardPresenter.spawn(group, layout, FastMoneyBoardPresenter.ActiveSide.BOTH);
     }
 
     public void hideFastMoneyBoard(String boardId) {
@@ -744,7 +744,26 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         DynamicBoardLayout layout = resolveLayoutOrNull(group);
         if (layout != null) {
             displayRegistry.removeByGroup("board", group);
-            createDynamicBoard(group, layout);
+            respawnDynamicBoard(group, layout);
         }
+    }
+
+    private BoardInstance respawnDynamicBoard(String boardId, DynamicBoardLayout dynamicLayout) {
+        BoardInstance existing = instances.remove(boardId);
+        if (existing != null) {
+            removeSlotEntities(existing.slots());
+        }
+
+        BoardInstance instance = DynamicDisplayBoardFactory.create(boardId, dynamicLayout, displayRegistry);
+        if (instance == null) {
+            return null;
+        }
+
+        instances.put(boardId, instance);
+        dynamicIds.add(boardId);
+        dynamicStore.saveLayout(boardId, dynamicLayout);
+        metricsByBoardId.put(boardId, metricsFromDynamicLayout(dynamicLayout));
+        dynamicLayouts.put(boardId, dynamicLayout);
+        return instance;
     }
 }

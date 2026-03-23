@@ -154,6 +154,7 @@ public final class PluginBootstrap {
         this.fastMoneyBoardPlacement = new FastMoneyBoardPlacement();
         this.fastMoneyBoardPresenter = new FastMoneyBoardPresenter(displayRegistry, fastMoneyBoardPlacement);
         this.fastMoneyBackdropPresenter = new FastMoneyBackdropPresenter(displayRegistry);
+        this.displayBoardPresenter.rehydrateDynamicBoards();
         this.fastMoneyCommands = new FastMoneyCommands(
                 messages,
                 fastMoneyService,
@@ -162,6 +163,8 @@ public final class PluginBootstrap {
                 displayBoardPresenter,
                 fastMoneyBoardPresenter,
                 fastMoneyBackdropPresenter,
+                surveyRepository,
+                timerService,
                 config.hostPermission(),
                 "familyfeud.admin");
         this.displayBoardSelectionListener = new DisplayBoardSelectionListener(
@@ -198,6 +201,9 @@ public final class PluginBootstrap {
         plugin.getServer()
                 .getPluginManager()
                 .registerEvents(new FastMoneyPlayerBindListener(messages, fastMoneyPlayerBindService), plugin);
+        plugin.getServer()
+                .getPluginManager()
+                .registerEvents(new FastMoneyChatListener(plugin, fastMoneyCommands), plugin);
         scorePanelPresenter.rehydrateStoredPanels(scorePanelStore);
         timerPanelPresenter.rehydrateStoredPanels(timerPanelStore);
         registerCommands();
