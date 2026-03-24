@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 final class FastMoneyBoardPlacementTest {
 
     @Test
-    void computesSixRowsWithDescendingY() {
+    void computesQuestionRowsWithDescendingY() {
         DynamicBoardLayout layout = new DynamicBoardLayout(
                 UUID.randomUUID(),
                 BoardFacing.SOUTH,
@@ -32,19 +32,32 @@ final class FastMoneyBoardPlacementTest {
 
         FastMoneyBoardPlacement placement = new FastMoneyBoardPlacement();
 
-        List<FastMoneyBoardPlacement.RowAnchors> rows = placement.compute(layout);
+        FastMoneyBoardPlacement.LayoutAnchors anchors = placement.compute(layout);
+        List<FastMoneyBoardPlacement.QuestionRowAnchors> rows = anchors.questions();
 
-        assertEquals(6, rows.size());
-        // y decreases per row
+        assertEquals(5, rows.size());
+
         for (int i = 1; i < rows.size(); i++) {
-            assertTrue(rows.get(i).textCell().y() < rows.get(i - 1).textCell().y());
+            assertTrue(rows.get(i).p1TextCell().y() < rows.get(i - 1).p1TextCell().y());
         }
-        FastMoneyBoardPlacement.RowAnchors first = rows.get(0);
-        double rightX = BoardFacing.SOUTH.rightX();
-        double rightZ = BoardFacing.SOUTH.rightZ();
-        double textDot = (first.textCell().x() * rightX) + (first.textCell().z() * rightZ);
-        double pointsDot =
-                (first.pointsCell().x() * rightX) + (first.pointsCell().z() * rightZ);
-        assertTrue(pointsDot > textDot);
+
+        FastMoneyBoardPlacement.QuestionRowAnchors first = rows.get(0);
+        double screenRightX = -BoardFacing.SOUTH.rightX();
+        double screenRightZ = -BoardFacing.SOUTH.rightZ();
+
+        double p1TextDot =
+                (first.p1TextCell().x() * screenRightX) + (first.p1TextCell().z() * screenRightZ);
+        double p1PointsDot =
+                (first.p1PointsCell().x() * screenRightX) + (first.p1PointsCell().z() * screenRightZ);
+        double p2TextDot =
+                (first.p2TextCell().x() * screenRightX) + (first.p2TextCell().z() * screenRightZ);
+        double p2PointsDot =
+                (first.p2PointsCell().x() * screenRightX) + (first.p2PointsCell().z() * screenRightZ);
+
+        assertTrue(p1PointsDot > p1TextDot);
+        assertTrue(p2TextDot > p1PointsDot);
+        assertTrue(p2PointsDot > p2TextDot);
+        assertTrue(first.rowHeight() > 0.0);
+        assertTrue(anchors.totals().totalZoneHeight() > 0.0);
     }
 }
