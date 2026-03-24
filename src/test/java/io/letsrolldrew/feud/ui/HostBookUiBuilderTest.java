@@ -78,7 +78,7 @@ class HostBookUiBuilderTest {
                 cmds, onFastMoney.and(c -> c.contains("action fastmoney.bind.clear")), "Missing fastmoney bind clear");
         assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.start")), "Missing fastmoney start");
         assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.stop")), "Missing fastmoney stop");
-        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.status")), "Missing fastmoney status");
+        assertAny(cmds, onFastMoney.and(c -> c.contains("action fastmoney.next")), "Missing fastmoney next");
 
         assertAny(
                 cmds, onFastMoney.and(c -> c.contains("action fastmoney.reveal.1.1")), "Missing fastmoney reveal 1 1");

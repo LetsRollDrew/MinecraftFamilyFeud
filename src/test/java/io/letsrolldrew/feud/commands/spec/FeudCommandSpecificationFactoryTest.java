@@ -214,6 +214,7 @@ final class FeudCommandSpecificationFactoryTest {
         assertNotNull(bind);
         assertEquals(
                 ArgType.WORD, firstChildByType(bind, ArgType.WORD, "target").type());
+        assertNotNull(child(fastmoney, "next"));
     }
 
     @Test
