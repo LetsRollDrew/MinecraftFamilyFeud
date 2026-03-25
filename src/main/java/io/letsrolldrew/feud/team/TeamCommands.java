@@ -61,6 +61,9 @@ public final class TeamCommands {
 
     private void handleReset(CommandSender sender) {
         teamService.reset();
+        if (buzzerCommands != null) {
+            buzzerCommands.handleTeamReset();
+        }
         messages.success(sender, Msg.TEAMS_RESET);
     }
 

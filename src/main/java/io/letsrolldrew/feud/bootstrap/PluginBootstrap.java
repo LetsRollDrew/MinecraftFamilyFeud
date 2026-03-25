@@ -70,8 +70,10 @@ public final class PluginBootstrap {
     private TimerService timerService;
     private TimerCommands timerCommands;
     private BuzzerService buzzerService;
+    private BuzzerBindingStore buzzerBindingStore;
     private BuzzerCommands buzzerCommands;
     private BuzzerListener buzzerListener;
+    private BuzzerHitboxService buzzerHitboxService;
     private FastMoneyPlayerBindService fastMoneyPlayerBindService;
     private FastMoneyService fastMoneyService;
     private FastMoneySurveySetStore fastMoneySurveySetStore;
@@ -125,11 +127,25 @@ public final class PluginBootstrap {
                 teamService,
                 12_000L,
                 1_000L);
-        this.buzzerCommands =
-                new BuzzerCommands(messages, buzzerService, teamService, config.hostPermission(), "familyfeud.admin");
+        this.buzzerBindingStore = new BuzzerBindingStore(new File(plugin.getDataFolder(), "buzzers.yml"));
+        for (var entry : buzzerBindingStore.loadAll().entrySet()) {
+            teamService.setBuzzer(entry.getKey(), entry.getValue());
+        }
+        this.buzzerHitboxService =
+                new BuzzerHitboxService(plugin, teamService, new NamespacedKey(plugin, "buzzer_hitbox_team"));
+        this.buzzerCommands = new BuzzerCommands(
+                messages,
+                buzzerService,
+                teamService,
+                buzzerHitboxService,
+                buzzerBindingStore,
+                config.hostPermission(),
+                "familyfeud.admin");
         this.teamCommands =
                 new TeamCommands(messages, teamService, config.hostPermission(), "familyfeud.admin", buzzerCommands);
-        this.buzzerListener = new BuzzerListener(messages, buzzerService, teamService);
+        this.buzzerListener =
+                new BuzzerListener(messages, buzzerService, teamService, buzzerHitboxService, buzzerBindingStore);
+        this.buzzerHitboxService.syncAll();
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
         this.timerService.setOnTick(seconds -> timerPanelPresenter.updateAll(seconds));
@@ -209,7 +225,11 @@ public final class PluginBootstrap {
         registerCommands();
     }
 
-    public void disable() {}
+    public void disable() {
+        if (buzzerHitboxService != null) {
+            buzzerHitboxService.shutdown();
+        }
+    }
 
     public PluginConfig getConfig() {
         return config;

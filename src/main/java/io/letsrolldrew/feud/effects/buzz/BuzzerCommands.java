@@ -16,6 +16,8 @@ public final class BuzzerCommands {
     private final Messages messages;
     private final BuzzerService buzzerService;
     private final TeamService teamService;
+    private final BuzzerHitboxService buzzerHitboxService;
+    private final BuzzerBindingStore buzzerBindingStore;
     private final String hostPermission;
     private final String adminPermission;
 
@@ -23,11 +25,15 @@ public final class BuzzerCommands {
             Messages messages,
             BuzzerService buzzerService,
             TeamService teamService,
+            BuzzerHitboxService buzzerHitboxService,
+            BuzzerBindingStore buzzerBindingStore,
             String hostPermission,
             String adminPermission) {
         this.messages = Objects.requireNonNull(messages, "messages");
         this.buzzerService = Objects.requireNonNull(buzzerService, "buzzerService");
         this.teamService = Objects.requireNonNull(teamService, "teamService");
+        this.buzzerHitboxService = Objects.requireNonNull(buzzerHitboxService, "buzzerHitboxService");
+        this.buzzerBindingStore = Objects.requireNonNull(buzzerBindingStore, "buzzerBindingStore");
         this.hostPermission = Validation.requireNonBlank(hostPermission, "hostPermission");
         this.adminPermission = Validation.requireNonBlank(adminPermission, "adminPermission");
     }
@@ -67,6 +73,11 @@ public final class BuzzerCommands {
         return true;
     }
 
+    public void handleTeamReset() {
+        buzzerBindingStore.clearAll();
+        buzzerHitboxService.syncAll();
+    }
+
     private void handleBind(CommandSender sender, TeamId team) {
         if (!(sender instanceof Player player)) {
             messages.error(sender, Msg.PLAYER_ONLY);
@@ -78,6 +89,8 @@ public final class BuzzerCommands {
 
     private void handleClear(CommandSender sender, TeamId team) {
         buzzerService.clearBind(team);
+        buzzerBindingStore.clear(team);
+        buzzerHitboxService.syncAll();
         messages.success(sender, Msg.BUZZER_CLEARED, Placeholder.of("team", team.name()));
     }
 

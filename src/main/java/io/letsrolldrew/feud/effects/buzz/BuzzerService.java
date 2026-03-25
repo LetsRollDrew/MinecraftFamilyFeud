@@ -58,16 +58,17 @@ public final class BuzzerService {
         return pendingBind.containsKey(player.getUniqueId());
     }
 
-    public void bindTo(Player player, Location loc) {
+    public TeamId bindTo(Player player, Location loc) {
         if (player == null || loc == null || loc.getWorld() == null) {
-            return;
+            return null;
         }
         TeamId team = pendingBind.remove(player.getUniqueId());
         if (team == null) {
-            return;
+            return null;
         }
         BlockRef ref = toBlockRef(loc);
         teamService.setBuzzer(team, ref);
+        return team;
     }
 
     public void clearBind(TeamId team) {
