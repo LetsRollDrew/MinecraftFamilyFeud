@@ -1,16 +1,16 @@
 package io.letsrolldrew.feud.effects.fastmoney;
 
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.Objects;
 import java.util.UUID;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
-import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public final class FastMoneyChatListener implements Listener {
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();

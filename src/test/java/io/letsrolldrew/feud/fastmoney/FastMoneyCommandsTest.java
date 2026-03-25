@@ -143,8 +143,7 @@ final class FastMoneyCommandsTest {
 
     private static SurveyRepository surveyRepository() throws InvalidConfigurationException {
         YamlConfiguration config = new YamlConfiguration();
-        config.loadFromString(
-                """
+        config.loadFromString("""
                 surveys:
                   q1:
                     question: "Q1"
@@ -198,8 +197,7 @@ final class FastMoneyCommandsTest {
     private static FastMoneySurveySetStore surveySetStore(SurveyRepository surveyRepository)
             throws InvalidConfigurationException {
         YamlConfiguration config = new YamlConfiguration();
-        config.loadFromString(
-                """
+        config.loadFromString("""
                 fastMoney:
                   packs:
                     s1:

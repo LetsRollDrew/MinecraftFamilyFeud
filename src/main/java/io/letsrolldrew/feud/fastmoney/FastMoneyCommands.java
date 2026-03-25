@@ -181,7 +181,8 @@ public final class FastMoneyCommands {
         String boardId = boardIdOrDefault(args, 1);
         try {
             service.startRound();
-            timerService.start(currentSurveySet().map(FastMoneySurveySet::player1Seconds).orElse(0));
+            timerService.start(
+                    currentSurveySet().map(FastMoneySurveySet::player1Seconds).orElse(0));
             showBoard(sender, boardId);
             messages.success(sender, Msg.FAST_MONEY_P1_TURN_STARTED);
         } catch (IllegalStateException ex) {
@@ -212,7 +213,9 @@ public final class FastMoneyCommands {
                 Placeholder.of("p1", totalPoints(state, true)),
                 Placeholder.of("p2", totalPoints(state, false)),
                 Placeholder.of("total", totalPoints(state)),
-                Placeholder.of("target", currentSurveySet().map(FastMoneySurveySet::targetScore).orElse(0)));
+                Placeholder.of(
+                        "target",
+                        currentSurveySet().map(FastMoneySurveySet::targetScore).orElse(0)));
         return true;
     }
 
@@ -239,7 +242,9 @@ public final class FastMoneyCommands {
 
                 if (before.phase() == FastMoneyPhase.PLAYER1_TURN) {
                     service.beginPlayer2Turn();
-                    timerService.start(currentSurveySet().map(FastMoneySurveySet::player2Seconds).orElse(0));
+                    timerService.start(currentSurveySet()
+                            .map(FastMoneySurveySet::player2Seconds)
+                            .orElse(0));
                     refreshBoard();
                     messages.success(sender, Msg.FAST_MONEY_P2_TURN_STARTED);
                     return true;
@@ -252,7 +257,11 @@ public final class FastMoneyCommands {
                         sender,
                         Msg.FAST_MONEY_COMPLETE,
                         Placeholder.of("total", totalPoints(service.state())),
-                        Placeholder.of("target", currentSurveySet().map(FastMoneySurveySet::targetScore).orElse(0)));
+                        Placeholder.of(
+                                "target",
+                                currentSurveySet()
+                                        .map(FastMoneySurveySet::targetScore)
+                                        .orElse(0)));
                 return true;
             }
 
@@ -405,7 +414,8 @@ public final class FastMoneyCommands {
         }
 
         FastMoneyQuestionState question = service.state().questions().get(questionIndex - 1);
-        return surveyRepository.findById(question.surveyId())
+        return surveyRepository
+                .findById(question.surveyId())
                 .map(Survey::answers)
                 .filter(answers -> slot <= answers.size())
                 .map(answers -> answers.get(slot - 1));
@@ -419,7 +429,8 @@ public final class FastMoneyCommands {
         int total = 0;
         for (FastMoneyQuestionState question : state.questions()) {
             int awardedSlot = player1 ? question.player1AwardedSlot() : question.player2AwardedSlot();
-            total += surveyRepository.findById(question.surveyId())
+            total += surveyRepository
+                    .findById(question.surveyId())
                     .map(Survey::answers)
                     .filter(answers -> awardedSlot > 0 && awardedSlot <= answers.size())
                     .map(answers -> answers.get(awardedSlot - 1).points())
