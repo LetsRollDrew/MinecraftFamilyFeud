@@ -1,0 +1,212 @@
+package io.letsrolldrew.feud.effects.lighting;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+public final class StageLightingStore {
+    private final File file;
+
+    public StageLightingStore(File file) {
+        this.file = file;
+    }
+
+    public StageLightingConfig load() {
+        if (file == null) {
+            return new StageLightingConfig(
+                    StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        }
+
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        ConfigurationSection root = config.getConfigurationSection("lighting");
+        if (root == null) {
+            return new StageLightingConfig(
+                    StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        }
+
+        return new StageLightingConfig(loadArena(root), loadColumns(root), Map.of(), Map.of(), Map.of(), Map.of());
+    }
+
+    public void save(StageLightingConfig config) {
+        if (file == null || config == null) {
+            return;
+        }
+
+        YamlConfiguration yaml = new YamlConfiguration();
+        saveArena(yaml, config.arena());
+        saveColumns(yaml, config.columns());
+
+        try {
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+            yaml.save(file);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static StageLightingConfig.Arena loadArena(ConfigurationSection root) {
+        ConfigurationSection arena = root.getConfigurationSection("arena");
+        if (arena == null) {
+            return StageLightingConfig.Arena.unbound();
+        }
+        List<Integer> center = parseTriple(arena.getString("center", ""));
+        String world = arena.getString("world", "");
+        StageLightingConfig.ScanAxis axis = StageLightingConfig.ScanAxis.fromString(arena.getString("axis", "x"));
+        return new StageLightingConfig.Arena(
+                world,
+                center.size() > 0 ? center.get(0) : 0,
+                center.size() > 1 ? center.get(1) : 0,
+                center.size() > 2 ? center.get(2) : 0,
+                axis,
+                arena.getInt("radiusX", 25),
+                arena.getInt("radiusZ", 25),
+                arena.getInt("yDown", 16),
+                arena.getInt("yUp", 15),
+                arena.getStringList("palette"));
+    }
+
+    private static Map<String, StageLightingConfig.Column> loadColumns(ConfigurationSection root) {
+        Map<String, StageLightingConfig.Column> columns = new LinkedHashMap<>();
+        ConfigurationSection columnsSection = root.getConfigurationSection("columns");
+        if (columnsSection == null) {
+            return columns;
+        }
+
+        for (String columnId : columnsSection.getKeys(false)) {
+            ConfigurationSection columnSection = columnsSection.getConfigurationSection(columnId);
+            if (columnSection == null) {
+                continue;
+            }
+            List<StageLightingConfig.Cell> cells = new ArrayList<>();
+            List<Map<?, ?>> rawCells = columnSection.getMapList("cells");
+            if (!rawCells.isEmpty()) {
+                for (Map<?, ?> rawCell : rawCells) {
+                    CellParts parts = parseCellMap(rawCell);
+                    if (parts != null) {
+                        cells.add(new StageLightingConfig.Cell(
+                                parts.dx, parts.dy, parts.dz, parts.role, parts.originalSpec));
+                    }
+                }
+            } else {
+                for (String rawCell : columnSection.getStringList("cells")) {
+                    CellParts parts = parseCellString(rawCell);
+                    if (parts != null) {
+                        cells.add(new StageLightingConfig.Cell(
+                                parts.dx, parts.dy, parts.dz, parts.role, parts.originalSpec));
+                    }
+                }
+            }
+            columns.put(columnId, new StageLightingConfig.Column(columnId, cells));
+        }
+        return columns;
+    }
+
+    private static void saveArena(YamlConfiguration yaml, StageLightingConfig.Arena arena) {
+        String base = "lighting.arena";
+        yaml.set(base + ".world", arena.world());
+        yaml.set(base + ".center", arena.centerX() + "," + arena.centerY() + "," + arena.centerZ());
+        yaml.set(base + ".axis", arena.axis().name().toLowerCase());
+        yaml.set(base + ".radiusX", arena.radiusX());
+        yaml.set(base + ".radiusZ", arena.radiusZ());
+        yaml.set(base + ".yDown", arena.yDown());
+        yaml.set(base + ".yUp", arena.yUp());
+        yaml.set(base + ".palette", arena.palette());
+    }
+
+    private static void saveColumns(YamlConfiguration yaml, Map<String, StageLightingConfig.Column> columns) {
+        String base = "lighting.columns";
+        yaml.set(base, null);
+        for (StageLightingConfig.Column column : columns.values()) {
+            List<Map<String, Object>> rawCells = new ArrayList<>();
+            for (StageLightingConfig.Cell cell : column.cells()) {
+                Map<String, Object> rawCell = new LinkedHashMap<>();
+                rawCell.put("dx", cell.dx());
+                rawCell.put("dy", cell.dy());
+                rawCell.put("dz", cell.dz());
+                rawCell.put("role", cell.role().name().toLowerCase());
+                rawCell.put("original", cell.originalSpec());
+                rawCells.add(rawCell);
+            }
+            yaml.set(base + "." + column.id() + ".cells", rawCells);
+        }
+    }
+
+    private static List<Integer> parseTriple(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        String[] parts = raw.split(",");
+        if (parts.length != 3) {
+            return List.of();
+        }
+        try {
+            return List.of(
+                    Integer.parseInt(parts[0].trim()),
+                    Integer.parseInt(parts[1].trim()),
+                    Integer.parseInt(parts[2].trim()));
+        } catch (NumberFormatException ignored) {
+            return List.of();
+        }
+    }
+
+    private static CellParts parseCellMap(Map<?, ?> rawCell) {
+        if (rawCell == null) {
+            return null;
+        }
+        Integer dx = asInt(rawCell.get("dx"));
+        Integer dy = asInt(rawCell.get("dy"));
+        Integer dz = asInt(rawCell.get("dz"));
+        if (dx == null || dy == null || dz == null) {
+            return null;
+        }
+        StageLightingConfig.CellRole role = StageLightingConfig.CellRole.fromString(asString(rawCell.get("role")));
+        String originalSpec = asString(rawCell.get("original"));
+        return new CellParts(dx, dy, dz, role, originalSpec);
+    }
+
+    private static CellParts parseCellString(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String[] parts = raw.split(",");
+        if (parts.length < 3) {
+            return null;
+        }
+        try {
+            int dx = Integer.parseInt(parts[0].trim());
+            int dy = Integer.parseInt(parts[1].trim());
+            int dz = Integer.parseInt(parts[2].trim());
+            StageLightingConfig.CellRole role = parts.length > 3
+                    ? StageLightingConfig.CellRole.fromString(parts[3])
+                    : StageLightingConfig.CellRole.EMITTER;
+            return new CellParts(dx, dy, dz, role, "");
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static Integer asInt(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String string) {
+            try {
+                return Integer.parseInt(string.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static String asString(Object value) {
+        return value == null ? "" : value.toString().trim();
+    }
+
+    private record CellParts(int dx, int dy, int dz, StageLightingConfig.CellRole role, String originalSpec) {}
+}
