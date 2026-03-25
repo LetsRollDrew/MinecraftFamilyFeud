@@ -38,7 +38,8 @@ final class FastMoneyBoardPlacementTest {
         assertEquals(5, rows.size());
 
         for (int i = 1; i < rows.size(); i++) {
-            assertTrue(rows.get(i).p1TextCell().y() < rows.get(i - 1).p1TextCell().y());
+            assertTrue(
+                    rows.get(i).p1TextCell().y() < rows.get(i - 1).p1TextCell().y());
         }
 
         FastMoneyBoardPlacement.QuestionRowAnchors first = rows.get(0);
@@ -47,12 +48,12 @@ final class FastMoneyBoardPlacementTest {
 
         double p1TextDot =
                 (first.p1TextCell().x() * screenRightX) + (first.p1TextCell().z() * screenRightZ);
-        double p1PointsDot =
-                (first.p1PointsCell().x() * screenRightX) + (first.p1PointsCell().z() * screenRightZ);
+        double p1PointsDot = (first.p1PointsCell().x() * screenRightX)
+                + (first.p1PointsCell().z() * screenRightZ);
         double p2TextDot =
                 (first.p2TextCell().x() * screenRightX) + (first.p2TextCell().z() * screenRightZ);
-        double p2PointsDot =
-                (first.p2PointsCell().x() * screenRightX) + (first.p2PointsCell().z() * screenRightZ);
+        double p2PointsDot = (first.p2PointsCell().x() * screenRightX)
+                + (first.p2PointsCell().z() * screenRightZ);
 
         assertTrue(p1PointsDot > p1TextDot);
         assertTrue(p2TextDot > p1PointsDot);

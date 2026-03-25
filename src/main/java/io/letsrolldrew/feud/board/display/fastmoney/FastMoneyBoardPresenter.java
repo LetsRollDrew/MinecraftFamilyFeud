@@ -105,46 +105,14 @@ public final class FastMoneyBoardPresenter {
             double barHeight = Math.max(0.01, row.rowHeight() * BAR_HEIGHT_FACTOR);
 
             spawnQuestionCell(
-                    group,
-                    world,
-                    yaw,
-                    layout,
-                    p1AnswerId,
-                    row.p1TextCell(),
-                    row.textWidth(),
-                    barHeight,
-                    true);
+                    group, world, yaw, layout, p1AnswerId, row.p1TextCell(), row.textWidth(), barHeight, true);
             spawnQuestionCell(
-                    group,
-                    world,
-                    yaw,
-                    layout,
-                    p1PointsId,
-                    row.p1PointsCell(),
-                    row.pointsWidth(),
-                    barHeight,
-                    false);
+                    group, world, yaw, layout, p1PointsId, row.p1PointsCell(), row.pointsWidth(), barHeight, false);
 
             spawnQuestionCell(
-                    group,
-                    world,
-                    yaw,
-                    layout,
-                    p2AnswerId,
-                    row.p2TextCell(),
-                    row.textWidth(),
-                    barHeight,
-                    true);
+                    group, world, yaw, layout, p2AnswerId, row.p2TextCell(), row.textWidth(), barHeight, true);
             spawnQuestionCell(
-                    group,
-                    world,
-                    yaw,
-                    layout,
-                    p2PointsId,
-                    row.p2PointsCell(),
-                    row.pointsWidth(),
-                    barHeight,
-                    false);
+                    group, world, yaw, layout, p2PointsId, row.p2PointsCell(), row.pointsWidth(), barHeight, false);
         }
     }
 
@@ -174,7 +142,8 @@ public final class FastMoneyBoardPresenter {
             DynamicBoardLayout layout,
             FastMoneyBoardPlacement.LayoutAnchors anchors,
             ActiveSide activeSide) {
-        Vector3d screenRight = new Vector3d(-layout.facing().rightX(), 0, -layout.facing().rightZ());
+        Vector3d screenRight =
+                new Vector3d(-layout.facing().rightX(), 0, -layout.facing().rightZ());
 
         FastMoneyBoardPlacement.TotalAnchors totals = anchors.totals();
 
@@ -466,7 +435,8 @@ public final class FastMoneyBoardPresenter {
             return java.util.Optional.empty();
         }
 
-        return surveyRepository.findById(question.surveyId())
+        return surveyRepository
+                .findById(question.surveyId())
                 .map(Survey::answers)
                 .filter(answers -> awardedSlot <= answers.size())
                 .map(answers -> answers.get(awardedSlot - 1));

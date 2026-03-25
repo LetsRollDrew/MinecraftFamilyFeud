@@ -86,14 +86,7 @@ public final class FastMoneyBoardPlacement {
             Vector3d p2PointsPos = offsetFrom(rowCenter, screenRight, p2PtsCenter);
 
             questions.add(new QuestionRowAnchors(
-                    i + 1,
-                    p1TextPos,
-                    p1PointsPos,
-                    p2TextPos,
-                    p2PointsPos,
-                    textWidth,
-                    pointsWidth,
-                    questionRowHeight));
+                    i + 1, p1TextPos, p1PointsPos, p2TextPos, p2PointsPos, textWidth, pointsWidth, questionRowHeight));
         }
 
         double totalZoneTopFromCenter = topInnerEdgeFromCenter - questionAreaHeight;
@@ -133,6 +126,5 @@ public final class FastMoneyBoardPlacement {
             double pointsWidth,
             double rowHeight) {}
 
-    public record TotalAnchors(Vector3d p1TotalCell, Vector3d p2TotalCell, double totalWidth, double totalZoneHeight) {
-    }
+    public record TotalAnchors(Vector3d p1TotalCell, Vector3d p2TotalCell, double totalWidth, double totalZoneHeight) {}
 }
