@@ -16,6 +16,7 @@ import io.letsrolldrew.feud.effects.board.selection.*;
 import io.letsrolldrew.feud.effects.buzz.*;
 import io.letsrolldrew.feud.effects.fastmoney.*;
 import io.letsrolldrew.feud.effects.holo.*;
+import io.letsrolldrew.feud.effects.lighting.*;
 import io.letsrolldrew.feud.effects.timer.*;
 import io.letsrolldrew.feud.fastmoney.*;
 import io.letsrolldrew.feud.game.*;
@@ -69,6 +70,8 @@ public final class PluginBootstrap {
     private TimerPanelStore timerPanelStore;
     private TimerService timerService;
     private TimerCommands timerCommands;
+    private StageLightingService stageLightingService;
+    private LightingCommands lightingCommands;
     private BuzzerService buzzerService;
     private BuzzerBindingStore buzzerBindingStore;
     private BuzzerCommands buzzerCommands;
@@ -121,6 +124,10 @@ public final class PluginBootstrap {
         this.timerService = new TimerService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin), System::currentTimeMillis, 20);
         this.timerCommands = new TimerCommands(messages, timerService, config.hostPermission(), "familyfeud.admin");
+        File lightingFile = new File(plugin.getDataFolder(), "lighting.yml");
+        this.stageLightingService = new StageLightingService(plugin, new StageLightingStore(lightingFile));
+        this.lightingCommands =
+                new LightingCommands(messages, stageLightingService, config.hostPermission(), "familyfeud.admin");
         this.buzzerService = new BuzzerService(
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin),
                 System::currentTimeMillis,
@@ -229,6 +236,9 @@ public final class PluginBootstrap {
         if (buzzerHitboxService != null) {
             buzzerHitboxService.shutdown();
         }
+        if (stageLightingService != null) {
+            stageLightingService.shutdown();
+        }
     }
 
     public PluginConfig getConfig() {
@@ -259,7 +269,8 @@ public final class PluginBootstrap {
                 teamCommands,
                 timerCommands,
                 buzzerCommands,
-                fastMoneyCommands);
+                fastMoneyCommands,
+                lightingCommands);
 
         feudRootCommand = new FeudRootCommand(
                 plugin,
@@ -326,4 +337,6 @@ public final class PluginBootstrap {
             plugin.getLogger().warning("Could not create fast-money.yml: " + ex.getMessage());
         }
     }
+
 }
+

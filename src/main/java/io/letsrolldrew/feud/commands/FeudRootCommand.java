@@ -16,6 +16,7 @@ import io.letsrolldrew.feud.display.DisplayRegistry;
 import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.effects.lighting.LightingCommands;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
@@ -50,6 +51,7 @@ public final class FeudRootCommand implements CommandExecutor {
     private final TimerCommands timerCommands;
     private final BuzzerCommands buzzerCommands;
     private final FastMoneyCommands fastMoneyCommands;
+    private final LightingCommands lightingCommands;
     private final HostBookAnchorStore hostBookAnchorStore;
     private final HostBookActionRouter hostBookActionRouter;
     private final HostBookService hostBookService;
@@ -90,6 +92,7 @@ public final class FeudRootCommand implements CommandExecutor {
         this.timerCommands = commandModules.timerCommands();
         this.buzzerCommands = commandModules.buzzerCommands();
         this.fastMoneyCommands = commandModules.fastMoneyCommands();
+        this.lightingCommands = commandModules.lightingCommands();
         this.hostBookAnchorStore = hostBookAnchorStore;
         this.hostBookActionRouter = new HostBookActionRouter(
                 messages, commandModules.fastMoneyCommands(), displayBoardSelectionStore, displayBoardPresenter);
@@ -164,6 +167,8 @@ public final class FeudRootCommand implements CommandExecutor {
                 return buzzerCommands.handleBuzzReset(sender);
             case "timer":
                 return timerCommands.handle(sender, tail);
+            case "lighting":
+                return lightingCommands.handle(sender, tail);
             case "fastmoney":
                 return fastMoneyCommands.handle(sender, tail);
             case "host":

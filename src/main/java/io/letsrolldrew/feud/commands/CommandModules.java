@@ -2,6 +2,7 @@ package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
+import io.letsrolldrew.feud.effects.lighting.LightingCommands;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.team.TeamCommands;
@@ -17,6 +18,7 @@ public final class CommandModules {
     private final TimerCommands timerCommands;
     private final BuzzerCommands buzzerCommands;
     private final FastMoneyCommands fastMoneyCommands;
+    private final LightingCommands lightingCommands;
 
     public CommandModules(
             HologramCommands hologramCommands,
@@ -25,7 +27,8 @@ public final class CommandModules {
             TeamCommands teamCommands,
             TimerCommands timerCommands,
             BuzzerCommands buzzerCommands,
-            FastMoneyCommands fastMoneyCommands) {
+            FastMoneyCommands fastMoneyCommands,
+            LightingCommands lightingCommands) {
         this.hologramCommands = Objects.requireNonNull(hologramCommands, "hologramCommands");
         this.displayBoardCommands = Objects.requireNonNull(displayBoardCommands, "displayBoardCommands");
         this.surveyCommands = Objects.requireNonNull(surveyCommands, "surveyCommands");
@@ -33,6 +36,7 @@ public final class CommandModules {
         this.timerCommands = Objects.requireNonNull(timerCommands, "timerCommands");
         this.buzzerCommands = Objects.requireNonNull(buzzerCommands, "buzzerCommands");
         this.fastMoneyCommands = Objects.requireNonNull(fastMoneyCommands, "fastMoneyCommands");
+        this.lightingCommands = Objects.requireNonNull(lightingCommands, "lightingCommands");
     }
 
     public HologramCommands hologramCommands() {
@@ -61,5 +65,9 @@ public final class CommandModules {
 
     public FastMoneyCommands fastMoneyCommands() {
         return fastMoneyCommands;
+    }
+
+    public LightingCommands lightingCommands() {
+        return lightingCommands;
     }
 }

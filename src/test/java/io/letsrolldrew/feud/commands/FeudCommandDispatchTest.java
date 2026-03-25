@@ -85,6 +85,18 @@ final class FeudCommandDispatchTest {
     }
 
     @Test
+    void lightingCommandIsReachable() {
+        CapturingSender sender = CapturingSender.allowAllPerms();
+
+        boolean handled = server.dispatchCommand(sender.sender(), "feud lighting status");
+
+        assertTrue(handled);
+
+        String all = sender.joinedLower();
+        assertTrue(all.contains("lighting") || all.contains("status") || all.contains("usage"));
+    }
+
+    @Test
     void buzzCommandIsReachable() {
         CapturingSender sender = CapturingSender.allowAllPerms();
 

@@ -197,6 +197,27 @@ final class FeudCommandSpecificationFactoryTest {
     }
 
     @Test
+    void lightingHasExpectedChildrenAndRequirements() {
+        FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
+        CommandSpecificationNode root = factory.buildFullSpecification("host.perm", "admin.perm");
+
+        CommandSpecificationNode lighting = child(root, "lighting");
+        assertNotNull(lighting);
+        assertFalse(lighting.requirements().isEmpty());
+        assertNotNull(child(lighting, "center"));
+        assertNotNull(child(lighting, "scan"));
+        assertNotNull(child(lighting, "status"));
+        CommandSpecificationNode column = child(lighting, "column");
+        assertNotNull(column);
+        assertNotNull(child(column, "list"));
+
+        CommandSpecificationNode center = child(lighting, "center");
+        assertNotNull(child(center, "bind"));
+        assertNotNull(child(center, "clear"));
+        assertNotNull(child(center, "status"));
+    }
+
+    @Test
     void fastMoneyHasExpectedChildrenAndRequirements() {
         FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
         CommandSpecificationNode root = factory.buildFullSpecification("host.perm", "admin.perm");

@@ -64,6 +64,18 @@ public enum Msg {
     TIMER_RESET_TO("Timer reset to {seconds}s"),
     TIMER_STATUS("Timer {state} ({seconds}s remaining)"),
 
+    LIGHTING_STATUS(
+            "Lighting status: center={center} axis={axis} columns={columns} palettes={palettes} modes={modes} animations={animations} jingles={jingles}"),
+    LIGHTING_COLUMNS_EMPTY("Lighting columns: none scanned"),
+    LIGHTING_COLUMNS("Lighting columns: {columns}"),
+    LIGHTING_CENTER_BOUND("Lighting center bound at {world} {x},{y},{z}"),
+    LIGHTING_CENTER_CLEARED("Lighting center cleared"),
+    LIGHTING_CENTER_NOT_BOUND("Lighting center is not bound"),
+    LIGHTING_CENTER_STATUS(
+            "Lighting center: {world} {x},{y},{z} axis={axis} rx={radiusX} rz={radiusZ} down={yDown} up={yUp} columns={columns}"),
+    LIGHTING_SCAN_COMPLETE(
+            "Lighting scan complete: columns={columns} axis={axis} rx={radiusX} rz={radiusZ} down={yDown} up={yUp}"),
+
     // team (chat confirmations / status)
     TEAM_INFO_HEADER("Teams"),
     TEAM_INFO_LINE("{team}: {name} | score={score} | buzzer={buzzer}"),
@@ -175,6 +187,7 @@ public enum Msg {
             + "/feud holo list\n"
             + "/feud clear all - remove all display entities\n"
             + "/feud host book cleanup - cleanup remote\n"
+            + "/feud lighting center|scan|status|column\n"
             + "/feud timer start|stop|reset|status"),
 
     BOARD_ENTRY_HELP("Board commands: map | display ..."),
@@ -200,6 +213,7 @@ public enum Msg {
     HOLO_ITEM_USAGE("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>"),
 
     FAST_MONEY_HELP("Fast Money: set|start|stop|status|next|bind|answer|board"),
+    LIGHTING_HELP("Lighting: center|scan|status|column"),
 
     // listener / gameplay feedback
     BOARD_WAND_TOP_LEFT_SET("Top-left set, now click the bottom-right frame"),
@@ -237,6 +251,9 @@ public enum Msg {
     USAGE_FAST_MONEY_ANSWER("Usage: /feud fastmoney answer <text...>"),
     USAGE_FAST_MONEY_NEXT("Usage: /feud fastmoney next"),
     USAGE_FAST_MONEY_BOARD("Usage: /feud fastmoney board <show|hide> [boardId]"),
+    USAGE_LIGHTING_COLUMN("Usage: /feud lighting column list"),
+    USAGE_LIGHTING_CENTER("Usage: /feud lighting center <bind|clear|status>"),
+    USAGE_LIGHTING_SCAN("Usage: /feud lighting scan [x|z] [radiusX] [radiusZ] [down] [up]"),
     USAGE_BOARD_CREATE("Usage: /feud board create <boardId>"),
     USAGE_BOARD_DISPLAY_DYNAMIC("Usage: /feud board display dynamic <boardId>"),
     USAGE_BOARD_DISPLAY_REMOVE("Usage: /feud board display remove <boardId>"),

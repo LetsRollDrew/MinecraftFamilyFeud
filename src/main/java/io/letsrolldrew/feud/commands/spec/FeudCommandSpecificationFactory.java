@@ -38,6 +38,7 @@ public final class FeudCommandSpecificationFactory {
         children.add(buildSurvey(hostPermission));
         children.add(buildTeam(hostPermission, adminPermission));
         children.add(buildTimer(hostPermission, adminPermission));
+        children.add(buildLighting(hostPermission, adminPermission));
         children.add(buildFastMoney(hostPermission, adminPermission));
         children.add(buildHostBook(hostPermission));
         children.add(buildClear(adminPermission));
@@ -309,6 +310,35 @@ public final class FeudCommandSpecificationFactory {
                 .requirements(List.of(Requirements.anyOf(
                         Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
                 .children(List.of(start, stop, reset, status))
+                .build();
+    }
+
+    private CommandSpecificationNode buildLighting(String hostPermission, String adminPermission) {
+        CommandSpecificationNode center = CommandSpecificationNode.builder(ArgType.LITERAL, "center")
+                .children(List.of(
+                        CommandSpecificationNode.builder(ArgType.LITERAL, "bind")
+                                .requirements(List.of(Requirements.playerOnly()))
+                                .build(),
+                        CommandSpecificationNode.builder(ArgType.LITERAL, "clear")
+                                .build(),
+                        CommandSpecificationNode.builder(ArgType.LITERAL, "status")
+                                .build()))
+                .build();
+        CommandSpecificationNode scan = CommandSpecificationNode.builder(ArgType.LITERAL, "scan")
+                .child(CommandSpecificationNode.builder(ArgType.WORD, "axis")
+                        .noExec()
+                        .build())
+                .build();
+        CommandSpecificationNode status =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "status").build();
+        CommandSpecificationNode column = CommandSpecificationNode.builder(ArgType.LITERAL, "column")
+                .child(CommandSpecificationNode.builder(ArgType.LITERAL, "list").build())
+                .build();
+
+        return CommandSpecificationNode.builder(ArgType.LITERAL, "lighting")
+                .requirements(List.of(Requirements.anyOf(
+                        Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
+                .children(List.of(center, scan, status, column))
                 .build();
     }
 
