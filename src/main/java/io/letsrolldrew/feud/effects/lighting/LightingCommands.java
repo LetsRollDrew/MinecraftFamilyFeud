@@ -40,7 +40,9 @@ public final class LightingCommands {
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "mode" -> handleMode(sender, args);
+            case "animation" -> handleAnimation(sender, args);
             case "jingle" -> handleJingle(sender, args);
+            case "stop" -> handleStop(sender);
             case "status" -> handleStatus(sender);
             case "column" -> handleColumn(sender, args);
             case "center" -> handleCenter(sender, args);
@@ -63,6 +65,19 @@ public final class LightingCommands {
         messages.success(sender, Msg.LIGHTING_MODE_APPLIED, Placeholder.of("id", id));
     }
 
+    private void handleAnimation(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            messages.usage(sender, Msg.USAGE_LIGHTING_ANIMATION);
+            return;
+        }
+        String id = args[1].trim();
+        if (!stageLightingService.playAnimation(id)) {
+            messages.error(sender, Msg.LIGHTING_ANIMATION_NOT_FOUND, Placeholder.of("id", id));
+            return;
+        }
+        messages.success(sender, Msg.LIGHTING_ANIMATION_STARTED, Placeholder.of("id", id));
+    }
+
     private void handleJingle(CommandSender sender, String[] args) {
         if (args.length < 2) {
             messages.usage(sender, Msg.USAGE_LIGHTING_JINGLE);
@@ -76,11 +91,18 @@ public final class LightingCommands {
         messages.success(sender, Msg.LIGHTING_JINGLE_TRIGGERED, Placeholder.of("id", id));
     }
 
+    private void handleStop(CommandSender sender) {
+        stageLightingService.stopAnimation();
+        messages.success(sender, Msg.LIGHTING_STOPPED);
+    }
+
     private void handleStatus(CommandSender sender) {
         StageLightingService.LightingStatus status = stageLightingService.status();
         messages.info(
                 sender,
                 Msg.LIGHTING_STATUS,
+                Placeholder.of("mode", status.activeModeOrNone()),
+                Placeholder.of("animation", status.activeAnimationOrNone()),
                 Placeholder.of("center", status.centerOrNone()),
                 Placeholder.of("axis", status.axis()),
                 Placeholder.of("columns", status.columns()),
@@ -119,7 +141,7 @@ public final class LightingCommands {
                     messages.error(sender, Msg.NOT_READY);
                     return;
                 }
-                StageLightingConfig.Arena arena = stageLightingService.arena();
+                var arena = stageLightingService.arena();
                 messages.success(
                         sender,
                         Msg.LIGHTING_CENTER_BOUND,

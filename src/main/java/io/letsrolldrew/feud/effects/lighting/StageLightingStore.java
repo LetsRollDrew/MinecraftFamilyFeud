@@ -34,7 +34,7 @@ public final class StageLightingStore {
                 loadColumns(root),
                 loadPalettes(root),
                 loadModes(root),
-                Map.of(),
+                loadAnimations(root),
                 loadJingles(root));
     }
 
@@ -48,6 +48,7 @@ public final class StageLightingStore {
         saveColumns(yaml, config.columns());
         savePalettes(yaml, config.palettes());
         saveModes(yaml, config.modes());
+        saveAnimations(yaml, config.animations());
         saveJingles(yaml, config.jingles());
 
         try {
@@ -158,6 +159,52 @@ public final class StageLightingStore {
         return modes;
     }
 
+    private static Map<String, StageLightingConfig.Animation> loadAnimations(ConfigurationSection root) {
+        Map<String, StageLightingConfig.Animation> animations = new LinkedHashMap<>();
+        ConfigurationSection section = root.getConfigurationSection("animations");
+        if (section == null) {
+            return animations;
+        }
+
+        for (String animationId : section.getKeys(false)) {
+            ConfigurationSection animationSection = section.getConfigurationSection(animationId);
+            if (animationSection == null) {
+                continue;
+            }
+
+            List<StageLightingConfig.Frame> frames = new ArrayList<>();
+            List<Map<?, ?>> rawFrames = animationSection.getMapList("frames");
+            for (Map<?, ?> rawFrame : rawFrames) {
+                Object columnsObj = rawFrame.get("columns");
+                Object zonesObj = rawFrame.get("zones");
+                Map<String, String> specMap = new LinkedHashMap<>();
+                if (columnsObj instanceof Map<?, ?> rawColumns) {
+                    readSpecMap(rawColumns, specMap);
+                } else if (zonesObj instanceof Map<?, ?> rawZones) {
+                    readSpecMap(rawZones, specMap);
+                }
+                frames.add(new StageLightingConfig.Frame(specMap));
+            }
+
+            StageLightingConfig.AnimationKind kind = StageLightingConfig.AnimationKind.fromString(
+                    animationSection.getString("kind", frames.isEmpty() ? "pulse" : "frames"));
+            animations.put(
+                    animationId,
+                    new StageLightingConfig.Animation(
+                            animationId,
+                            kind,
+                            animationSection.getLong("periodTicks", 6L),
+                            frames,
+                            animationSection.getString("primary", animationSection.getString("active", "")),
+                            animationSection.getString("secondary", ""),
+                            animationSection.getString("background", ""),
+                            animationSection.getInt("width", 1),
+                            animationSection.getInt("step", 1),
+                            linkedJingleId(animationSection)));
+        }
+        return animations;
+    }
+
     private static Map<String, StageLightingConfig.Jingle> loadJingles(ConfigurationSection root) {
         Map<String, StageLightingConfig.Jingle> jingles = new LinkedHashMap<>();
         ConfigurationSection section = root.getConfigurationSection("jingles");
@@ -237,6 +284,41 @@ public final class StageLightingStore {
             yaml.set(modeBase + ".jingle", mode.jingleId().isBlank() ? null : mode.jingleId());
             for (Map.Entry<String, String> entry : mode.columnSpecs().entrySet()) {
                 yaml.set(modeBase + ".columns." + entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private static void saveAnimations(YamlConfiguration yaml, Map<String, StageLightingConfig.Animation> animations) {
+        String base = "lighting.animations";
+        yaml.set(base, null);
+        for (StageLightingConfig.Animation animation : animations.values()) {
+            String animationBase = base + "." + animation.id();
+            yaml.set(animationBase + ".kind", animation.kind().name().toLowerCase());
+            yaml.set(animationBase + ".periodTicks", animation.periodTicks());
+            yaml.set(animationBase + ".jingle", animation.jingleId().isBlank() ? null : animation.jingleId());
+            if (!animation.primaryPaletteId().isBlank()) {
+                yaml.set(animationBase + ".primary", animation.primaryPaletteId());
+            }
+            if (!animation.secondaryPaletteId().isBlank()) {
+                yaml.set(animationBase + ".secondary", animation.secondaryPaletteId());
+            }
+            if (!animation.backgroundPaletteId().isBlank()) {
+                yaml.set(animationBase + ".background", animation.backgroundPaletteId());
+            }
+            if (animation.windowWidth() > 1) {
+                yaml.set(animationBase + ".width", animation.windowWidth());
+            }
+            if (animation.step() > 1) {
+                yaml.set(animationBase + ".step", animation.step());
+            }
+            if (animation.kind() == StageLightingConfig.AnimationKind.FRAMES) {
+                List<Map<String, Object>> frames = new ArrayList<>();
+                for (StageLightingConfig.Frame frame : animation.frames()) {
+                    Map<String, Object> rawFrame = new LinkedHashMap<>();
+                    rawFrame.put("columns", new LinkedHashMap<>(frame.columnSpecs()));
+                    frames.add(rawFrame);
+                }
+                yaml.set(animationBase + ".frames", frames);
             }
         }
     }

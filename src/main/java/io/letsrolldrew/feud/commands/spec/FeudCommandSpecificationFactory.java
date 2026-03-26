@@ -332,9 +332,14 @@ public final class FeudCommandSpecificationFactory {
         CommandSpecificationNode mode = CommandSpecificationNode.builder(ArgType.LITERAL, "mode")
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
                 .build();
+        CommandSpecificationNode animation = CommandSpecificationNode.builder(ArgType.LITERAL, "animation")
+                .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
+                .build();
         CommandSpecificationNode jingle = CommandSpecificationNode.builder(ArgType.LITERAL, "jingle")
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
                 .build();
+        CommandSpecificationNode stop =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "stop").build();
         CommandSpecificationNode status =
                 CommandSpecificationNode.builder(ArgType.LITERAL, "status").build();
         CommandSpecificationNode column = CommandSpecificationNode.builder(ArgType.LITERAL, "column")
@@ -344,7 +349,7 @@ public final class FeudCommandSpecificationFactory {
         return CommandSpecificationNode.builder(ArgType.LITERAL, "lighting")
                 .requirements(List.of(Requirements.anyOf(
                         Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
-                .children(List.of(center, scan, mode, jingle, status, column))
+                .children(List.of(center, scan, mode, animation, jingle, stop, status, column))
                 .build();
     }
 

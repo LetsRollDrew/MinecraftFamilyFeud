@@ -18,6 +18,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitTask;
 
 public final class StageLightingService {
     public static final String ORIGINAL_SPEC = "__original__";
@@ -28,6 +29,9 @@ public final class StageLightingService {
     private final Map<String, BlockData> blockDataCache = new LinkedHashMap<>();
 
     private StageLightingConfig config;
+    private BukkitTask animationTask;
+    private String activeModeId = "";
+    private String activeAnimationId = "";
 
     public StageLightingService(Plugin plugin, StageLightingStore store) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
@@ -72,6 +76,13 @@ public final class StageLightingService {
         return Optional.ofNullable(config.modes().get(id.trim()));
     }
 
+    public Optional<StageLightingConfig.Animation> findAnimation(String id) {
+        if (id == null || id.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(config.animations().get(id.trim()));
+    }
+
     public Optional<StageLightingConfig.Jingle> findJingle(String id) {
         if (id == null || id.isBlank()) {
             return Optional.empty();
@@ -101,6 +112,7 @@ public final class StageLightingService {
     }
 
     public void clearCenter() {
+        stopAnimation();
         config = presetCatalog.apply(config.withArena(StageLightingConfig.Arena.unbound()).withColumns(Map.of()));
         store.save(config);
     }
@@ -179,8 +191,46 @@ public final class StageLightingService {
         if (mode == null || !config.arena().isBound()) {
             return false;
         }
+        stopAnimation();
         applyColumnSpecs(mode.columnSpecs());
+        activeModeId = mode.id();
+        activeAnimationId = "";
         triggerJingle(mode.jingleId());
+        return true;
+    }
+
+    public boolean playAnimation(String id) {
+        StageLightingConfig.Animation animation = config.animations().get(id);
+        if (animation == null || !config.arena().isBound()) {
+            return false;
+        }
+
+        List<StageLightingConfig.Frame> frames = framesFor(animation);
+        if (frames.isEmpty()) {
+            return false;
+        }
+
+        stopAnimation();
+        activeModeId = "";
+        activeAnimationId = animation.id();
+
+        applyColumnSpecs(frames.getFirst().columnSpecs());
+        triggerJingle(animation.jingleId());
+
+        animationTask = Bukkit.getScheduler()
+                .runTaskTimer(
+                        plugin,
+                        new Runnable() {
+                            private int frameIndex = 1;
+
+                            @Override
+                            public void run() {
+                                applyColumnSpecs(frames.get(frameIndex).columnSpecs());
+                                frameIndex = (frameIndex + 1) % frames.size();
+                            }
+                        },
+                        animation.periodTicks(),
+                        animation.periodTicks());
         return true;
     }
 
@@ -205,9 +255,19 @@ public final class StageLightingService {
         return true;
     }
 
+    public void stopAnimation() {
+        if (animationTask != null) {
+            animationTask.cancel();
+            animationTask = null;
+        }
+        activeAnimationId = "";
+    }
+
     public LightingStatus status() {
         StageLightingConfig.Arena arena = config.arena();
         return new LightingStatus(
+                activeModeId,
+                activeAnimationId,
                 arena.isBound(),
                 arena.isBound()
                         ? arena.world() + " " + arena.centerX() + "," + arena.centerY() + "," + arena.centerZ()
@@ -224,7 +284,59 @@ public final class StageLightingService {
                 config.jingles().size());
     }
 
-    public void shutdown() {}
+    public void shutdown() {
+        stopAnimation();
+    }
+
+    private List<StageLightingConfig.Frame> framesFor(StageLightingConfig.Animation animation) {
+        return switch (animation.kind()) {
+            case FRAMES -> animation.frames();
+            case PULSE -> buildPulseFrames(animation);
+            case COLUMN_ALTERNATE -> buildColumnAlternateFrames(animation);
+            case SLIDING_WINDOW -> buildSlidingWindowFrames(animation);
+        };
+    }
+
+    private List<StageLightingConfig.Frame> buildPulseFrames(StageLightingConfig.Animation animation) {
+        if (animation.primaryPaletteId().isBlank() || animation.secondaryPaletteId().isBlank()) {
+            return List.of();
+        }
+        return List.of(
+                new StageLightingConfig.Frame(Map.of("all", animation.primaryPaletteId())),
+                new StageLightingConfig.Frame(Map.of("all", animation.secondaryPaletteId())));
+    }
+
+    private List<StageLightingConfig.Frame> buildColumnAlternateFrames(StageLightingConfig.Animation animation) {
+        if (animation.primaryPaletteId().isBlank() || animation.secondaryPaletteId().isBlank()) {
+            return List.of();
+        }
+        Map<String, String> first = new LinkedHashMap<>();
+        first.put("odd", animation.primaryPaletteId());
+        first.put("even", animation.secondaryPaletteId());
+        Map<String, String> second = new LinkedHashMap<>();
+        second.put("odd", animation.secondaryPaletteId());
+        second.put("even", animation.primaryPaletteId());
+        return List.of(new StageLightingConfig.Frame(first), new StageLightingConfig.Frame(second));
+    }
+
+    private List<StageLightingConfig.Frame> buildSlidingWindowFrames(StageLightingConfig.Animation animation) {
+        List<StageLightingConfig.Column> columns = new ArrayList<>(config.columns().values());
+        if (columns.isEmpty() || animation.primaryPaletteId().isBlank() || animation.backgroundPaletteId().isBlank()) {
+            return List.of();
+        }
+
+        List<StageLightingConfig.Frame> frames = new ArrayList<>();
+        for (int start = 0; start < columns.size(); start += animation.step()) {
+            Map<String, String> specMap = new LinkedHashMap<>();
+            specMap.put("all", animation.backgroundPaletteId());
+            for (int offset = 0; offset < animation.windowWidth(); offset++) {
+                int index = (start + offset) % columns.size();
+                specMap.put(columns.get(index).id(), animation.primaryPaletteId());
+            }
+            frames.add(new StageLightingConfig.Frame(specMap));
+        }
+        return frames;
+    }
 
     private void applyColumnSpecs(Map<String, String> columnSpecs) {
         if (columnSpecs == null || columnSpecs.isEmpty() || !config.arena().isBound()) {
@@ -395,6 +507,8 @@ public final class StageLightingService {
     }
 
     public record LightingStatus(
+            String activeModeId,
+            String activeAnimationId,
             boolean centerBound,
             String center,
             String axis,
@@ -407,6 +521,14 @@ public final class StageLightingService {
             int modes,
             int animations,
             int jingles) {
+        public String activeModeOrNone() {
+            return activeModeId == null || activeModeId.isBlank() ? "none" : activeModeId;
+        }
+
+        public String activeAnimationOrNone() {
+            return activeAnimationId == null || activeAnimationId.isBlank() ? "none" : activeAnimationId;
+        }
+
         public String centerOrNone() {
             return centerBound ? center : "none";
         }

@@ -1,20 +1,17 @@
 package io.letsrolldrew.feud.messages;
 
 public enum Msg {
-    // permissions / restrictions
     HOST_ONLY("You must be the host to do that"),
     ADMIN_ONLY("Admin only"),
     PLAYER_ONLY("Only players can use this command"),
     NEED_PERMISSION("You need permission: {permission}"),
 
-    // validation / argument parsing
     TEAM_MUST_BE_RED_BLUE("Team must be red or blue"),
     SLOT_MUST_BE_1_8("Slot must be 1-8"),
     SECONDS_CANNOT_BE_NEGATIVE("Seconds can't be negative"),
     INVALID_ID_SIMPLE("Invalid id"),
     INVALID_ID_HOLO("Invalid id, use letters, numbers, _ or -"),
 
-    // not ready / missing / not found
     NOT_READY("Not ready"),
     MISSING_BOARD_ID("Missing board id"),
     SURVEYS_NOT_LOADED("Surveys not loaded"),
@@ -25,10 +22,8 @@ public enum Msg {
     FAST_MONEY_BOARD_NO_LAYOUT("Fast Money board not spawned: no layout for {boardId}"),
     UNKNOWN_MATERIAL("Unknown material: {material}"),
 
-    // generic fallbacks
     REQUIREMENT_DENIED("You cannot use this command"),
 
-    // success confirmations templates
     HOLOGRAM_SPAWNED("Spawned hologram '{id}'"),
     HOLOGRAM_UPDATED("Updated hologram '{id}'"),
     HOLOGRAM_MOVED_TO_YOU("Moved hologram '{id}' to your location"),
@@ -45,7 +40,6 @@ public enum Msg {
     ITEM_HOLOGRAM_MOVED_TO_YOU("Moved item hologram '{id}' to your location"),
     ITEM_HOLOGRAM_REMOVED("Removed item hologram '{id}'"),
 
-    // ui / round control (chat confirmations)
     UI_REVEALED_SLOT("Revealed slot {slot}"),
     UI_STRIKE_RECORDED("Strike recorded ({count}/{max})"),
     UI_STRIKES_CLEARED("Strikes cleared"),
@@ -56,7 +50,6 @@ public enum Msg {
     UI_AWARDED_POINTS("Awarded {points} points to {team}"),
     UI_ROUND_RESET("Round state reset"),
 
-    // timer (chat confirmations / status)
     TIMER_STARTED("Timer started"),
     TIMER_STARTED_FOR("Timer started for {seconds}s"),
     TIMER_STOPPED("Timer stopped"),
@@ -65,11 +58,14 @@ public enum Msg {
     TIMER_STATUS("Timer {state} ({seconds}s remaining)"),
 
     LIGHTING_MODE_NOT_FOUND("Lighting mode not found: {id}"),
+    LIGHTING_ANIMATION_NOT_FOUND("Lighting animation not found: {id}"),
     LIGHTING_JINGLE_NOT_FOUND("Lighting jingle not found: {id}"),
     LIGHTING_MODE_APPLIED("Lighting mode applied: {id}"),
+    LIGHTING_ANIMATION_STARTED("Lighting animation started: {id}"),
     LIGHTING_JINGLE_TRIGGERED("Lighting jingle triggered: {id}"),
+    LIGHTING_STOPPED("Lighting animation stopped"),
     LIGHTING_STATUS(
-            "Lighting status: center={center} axis={axis} columns={columns} palettes={palettes} modes={modes} animations={animations} jingles={jingles}"),
+            "Lighting status: center={center} axis={axis} mode={mode} animation={animation} columns={columns} palettes={palettes} modes={modes} animations={animations} jingles={jingles}"),
     LIGHTING_COLUMNS_EMPTY("Lighting columns: none scanned"),
     LIGHTING_COLUMNS("Lighting columns: {columns}"),
     LIGHTING_CENTER_BOUND("Lighting center bound at {world} {x},{y},{z}"),
@@ -80,7 +76,6 @@ public enum Msg {
     LIGHTING_SCAN_COMPLETE(
             "Lighting scan complete: columns={columns} axis={axis} rx={radiusX} rz={radiusZ} down={yDown} up={yUp}"),
 
-    // team (chat confirmations / status)
     TEAM_INFO_HEADER("Teams"),
     TEAM_INFO_LINE("{team}: {name} | score={score} | buzzer={buzzer}"),
     TEAMS_RESET("Teams reset"),
@@ -89,20 +84,17 @@ public enum Msg {
     TEAM_NAME_SET("Team {team} name set to '{name}'"),
     BUZZER_COMMANDS_NOT_AVAILABLE("Buzzer commands are not available"),
 
-    // buzzer (chat confirmations / status)
     BUZZ_LOCK_RESET("Buzz lock reset"),
     BUZZER_BIND_PROMPT("Binding buzzer for {team}, right-click a block to bind"),
     BUZZER_CLEARED("Cleared buzzer for {team}"),
     BUZZER_NOT_BOUND("No buzzer bound for {team}"),
     BUZZER_LOCATION("Buzzer for {team} at {x},{y},{z}"),
 
-    // survey (chat confirmations / status)
     SURVEY_LIST_EMPTY("No surveys loaded"),
     SURVEY_LIST_HEADER("Loaded surveys"),
     SURVEY_LIST_ENTRY("- {id}: {question}"),
     SURVEY_LOADED("Loaded survey: {id}"),
 
-    // fast money (chat confirmations / status)
     FAST_MONEY_QUESTION_AND_SLOT_MUST_BE_POSITIVE("Question and slot must be positive"),
     FAST_MONEY_AWARDED_P1("Awarded Player 1, question {question}, slot {slot}"),
     FAST_MONEY_AWARDED_P2("Awarded Player 2, question {question}, slot {slot}"),
@@ -112,14 +104,14 @@ public enum Msg {
     FAST_MONEY_ADVANCED_TO_QUESTION("Fast Money: advanced to question {question}"),
     FAST_MONEY_COMPLETE("Fast Money complete: total={total} target={target}"),
     FAST_MONEY_STOPPED("Fast Money stopped"),
-    FAST_MONEY_STATUS("Fast Money status: phase={phase} set={set} q={question} p1={p1} p2={p2} total={total} target={target}"),
+    FAST_MONEY_STATUS(
+            "Fast Money status: phase={phase} set={set} q={question} p1={p1} p2={p2} total={total} target={target}"),
     FAST_MONEY_BINDINGS_CLEARED("Fast Money bindings cleared"),
     FAST_MONEY_BIND_P1_ARMED("Fast Money: bind P1 armed, right-click a player"),
     FAST_MONEY_BIND_P2_ARMED("Fast Money: bind P2 armed, right-click a player"),
     FAST_MONEY_ANSWER_RECORDED("Answer recorded for question {question}"),
     FAST_MONEY_SLOT_NOT_DEFINED("Fast Money question {question} has no survey answer in slot {slot}"),
 
-    // board display (remote + selection spawn) confirmations / status
     BOARD_LIST_EMPTY("No boards active"),
     BOARD_LIST_LINE("Boards: {boards}"),
     DISPLAY_REMOTE_REFRESHED("Remote refreshed"),
@@ -141,7 +133,6 @@ public enum Msg {
     SELECTOR_WAND_NOT_AVAILABLE("Selector wand is not available"),
     DISPLAY_SELECTOR_GIVEN("Display selector given"),
 
-    // host book / selector misc
     UNKNOWN_UI_ACTION("Unknown UI action: {actionId}"),
     SELECTION_SPAWN_NOT_WIRED("Selection spawn actions are not yet wired to commands"),
     INVALID_FAST_MONEY_REVEAL_ACTION("Invalid Fast Money reveal action: {actionId}"),
@@ -154,21 +145,18 @@ public enum Msg {
     DISPLAY_REMOTE_GIVEN("Display remote: {boardId}"),
     CLEANUP_BOOK_GIVEN("Cleanup book given"),
     MAP_BOARD_REMOTE_GIVEN("Map board remote given"),
+    LIGHTING_REMOTE_GIVEN("Lighting remote given"),
 
-    // holograms (list output / validation)
     CUSTOM_MODEL_DATA_MUST_BE_NUMBER("CustomModelData must be a number"),
     HOLOGRAM_LIST_EMPTY("No holograms are active"),
     HOLOGRAM_LIST_HEADER("Holograms"),
     HOLOGRAM_LIST_ENTRY("- {id} ({type})"),
     HOLOGRAM_LIST_TOTALS("Totals: text={text} item={item}"),
 
-    // clear all
     CLEARED_DISPLAYS("Cleared {count} displays"),
 
-    // version
     VERSION_OUTPUT("FamilyFeud v{version} - game state: not started\nUse /feud help for commands"),
 
-    // help blocks
     ROOT_HELP("FamilyFeud commands:\n"
             + "/feud - show version\n"
             + "/feud help - this help\n"
@@ -180,6 +168,7 @@ public enum Msg {
             + "/feud team buzzer bind|clear|test <red|blue>\n"
             + "/feud buzz reset\n"
             + "/feud host book - give host remote\n"
+            + "/feud host book lighting - give lighting remote\n"
             + "/feud ui reveal <1-8> - reveal slot\n"
             + "/feud ui strike - add a strike\n"
             + "/feud ui clearstrikes - clear strikes\n"
@@ -191,7 +180,7 @@ public enum Msg {
             + "/feud holo list\n"
             + "/feud clear all - remove all display entities\n"
             + "/feud host book cleanup - cleanup remote\n"
-            + "/feud lighting center|scan|mode|jingle|status|column\n"
+            + "/feud lighting center|scan|mode|animation|jingle|stop|status\n"
             + "/feud timer start|stop|reset|status"),
 
     BOARD_ENTRY_HELP("Board commands: map | display ..."),
@@ -217,9 +206,8 @@ public enum Msg {
     HOLO_ITEM_USAGE("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>"),
 
     FAST_MONEY_HELP("Fast Money: set|start|stop|status|next|bind|answer|board"),
-    LIGHTING_HELP("Lighting: center|scan|mode|jingle|status|column"),
+    LIGHTING_HELP("Lighting: center|scan|mode|animation|jingle|stop|status|column"),
 
-    // listener / gameplay feedback
     BOARD_WAND_TOP_LEFT_SET("Top-left set, now click the bottom-right frame"),
     BOARD_WAND_SELECTION_INVALID("Selection invalid, ensure a 10x6 rectangle on the same wall (consistent facing)"),
     BOARD_WAND_BINDING_SAVED("Board binding saved ({width}x{height})"),
@@ -239,9 +227,8 @@ public enum Msg {
 
     FAST_MONEY_BOUND("Fast Money: bound {player}"),
 
-    // usage guides
     USAGE_CLEAR_ALL("Usage: /feud clear all"),
-    USAGE_HOST_BOOK("Usage: /feud host book [map|display|cleanup]"),
+    USAGE_HOST_BOOK("Usage: /feud host book [map|display|lighting|cleanup]"),
     USAGE_UI_ROOT("Usage: /feud ui <reveal, strike, clearstrikes, add, control, award, reset>"),
     USAGE_UI_REVEAL("Usage: /feud ui reveal <1-8>"),
     USAGE_UI_ADD("Usage: /feud ui add <points>"),
@@ -256,6 +243,7 @@ public enum Msg {
     USAGE_FAST_MONEY_NEXT("Usage: /feud fastmoney next"),
     USAGE_FAST_MONEY_BOARD("Usage: /feud fastmoney board <show|hide> [boardId]"),
     USAGE_LIGHTING_MODE("Usage: /feud lighting mode <id>"),
+    USAGE_LIGHTING_ANIMATION("Usage: /feud lighting animation <id>"),
     USAGE_LIGHTING_JINGLE("Usage: /feud lighting jingle <id>"),
     USAGE_LIGHTING_COLUMN("Usage: /feud lighting column list"),
     USAGE_LIGHTING_CENTER("Usage: /feud lighting center <bind|clear|status>"),
@@ -276,7 +264,6 @@ public enum Msg {
     BOARD_BASE_PAINTED("Board base painted"),
     BOARD_MAP_INIT_FAILED("Board map init failed (binding missing or world unloaded)"),
 
-    // Help (timer)
     TIMER_HELP("Timer commands:\n"
             + "/feud timer start [seconds]\n"
             + "/feud timer stop\n"
