@@ -340,5 +340,85 @@ public final class PluginBootstrap {
         }
     }
 
+    private void ensureLightingFile(File lightingFile) {
+        if (lightingFile.exists()) {
+            return;
+        }
+        try {
+            lightingFile.getParentFile().mkdirs();
+            String contents = """
+                    lighting:
+                      arena:
+                        world: ""
+                        center: 0,0,0
+                        axis: x
+                        radiusX: 25
+                        radiusZ: 25
+                        yDown: 16
+                        yUp: 15
+                        palette:
+                          - SEA_LANTERN
+                          - BEACON
+                          - SHROOMLIGHT
+                          - OCHRE_FROGLIGHT
+                          - VERDANT_FROGLIGHT
+                          - PEARLESCENT_FROGLIGHT
+                          - WHITE_STAINED_GLASS
+                          - LIGHT_BLUE_STAINED_GLASS
+                          - BLUE_STAINED_GLASS
+                          - RED_STAINED_GLASS
+                          - ORANGE_STAINED_GLASS
+                          - YELLOW_STAINED_GLASS
+                      columns: {}
+                      palettes:
+                        cool_blue:
+                          emitter: SEA_LANTERN
+                          filter: LIGHT_BLUE_STAINED_GLASS
+                        deep_blue:
+                          emitter: SEA_LANTERN
+                          filter: BLUE_STAINED_GLASS
+                        warm_orange:
+                          emitter: SHROOMLIGHT
+                          filter: ORANGE_STAINED_GLASS
+                        off_dim:
+                          emitter: BLACK_CONCRETE
+                          filter: BLUE_STAINED_GLASS
+                      modes:
+                        default:
+                          columns:
+                            all: __original__
+                        off:
+                          columns:
+                            all: off_dim
+                        deep_blue:
+                          columns:
+                            all: deep_blue
+                        warm:
+                          columns:
+                            all: warm_orange
+                          jingle: intro_demo
+                      animations:
+                        pulse:
+                          kind: column_alternate
+                          periodTicks: 6
+                          primary: cool_blue
+                          secondary: deep_blue
+                        chase:
+                          kind: sliding_window
+                          periodTicks: 4
+                          primary: warm_orange
+                          background: deep_blue
+                          width: 2
+                          step: 1
+                          jingle: intro_demo
+                      jingles:
+                        intro_demo:
+                          commands:
+                            - "say [FamilyFeud] intro_demo"
+                    """;
+            Files.writeString(lightingFile.toPath(), contents, StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            plugin.getLogger().warning("Could not create lighting.yml: " + ex.getMessage());
+        }
+    }
 }
-

@@ -28,6 +28,7 @@ final class FeudCommandDispatchTest {
     void setUp() {
         server = MockBukkit.mock();
         writeFastMoneyConfig();
+        writeLightingConfig();
         plugin = MockBukkit.load(FeudPlugin.class);
     }
 
@@ -149,6 +150,61 @@ final class FeudCommandDispatchTest {
         }
     }
 
+    private void writeLightingConfig() {
+        try {
+            File dataDir = new File(server.getPluginsFolder(), "FamilyFeud");
+            if (!dataDir.exists()) {
+                dataDir.mkdirs();
+            }
+
+            File file = new File(dataDir, "lighting.yml");
+            String contents = """
+                    lighting:
+                      arena:
+                        world: ""
+                        center: 0,0,0
+                        axis: x
+                        radiusX: 25
+                        radiusZ: 25
+                        yDown: 16
+                        yUp: 15
+                        palette:
+                          - SEA_LANTERN
+                          - BEACON
+                          - SHROOMLIGHT
+                          - LIGHT_BLUE_STAINED_GLASS
+                          - BLUE_STAINED_GLASS
+                          - ORANGE_STAINED_GLASS
+                      columns: {}
+                      palettes:
+                        cool_blue:
+                          emitter: SEA_LANTERN
+                          filter: LIGHT_BLUE_STAINED_GLASS
+                        warm_orange:
+                          emitter: SHROOMLIGHT
+                          filter: ORANGE_STAINED_GLASS
+                      modes:
+                        default:
+                          columns:
+                            all: cool_blue
+                      animations:
+                        chase:
+                          kind: sliding_window
+                          periodTicks: 4
+                          primary: warm_orange
+                          background: cool_blue
+                          width: 2
+                          step: 1
+                      jingles:
+                        intro_demo:
+                          commands:
+                            - "say [FamilyFeud] intro_demo"
+                    """;
+
+            Files.writeString(file.toPath(), contents, StandardCharsets.UTF_8);
+        } catch (Exception ignored) {
+        }
+    }
     private static final class CapturingSender {
         private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
         private final List<String> messages = new ArrayList<>();

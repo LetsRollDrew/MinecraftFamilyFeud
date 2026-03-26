@@ -197,7 +197,7 @@ final class FeudCommandSpecificationFactoryTest {
     }
 
     @Test
-    void lightingHasExpectedChildrenAndRequirements() {
+    void lightingHasExpectedChildrenAndHostBookEntry() {
         FeudCommandSpecificationFactory factory = new FeudCommandSpecificationFactory();
         CommandSpecificationNode root = factory.buildFullSpecification("host.perm", "admin.perm");
 
@@ -206,6 +206,10 @@ final class FeudCommandSpecificationFactoryTest {
         assertFalse(lighting.requirements().isEmpty());
         assertNotNull(child(lighting, "center"));
         assertNotNull(child(lighting, "scan"));
+        assertNotNull(child(lighting, "mode"));
+        assertNotNull(child(lighting, "animation"));
+        assertNotNull(child(lighting, "jingle"));
+        assertNotNull(child(lighting, "stop"));
         assertNotNull(child(lighting, "status"));
         CommandSpecificationNode column = child(lighting, "column");
         assertNotNull(column);
@@ -215,6 +219,12 @@ final class FeudCommandSpecificationFactoryTest {
         assertNotNull(child(center, "bind"));
         assertNotNull(child(center, "clear"));
         assertNotNull(child(center, "status"));
+
+        CommandSpecificationNode host = child(root, "host");
+        assertNotNull(host);
+        CommandSpecificationNode book = child(host, "book");
+        assertNotNull(book);
+        assertNotNull(child(book, "lighting"));
     }
 
     @Test
