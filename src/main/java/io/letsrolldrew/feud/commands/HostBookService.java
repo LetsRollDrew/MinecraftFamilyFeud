@@ -1,6 +1,7 @@
 package io.letsrolldrew.feud.commands;
 
 import io.letsrolldrew.feud.board.render.SlotRevealPainter;
+import io.letsrolldrew.feud.effects.lighting.StageLightingService;
 import io.letsrolldrew.feud.game.GameController;
 import io.letsrolldrew.feud.messages.Messages;
 import io.letsrolldrew.feud.messages.Msg;
@@ -11,6 +12,7 @@ import io.letsrolldrew.feud.ui.DisplayHostRemoteBookBuilder;
 import io.letsrolldrew.feud.ui.HostBookUiBuilder;
 import io.letsrolldrew.feud.ui.HostRemoteKind;
 import io.letsrolldrew.feud.ui.HostRemoteService;
+import io.letsrolldrew.feud.ui.LightingRemoteBookBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +31,7 @@ public final class HostBookService {
     private final HostRemoteService hostRemoteService;
     private final SurveyRepository surveyRepository;
     private final SlotRevealPainter slotRevealPainter;
+    private final StageLightingService stageLightingService;
 
     public HostBookService(
             Messages messages,
@@ -36,13 +39,15 @@ public final class HostBookService {
             HostBookUiBuilder hostBookUiBuilder,
             HostRemoteService hostRemoteService,
             SurveyRepository surveyRepository,
-            SlotRevealPainter slotRevealPainter) {
+            SlotRevealPainter slotRevealPainter,
+            StageLightingService stageLightingService) {
         this.messages = Objects.requireNonNull(messages, "messages");
         this.gameController = Objects.requireNonNull(gameController, "gameController");
         this.hostBookUiBuilder = Objects.requireNonNull(hostBookUiBuilder, "hostBookUiBuilder");
         this.hostRemoteService = Objects.requireNonNull(hostRemoteService, "hostRemoteService");
         this.surveyRepository = Objects.requireNonNull(surveyRepository, "surveyRepository");
         this.slotRevealPainter = Objects.requireNonNull(slotRevealPainter, "slotRevealPainter");
+        this.stageLightingService = stageLightingService;
     }
 
     public void giveOrReplaceHostBook(Player player) {
@@ -83,13 +88,16 @@ public final class HostBookService {
         meta.setTitle("Remote Selector");
         meta.setAuthor("FamilyFeud");
         Component page = Component.text()
-                .append(Component.text("Select Board Remote:", NamedTextColor.GOLD))
+                .append(Component.text("Select Remote:", NamedTextColor.GOLD))
                 .append(Component.newline())
                 .append(Component.newline())
                 .append(buttonUnderlined("Map Board Remote", "/feud host book map"))
                 .append(Component.newline())
                 .append(Component.newline())
                 .append(buttonUnderlined("Display Board Remote", "/feud host book display"))
+                .append(Component.newline())
+                .append(Component.newline())
+                .append(buttonUnderlined("Lighting Remote", "/feud host book lighting"))
                 .append(Component.newline())
                 .append(Component.newline())
                 .append(buttonUnderlined("Cleanup Remote", "/feud host book cleanup"))
@@ -123,6 +131,18 @@ public final class HostBookService {
         messages.info(player, Msg.DISPLAY_REMOTE_GIVEN, Placeholder.of("boardId", target));
     }
 
+    public void giveLightingBook(Player player) {
+        if (player == null) {
+            return;
+        }
+        if (stageLightingService == null) {
+            messages.error(player, Msg.NOT_READY);
+            return;
+        }
+        ItemStack fresh = LightingRemoteBookBuilder.create(stageLightingService, hostBookUiBuilder.getHostKey());
+        hostRemoteService.giveOrReplace(player, fresh);
+        messages.success(player, Msg.LIGHTING_REMOTE_GIVEN);
+    }
     public void giveCleanupBook(Player player) {
         if (player == null) {
             return;

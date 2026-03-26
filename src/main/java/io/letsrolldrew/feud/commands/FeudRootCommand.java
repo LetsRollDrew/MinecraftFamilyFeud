@@ -17,6 +17,7 @@ import io.letsrolldrew.feud.effects.board.selection.DisplayBoardSelectionStore;
 import io.letsrolldrew.feud.effects.buzz.BuzzerCommands;
 import io.letsrolldrew.feud.effects.holo.HologramCommands;
 import io.letsrolldrew.feud.effects.lighting.LightingCommands;
+import io.letsrolldrew.feud.effects.lighting.StageLightingService;
 import io.letsrolldrew.feud.effects.timer.TimerCommands;
 import io.letsrolldrew.feud.fastmoney.FastMoneyCommands;
 import io.letsrolldrew.feud.game.GameController;
@@ -82,7 +83,8 @@ public final class FeudRootCommand implements CommandExecutor {
             ScorePanelStore scorePanelStore,
             TimerPanelStore timerPanelStore,
             HostBookAnchorStore hostBookAnchorStore,
-            DisplayBoardSelectionStore displayBoardSelectionStore) {
+            DisplayBoardSelectionStore displayBoardSelectionStore,
+            StageLightingService stageLightingService) {
         this.plugin = plugin;
         this.messages = Objects.requireNonNull(messages, "messages");
         this.hologramCommands = commandModules.hologramCommands();
@@ -97,7 +99,13 @@ public final class FeudRootCommand implements CommandExecutor {
         this.hostBookActionRouter = new HostBookActionRouter(
                 messages, commandModules.fastMoneyCommands(), displayBoardSelectionStore, displayBoardPresenter);
         this.hostBookService = new HostBookService(
-                messages, gameController, hostBookUiBuilder, hostRemoteService, surveyRepository, slotRevealPainter);
+                messages,
+                gameController,
+                hostBookUiBuilder,
+                hostRemoteService,
+                surveyRepository,
+                slotRevealPainter,
+                stageLightingService);
         this.boardCommandEntry = new BoardCommandEntry(
                 messages,
                 boardCommands,

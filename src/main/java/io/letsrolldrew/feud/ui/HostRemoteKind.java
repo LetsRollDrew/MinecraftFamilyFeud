@@ -4,7 +4,8 @@ public enum HostRemoteKind {
     MAP(1),
     DISPLAY(2),
     SELECTOR(3),
-    CLEANUP(4);
+    CLEANUP(4),
+    LIGHTING(5);
 
     private final int tag;
 

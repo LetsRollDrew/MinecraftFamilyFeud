@@ -59,6 +59,7 @@ public final class HostBookCommandEntry {
                 List<String> ids = new ArrayList<>(displayBoardPresenter.listBoards());
                 hostBookService.giveDisplayBook(player, ids, tail);
             }
+            case "lighting" -> hostBookService.giveLightingBook(player);
             case "cleanup" -> hostBookService.giveCleanupBook(player);
             default -> hostBookService.giveSelectorBook(player);
         }

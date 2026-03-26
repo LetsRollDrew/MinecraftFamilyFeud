@@ -408,13 +408,15 @@ public final class FeudCommandSpecificationFactory {
                 CommandSpecificationNode.builder(ArgType.LITERAL, "map").build();
         CommandSpecificationNode display =
                 CommandSpecificationNode.builder(ArgType.LITERAL, "display").build();
+        CommandSpecificationNode lighting =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "lighting").build();
         CommandSpecificationNode cleanup =
                 CommandSpecificationNode.builder(ArgType.LITERAL, "cleanup").build();
 
         return CommandSpecificationNode.builder(ArgType.LITERAL, "host")
                 .child(CommandSpecificationNode.builder(ArgType.LITERAL, "book")
                         .requirements(List.of(Requirements.permission(hostPermission), Requirements.playerOnly()))
-                        .children(List.of(map, display, cleanup))
+                        .children(List.of(map, display, lighting, cleanup))
                         .build())
                 .build();
     }

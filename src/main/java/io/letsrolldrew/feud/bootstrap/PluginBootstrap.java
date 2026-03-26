@@ -298,7 +298,8 @@ public final class PluginBootstrap {
                 scorePanelStore,
                 timerPanelStore,
                 hostBookAnchorStore,
-                displayBoardSelectionStore);
+                displayBoardSelectionStore,
+                stageLightingService);
         feud.setExecutor(feudRootCommand);
         registerBrigadier(feudRootCommand, commandSpec);
     }
