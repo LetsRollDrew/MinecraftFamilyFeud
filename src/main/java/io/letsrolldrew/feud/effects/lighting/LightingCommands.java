@@ -39,6 +39,8 @@ public final class LightingCommands {
 
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "mode" -> handleMode(sender, args);
+            case "jingle" -> handleJingle(sender, args);
             case "status" -> handleStatus(sender);
             case "column" -> handleColumn(sender, args);
             case "center" -> handleCenter(sender, args);
@@ -46,6 +48,32 @@ public final class LightingCommands {
             default -> messages.usage(sender, Msg.LIGHTING_HELP);
         }
         return true;
+    }
+
+    private void handleMode(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            messages.usage(sender, Msg.USAGE_LIGHTING_MODE);
+            return;
+        }
+        String id = args[1].trim();
+        if (!stageLightingService.applyMode(id)) {
+            messages.error(sender, Msg.LIGHTING_MODE_NOT_FOUND, Placeholder.of("id", id));
+            return;
+        }
+        messages.success(sender, Msg.LIGHTING_MODE_APPLIED, Placeholder.of("id", id));
+    }
+
+    private void handleJingle(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            messages.usage(sender, Msg.USAGE_LIGHTING_JINGLE);
+            return;
+        }
+        String id = args[1].trim();
+        if (!stageLightingService.triggerJingle(id)) {
+            messages.error(sender, Msg.LIGHTING_JINGLE_NOT_FOUND, Placeholder.of("id", id));
+            return;
+        }
+        messages.success(sender, Msg.LIGHTING_JINGLE_TRIGGERED, Placeholder.of("id", id));
     }
 
     private void handleStatus(CommandSender sender) {

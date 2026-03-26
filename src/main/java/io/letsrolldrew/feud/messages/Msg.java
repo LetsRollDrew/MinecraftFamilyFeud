@@ -64,6 +64,10 @@ public enum Msg {
     TIMER_RESET_TO("Timer reset to {seconds}s"),
     TIMER_STATUS("Timer {state} ({seconds}s remaining)"),
 
+    LIGHTING_MODE_NOT_FOUND("Lighting mode not found: {id}"),
+    LIGHTING_JINGLE_NOT_FOUND("Lighting jingle not found: {id}"),
+    LIGHTING_MODE_APPLIED("Lighting mode applied: {id}"),
+    LIGHTING_JINGLE_TRIGGERED("Lighting jingle triggered: {id}"),
     LIGHTING_STATUS(
             "Lighting status: center={center} axis={axis} columns={columns} palettes={palettes} modes={modes} animations={animations} jingles={jingles}"),
     LIGHTING_COLUMNS_EMPTY("Lighting columns: none scanned"),
@@ -187,7 +191,7 @@ public enum Msg {
             + "/feud holo list\n"
             + "/feud clear all - remove all display entities\n"
             + "/feud host book cleanup - cleanup remote\n"
-            + "/feud lighting center|scan|status|column\n"
+            + "/feud lighting center|scan|mode|jingle|status|column\n"
             + "/feud timer start|stop|reset|status"),
 
     BOARD_ENTRY_HELP("Board commands: map | display ..."),
@@ -213,7 +217,7 @@ public enum Msg {
     HOLO_ITEM_USAGE("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>"),
 
     FAST_MONEY_HELP("Fast Money: set|start|stop|status|next|bind|answer|board"),
-    LIGHTING_HELP("Lighting: center|scan|status|column"),
+    LIGHTING_HELP("Lighting: center|scan|mode|jingle|status|column"),
 
     // listener / gameplay feedback
     BOARD_WAND_TOP_LEFT_SET("Top-left set, now click the bottom-right frame"),
@@ -251,6 +255,8 @@ public enum Msg {
     USAGE_FAST_MONEY_ANSWER("Usage: /feud fastmoney answer <text...>"),
     USAGE_FAST_MONEY_NEXT("Usage: /feud fastmoney next"),
     USAGE_FAST_MONEY_BOARD("Usage: /feud fastmoney board <show|hide> [boardId]"),
+    USAGE_LIGHTING_MODE("Usage: /feud lighting mode <id>"),
+    USAGE_LIGHTING_JINGLE("Usage: /feud lighting jingle <id>"),
     USAGE_LIGHTING_COLUMN("Usage: /feud lighting column list"),
     USAGE_LIGHTING_CENTER("Usage: /feud lighting center <bind|clear|status>"),
     USAGE_LIGHTING_SCAN("Usage: /feud lighting scan [x|z] [radiusX] [radiusZ] [down] [up]"),
