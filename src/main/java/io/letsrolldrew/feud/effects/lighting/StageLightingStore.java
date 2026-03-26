@@ -29,7 +29,13 @@ public final class StageLightingStore {
                     StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
         }
 
-        return new StageLightingConfig(loadArena(root), loadColumns(root), Map.of(), Map.of(), Map.of(), Map.of());
+        return new StageLightingConfig(
+                loadArena(root),
+                loadColumns(root),
+                loadPalettes(root),
+                loadModes(root),
+                Map.of(),
+                loadJingles(root));
     }
 
     public void save(StageLightingConfig config) {
@@ -40,6 +46,9 @@ public final class StageLightingStore {
         YamlConfiguration yaml = new YamlConfiguration();
         saveArena(yaml, config.arena());
         saveColumns(yaml, config.columns());
+        savePalettes(yaml, config.palettes());
+        saveModes(yaml, config.modes());
+        saveJingles(yaml, config.jingles());
 
         try {
             if (file.getParentFile() != null) {
@@ -107,6 +116,79 @@ public final class StageLightingStore {
         return columns;
     }
 
+    private static Map<String, StageLightingConfig.Palette> loadPalettes(ConfigurationSection root) {
+        Map<String, StageLightingConfig.Palette> palettes = new LinkedHashMap<>();
+        ConfigurationSection section = root.getConfigurationSection("palettes");
+        if (section == null) {
+            return palettes;
+        }
+
+        for (String paletteId : section.getKeys(false)) {
+            ConfigurationSection paletteSection = section.getConfigurationSection(paletteId);
+            if (paletteSection == null) {
+                continue;
+            }
+            String emitter = paletteSection.getString("emitter", "");
+            String filter = paletteSection.getString("filter", paletteSection.getString("glass", ""));
+            palettes.put(paletteId, new StageLightingConfig.Palette(paletteId, emitter, filter));
+        }
+        return palettes;
+    }
+
+    private static Map<String, StageLightingConfig.Mode> loadModes(ConfigurationSection root) {
+        Map<String, StageLightingConfig.Mode> modes = new LinkedHashMap<>();
+        ConfigurationSection section = root.getConfigurationSection("modes");
+        if (section == null) {
+            return modes;
+        }
+
+        for (String modeId : section.getKeys(false)) {
+            ConfigurationSection modeSection = section.getConfigurationSection(modeId);
+            if (modeSection == null) {
+                continue;
+            }
+            ConfigurationSection specSection = modeSection.getConfigurationSection("columns");
+            if (specSection == null) {
+                specSection = modeSection.getConfigurationSection("zones");
+            }
+            modes.put(
+                    modeId,
+                    new StageLightingConfig.Mode(modeId, loadSpecMap(specSection), linkedJingleId(modeSection)));
+        }
+        return modes;
+    }
+
+    private static Map<String, StageLightingConfig.Jingle> loadJingles(ConfigurationSection root) {
+        Map<String, StageLightingConfig.Jingle> jingles = new LinkedHashMap<>();
+        ConfigurationSection section = root.getConfigurationSection("jingles");
+        if (section == null) {
+            section = root.getConfigurationSection("cues");
+        }
+        if (section == null) {
+            return jingles;
+        }
+
+        for (String jingleId : section.getKeys(false)) {
+            ConfigurationSection jingleSection = section.getConfigurationSection(jingleId);
+            if (jingleSection == null) {
+                continue;
+            }
+
+            List<String> commands = new ArrayList<>();
+            for (String command : jingleSection.getStringList("commands")) {
+                if (command != null && !command.isBlank()) {
+                    commands.add(command.trim());
+                }
+            }
+            String singleCommand = jingleSection.getString("command", "");
+            if (!singleCommand.isBlank()) {
+                commands.add(singleCommand.trim());
+            }
+            jingles.put(jingleId, new StageLightingConfig.Jingle(jingleId, commands));
+        }
+        return jingles;
+    }
+
     private static void saveArena(YamlConfiguration yaml, StageLightingConfig.Arena arena) {
         String base = "lighting.arena";
         yaml.set(base + ".world", arena.world());
@@ -134,6 +216,67 @@ public final class StageLightingStore {
                 rawCells.add(rawCell);
             }
             yaml.set(base + "." + column.id() + ".cells", rawCells);
+        }
+    }
+
+    private static void savePalettes(YamlConfiguration yaml, Map<String, StageLightingConfig.Palette> palettes) {
+        String base = "lighting.palettes";
+        yaml.set(base, null);
+        for (StageLightingConfig.Palette palette : palettes.values()) {
+            String paletteBase = base + "." + palette.id();
+            yaml.set(paletteBase + ".emitter", palette.emitterSpec().isBlank() ? null : palette.emitterSpec());
+            yaml.set(paletteBase + ".filter", palette.filterSpec().isBlank() ? null : palette.filterSpec());
+        }
+    }
+
+    private static void saveModes(YamlConfiguration yaml, Map<String, StageLightingConfig.Mode> modes) {
+        String base = "lighting.modes";
+        yaml.set(base, null);
+        for (StageLightingConfig.Mode mode : modes.values()) {
+            String modeBase = base + "." + mode.id();
+            yaml.set(modeBase + ".jingle", mode.jingleId().isBlank() ? null : mode.jingleId());
+            for (Map.Entry<String, String> entry : mode.columnSpecs().entrySet()) {
+                yaml.set(modeBase + ".columns." + entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private static void saveJingles(YamlConfiguration yaml, Map<String, StageLightingConfig.Jingle> jingles) {
+        String base = "lighting.jingles";
+        yaml.set(base, null);
+        for (StageLightingConfig.Jingle jingle : jingles.values()) {
+            yaml.set(base + "." + jingle.id() + ".commands", jingle.commands());
+        }
+    }
+
+    private static String linkedJingleId(ConfigurationSection section) {
+        if (section == null) {
+            return "";
+        }
+        return section.getString("jingle", section.getString("cue", "")).trim();
+    }
+
+    private static Map<String, String> loadSpecMap(ConfigurationSection section) {
+        Map<String, String> specMap = new LinkedHashMap<>();
+        if (section == null) {
+            return specMap;
+        }
+        for (String id : section.getKeys(false)) {
+            String spec = section.getString(id);
+            if (spec == null || spec.isBlank()) {
+                continue;
+            }
+            specMap.put(id, spec.trim());
+        }
+        return specMap;
+    }
+
+    private static void readSpecMap(Map<?, ?> raw, Map<String, String> out) {
+        for (Map.Entry<?, ?> entry : raw.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+            out.put(entry.getKey().toString(), entry.getValue().toString());
         }
     }
 

@@ -125,6 +125,7 @@ public final class PluginBootstrap {
                 new io.letsrolldrew.feud.effects.anim.BukkitScheduler(plugin), System::currentTimeMillis, 20);
         this.timerCommands = new TimerCommands(messages, timerService, config.hostPermission(), "familyfeud.admin");
         File lightingFile = new File(plugin.getDataFolder(), "lighting.yml");
+        ensureLightingFile(lightingFile);
         this.stageLightingService = new StageLightingService(plugin, new StageLightingStore(lightingFile));
         this.lightingCommands =
                 new LightingCommands(messages, stageLightingService, config.hostPermission(), "familyfeud.admin");
