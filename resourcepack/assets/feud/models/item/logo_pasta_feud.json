@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/feud_x"
+    "layer0": "feud:item/pasta_feud_logo"
   }
 }

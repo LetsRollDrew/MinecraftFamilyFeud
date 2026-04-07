@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/tempfont"
+    "layer0": "feud:item/feudbox_numba_7"
   }
 }

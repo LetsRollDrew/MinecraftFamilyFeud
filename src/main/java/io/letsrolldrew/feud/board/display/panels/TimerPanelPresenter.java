@@ -3,6 +3,8 @@ package io.letsrolldrew.feud.board.display.panels;
 import io.letsrolldrew.feud.board.display.DynamicBoardLayout;
 import io.letsrolldrew.feud.display.DisplayKey;
 import io.letsrolldrew.feud.display.DisplayRegistry;
+import io.letsrolldrew.feud.display.DisplayTags;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -11,15 +13,24 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 public final class TimerPanelPresenter {
     private static final float CMD_TIMER_PANEL = 9005.0f;
+    private static final float CMD_TIMER_LOGO = 9009.0f;
 
     // semantics similar to the board factory
     private static final double PANEL_FORWARD_NUDGE = 0.05;
     private static final double TEXT_FORWARD_NUDGE = 0.04;
+    private static final double LOGO_FORWARD_NUDGE = 0.08;
+    private static final double LOGO_WIDTH_FACTOR = 0.58;
+    private static final double LOGO_HEIGHT_FACTOR = 0.58;
 
     // this is a fallback base; we compute a dynamic width per panel so it never wraps
     private static final int TEXT_LINE_WIDTH = 96;
@@ -34,6 +45,8 @@ public final class TimerPanelPresenter {
 
     private final Set<String> storedPanelIds = new HashSet<>();
     private final Set<String> boardPanelIds = new HashSet<>();
+    private final Map<String, DynamicBoardLayout> boardLayouts = new HashMap<>();
+    private final Map<String, DynamicBoardLayout> storedLayouts = new HashMap<>();
 
     public TimerPanelPresenter(DisplayRegistry displayRegistry) {
         this.displayRegistry = Objects.requireNonNull(displayRegistry, "displayRegistry");
@@ -58,7 +71,8 @@ public final class TimerPanelPresenter {
         }
         spawnTimerPanel(BOARD_NAMESPACE, boardId, layout);
         boardPanelIds.add(boardId);
-        updateForBoard(boardId, 0);
+        boardLayouts.put(boardId, layout);
+        updateForBoard(boardId, 0, false);
     }
 
     public void spawnStored(String panelId, DynamicBoardLayout layout) {
@@ -67,6 +81,8 @@ public final class TimerPanelPresenter {
         }
         spawnTimerPanel(STORED_NAMESPACE, panelId, layout);
         storedPanelIds.add(panelId);
+        storedLayouts.put(panelId, layout);
+        updatePanel(STORED_NAMESPACE, panelId, 0, false);
     }
 
     public void removeForBoard(String boardId) {
@@ -75,6 +91,7 @@ public final class TimerPanelPresenter {
         }
         removeTimerKeys(BOARD_NAMESPACE, boardId);
         boardPanelIds.remove(boardId);
+        boardLayouts.remove(boardId);
     }
 
     public void removeStored(String panelId) {
@@ -83,29 +100,81 @@ public final class TimerPanelPresenter {
         }
         removeTimerKeys(STORED_NAMESPACE, panelId);
         storedPanelIds.remove(panelId);
+        storedLayouts.remove(panelId);
     }
 
     public void updateForBoard(String boardId, int remainingSeconds) {
+        updateForBoard(boardId, remainingSeconds, true);
+    }
+
+    public void updateForBoard(String boardId, int remainingSeconds, boolean running) {
         if (boardId == null || boardId.isBlank()) {
             return;
         }
-        PanelDisplayHelper.setText(
-                displayRegistry,
-                new DisplayKey(BOARD_NAMESPACE, boardId, TIMER_ID, "text"),
-                Component.text(formatSecondsSafe(remainingSeconds)));
+        updatePanel(BOARD_NAMESPACE, boardId, remainingSeconds, running);
     }
 
     public void updateAll(int remainingSeconds) {
-        Component text = Component.text(formatSecondsSafe(remainingSeconds));
+        updateAll(remainingSeconds, true);
+    }
 
+    public void updateAll(int remainingSeconds, boolean running) {
         for (String boardId : boardPanelIds) {
-            PanelDisplayHelper.setText(
-                    displayRegistry, new DisplayKey(BOARD_NAMESPACE, boardId, TIMER_ID, "text"), text);
+            updatePanel(BOARD_NAMESPACE, boardId, remainingSeconds, running);
         }
         for (String panelId : storedPanelIds) {
-            PanelDisplayHelper.setText(
-                    displayRegistry, new DisplayKey(STORED_NAMESPACE, panelId, TIMER_ID, "text"), text);
+            updatePanel(STORED_NAMESPACE, panelId, remainingSeconds, running);
         }
+    }
+
+    private void updatePanel(String namespace, String group, int remainingSeconds, boolean running) {
+        DisplayKey textKey = textKey(namespace, group);
+        displayRegistry.resolveText(textKey).ifPresent(display -> {
+            display.text(Component.text(formatSecondsSafe(remainingSeconds)));
+            display.setTextOpacity(running ? (byte) 0xFF : (byte) 0x00);
+        });
+
+        if (running) {
+            displayRegistry.remove(logoKey(namespace, group));
+            return;
+        }
+        ensureLogo(namespace, group);
+    }
+
+    private void ensureLogo(String namespace, String group) {
+        DisplayKey key = logoKey(namespace, group);
+        if (displayRegistry.resolveItem(key).isPresent()) {
+            return;
+        }
+
+        DynamicBoardLayout layout = layoutFor(namespace, group);
+        if (layout == null) {
+            return;
+        }
+
+        World world = Bukkit.getWorld(layout.worldId());
+        if (world == null) {
+            return;
+        }
+
+        double panelWidth = layout.totalWidth();
+        double panelHeight = layout.totalHeight();
+        if (panelWidth <= 0.0 || panelHeight <= 0.0) {
+            return;
+        }
+
+        float yaw = layout.facing().yaw();
+        Vector3d center =
+                TimerPanelPlacement.computeCenterOnSelection(layout, panelWidth, panelHeight, PANEL_FORWARD_NUDGE);
+        Location centerLoc = PanelDisplayHelper.toLocation(world, center, yaw);
+        spawnLogo(namespace, group, world, centerLoc, layout, yaw, panelWidth, panelHeight);
+    }
+
+    private DynamicBoardLayout layoutFor(String namespace, String group) {
+        if (BOARD_NAMESPACE.equals(namespace)) {
+            return boardLayouts.get(group);
+        }
+        return storedLayouts.get(group);
     }
 
     private void spawnTimerPanel(String namespace, String group, DynamicBoardLayout layout) {
@@ -155,12 +224,60 @@ public final class TimerPanelPresenter {
                 verticalNudge,
                 TEXT_FORWARD_NUDGE,
                 namespace,
-                true);
+                false);
+
+        spawnLogo(namespace, group, world, centerLoc, layout, yaw, panelWidth, panelHeight);
+    }
+
+    private void spawnLogo(
+            String namespace,
+            String group,
+            World world,
+            Location centerLoc,
+            DynamicBoardLayout layout,
+            float yaw,
+            double panelWidth,
+            double panelHeight) {
+        DisplayKey key = logoKey(namespace, group);
+        displayRegistry.remove(key);
+
+        Location logoLoc = centerLoc.clone().add(
+                layout.facing().forwardX() * LOGO_FORWARD_NUDGE, 0, layout.facing().forwardZ() * LOGO_FORWARD_NUDGE);
+
+        double logoWidth = Math.max(0.01, panelWidth * LOGO_WIDTH_FACTOR);
+        double logoHeight = Math.max(0.01, panelHeight * LOGO_HEIGHT_FACTOR);
+        ItemStack logoStack = PanelDisplayHelper.stackWithCmd(CMD_TIMER_LOGO);
+
+        ItemDisplay logo = world.spawn(logoLoc, ItemDisplay.class, entity -> {
+            entity.setItemStack(logoStack);
+            entity.setBillboard(Display.Billboard.FIXED);
+            entity.setRotation(yaw, 0f);
+            entity.setTransformation(new Transformation(
+                    new Vector3f(0, 0, 0),
+                    new AxisAngle4f(0, 0, 0, 0),
+                    new Vector3f((float) logoWidth, (float) logoHeight, 0.01f),
+                    new AxisAngle4f(0, 0, 0, 0)));
+        });
+
+        if (logo == null) {
+            return;
+        }
+        DisplayTags.tag(logo, namespace, key.group());
+        displayRegistry.register(key, logo);
     }
 
     private void removeTimerKeys(String namespace, String group) {
         displayRegistry.remove(new DisplayKey(namespace, group, TIMER_ID, "bg"));
         displayRegistry.remove(new DisplayKey(namespace, group, TIMER_ID, "text"));
+        displayRegistry.remove(logoKey(namespace, group));
+    }
+
+    private static DisplayKey textKey(String namespace, String group) {
+        return new DisplayKey(namespace, group, TIMER_ID, "text");
+    }
+
+    private static DisplayKey logoKey(String namespace, String group) {
+        return new DisplayKey(namespace, group, TIMER_ID, "logo");
     }
 
     private static String formatSeconds(int remainingSeconds) {

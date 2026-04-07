@@ -33,7 +33,7 @@ import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
 public final class DisplayBoardService implements DisplayBoardPresenter {
-    private static final float CMD_HIDDEN = 9001.0f;
+    private static final float CMD_HIDDEN_BASE = 9100.0f;
     private static final float CMD_REVEALED = 9002.0f;
     private static final float CMD_FLASH = 9003.0f;
 
@@ -112,8 +112,6 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         BoardFacing facing = BoardFacing.fromYaw(facingReference.getLocation().getYaw());
         BoardSpace space = new BoardSpace(anchor.clone(), facing);
 
-        ItemStack hiddenStack = stackWithCmd(CMD_HIDDEN);
-
         List<SlotInstance> slots = new ArrayList<>(layout.slotRows() * layout.slotCols());
         int slotIndex = 0;
 
@@ -126,6 +124,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
                 Location bgLoc = space.at(colX, yOffset, 0.0);
                 SlotInstance slot = buildSlot(boardId, slotIndex);
 
+                ItemStack hiddenStack = stackWithCmd(hiddenCmdForSlot(slotIndex + 1));
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, facing.yaw());
 
                 // static answer/points locations (kept identical)
@@ -210,12 +209,13 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         if (slot == null) {
             return;
         }
+        float hiddenCmd = hiddenCmdForSlot(slotIndex);
 
         animationService.cancel(slot.backgroundKey());
 
         List<AnimationStep> steps = List.of(
                 new AnimationStep(0, () -> setBackgroundCmd(slot.backgroundKey(), CMD_FLASH)),
-                new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_HIDDEN)),
+                new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), hiddenCmd)),
                 new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_FLASH)),
                 new AnimationStep(2, () -> setBackgroundCmd(slot.backgroundKey(), CMD_REVEALED)),
                 new AnimationStep(0, () -> {
@@ -234,7 +234,7 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         }
 
         animationService.cancel(slot.backgroundKey());
-        setBackgroundCmd(slot.backgroundKey(), CMD_HIDDEN);
+        setBackgroundCmd(slot.backgroundKey(), hiddenCmdForSlot(slotIndex));
 
         clearText(slot.answerTopKey());
         clearText(slot.answerBottomKey());
@@ -410,6 +410,11 @@ public final class DisplayBoardService implements DisplayBoardPresenter {
         meta.setCustomModelDataComponent(cmdComponent);
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    private static float hiddenCmdForSlot(int slotIndex) {
+        int normalized = Math.max(1, Math.min(8, slotIndex));
+        return CMD_HIDDEN_BASE + normalized;
     }
 
     private void setBackgroundCmd(DisplayKey key, float cmd) {

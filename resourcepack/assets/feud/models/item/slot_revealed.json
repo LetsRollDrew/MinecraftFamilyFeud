@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/slot_revealed"
+    "layer0": "feud:item/answer"
   }
 }

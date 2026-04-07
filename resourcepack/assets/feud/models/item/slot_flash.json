@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/slot_flash"
+    "layer0": "feud:item/redbox_intro_fast_money"
   }
 }

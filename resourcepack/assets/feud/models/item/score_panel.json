@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/score_panel"
+    "layer0": "feud:item/score_tracker"
   }
 }

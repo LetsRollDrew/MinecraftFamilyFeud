@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/feud_x"
+    "layer0": "feud:item/fast_money_timer_holder"
   }
 }

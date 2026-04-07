@@ -156,7 +156,8 @@ public final class PluginBootstrap {
         this.buzzerHitboxService.syncAll();
         this.scorePanelPresenter = new ScorePanelPresenter(displayRegistry, teamService);
         this.timerPanelPresenter = new TimerPanelPresenter(displayRegistry);
-        this.timerService.setOnTick(seconds -> timerPanelPresenter.updateAll(seconds));
+        this.timerService.setOnStatus(
+                status -> timerPanelPresenter.updateAll(status.remainingSeconds(), status.running()));
         this.boardRenderer = new BoardRenderer(framebufferStore, dirtyTracker);
         this.slotRevealPainter =
                 new io.letsrolldrew.feud.board.render.SlotRevealPainter(framebufferStore, dirtyTracker, boardRenderer);

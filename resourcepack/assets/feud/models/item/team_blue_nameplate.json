@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "feud:item/team_blue_nameplate"
+    "layer0": "feud:item/family_name_banner"
   }
 }

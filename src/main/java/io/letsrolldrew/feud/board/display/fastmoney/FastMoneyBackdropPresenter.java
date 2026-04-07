@@ -14,7 +14,7 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 
 public final class FastMoneyBackdropPresenter {
-    private static final float CMD_PANEL = 9005.0f;
+    private static final float CMD_PANEL = 9010.0f;
     private static final String NAMESPACE = "fastmoney";
 
     private final DisplayRegistry displayRegistry;

@@ -25,8 +25,8 @@ import org.joml.Vector3f;
 // Spawns a display-based board from a DynamicBoardLayout and registers associated entities
 public final class DynamicDisplayBoardFactory {
 
-    // hidden background CMD value
-    private static final float CMD_HIDDEN = 9001.0f;
+    // hidden background CMD value base, per-slot is base + [1..8]
+    private static final float CMD_HIDDEN_BASE = 9100.0f;
 
     private DynamicDisplayBoardFactory() {}
 
@@ -41,8 +41,6 @@ public final class DynamicDisplayBoardFactory {
 
         Location anchor = new Location(world, layout.anchor().x, layout.anchor().y, layout.anchor().z);
         float yaw = layout.facing().yaw();
-
-        ItemStack hiddenStack = stackWithCmd(CMD_HIDDEN);
 
         // slot list needs to be in numeric order
         List<SlotInstance> slots = new ArrayList<>(Collections.nCopies(8, null));
@@ -90,6 +88,7 @@ public final class DynamicDisplayBoardFactory {
                 slots.set(slotIndex, slot);
 
                 Location bgLoc = BoardSpace.atCellCenter(anchor, layout.facing(), col, row, layout);
+                ItemStack hiddenStack = stackWithCmd(hiddenCmdForSlot(slotIndex + 1));
                 spawnBackground(slot.backgroundKey(), world, bgLoc, hiddenStack, yaw, layout, registry);
 
                 double visualSign = flip ? -1.0 : 1.0;
@@ -257,5 +256,10 @@ public final class DynamicDisplayBoardFactory {
         meta.setCustomModelDataComponent(cmdComponent);
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    private static float hiddenCmdForSlot(int slotIndex) {
+        int normalized = Math.max(1, Math.min(8, slotIndex));
+        return CMD_HIDDEN_BASE + normalized;
     }
 }

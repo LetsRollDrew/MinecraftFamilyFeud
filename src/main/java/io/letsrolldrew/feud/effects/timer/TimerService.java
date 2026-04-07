@@ -15,6 +15,7 @@ public final class TimerService {
     private final int defaultSeconds;
 
     private Consumer<Integer> onTick;
+    private Consumer<TimerStatus> onStatus;
     private ScheduledTask pending;
     private int remainingSeconds;
     private boolean running;
@@ -35,20 +36,18 @@ public final class TimerService {
 
         stopScheduledTick();
         remainingSeconds = normalized;
-        notifyTick();
+        running = remainingSeconds > 0;
+        notifyObservers();
 
-        if (remainingSeconds == 0) {
-            running = false;
-            return;
+        if (running) {
+            scheduleNextTick();
         }
-
-        running = true;
-        scheduleNextTick();
     }
 
     public void stop() {
         running = false;
         stopScheduledTick();
+        notifyObservers();
     }
 
     public void reset() {
@@ -58,9 +57,10 @@ public final class TimerService {
     public void reset(int seconds) {
         int normalized = Math.max(0, seconds);
 
-        stop();
+        stopScheduledTick();
+        running = false;
         remainingSeconds = normalized;
-        notifyTick();
+        notifyObservers();
     }
 
     public TimerStatus status() {
@@ -69,6 +69,10 @@ public final class TimerService {
 
     public void setOnTick(Consumer<Integer> onTick) {
         this.onTick = onTick;
+    }
+
+    public void setOnStatus(Consumer<TimerStatus> onStatus) {
+        this.onStatus = onStatus;
     }
 
     private void scheduleNextTick() {
@@ -81,19 +85,22 @@ public final class TimerService {
             return;
         }
         remainingSeconds = Math.max(0, remainingSeconds - 1);
-        notifyTick();
-
-        if (remainingSeconds > 0) {
-            scheduleNextTick();
-            return;
+        if (remainingSeconds == 0) {
+            running = false;
         }
+        notifyObservers();
 
-        running = false;
+        if (running) {
+            scheduleNextTick();
+        }
     }
 
-    private void notifyTick() {
+    private void notifyObservers() {
         if (onTick != null) {
             onTick.accept(remainingSeconds);
+        }
+        if (onStatus != null) {
+            onStatus.accept(new TimerStatus(running, remainingSeconds));
         }
     }
 
