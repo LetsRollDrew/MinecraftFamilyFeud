@@ -370,6 +370,24 @@ public final class PluginBootstrap {
                           - RED_STAINED_GLASS
                           - ORANGE_STAINED_GLASS
                           - YELLOW_STAINED_GLASS
+                          - GREEN_STAINED_GLASS
+                          - PURPLE_STAINED_GLASS
+                          - PINK_STAINED_GLASS
+                          - BLACK_STAINED_GLASS
+                          - GRAY_STAINED_GLASS
+                          - LIGHT_GRAY_STAINED_GLASS
+                          - WHITE_STAINED_GLASS_PANE
+                          - LIGHT_BLUE_STAINED_GLASS_PANE
+                          - BLUE_STAINED_GLASS_PANE
+                          - RED_STAINED_GLASS_PANE
+                          - ORANGE_STAINED_GLASS_PANE
+                          - YELLOW_STAINED_GLASS_PANE
+                          - GREEN_STAINED_GLASS_PANE
+                          - PURPLE_STAINED_GLASS_PANE
+                          - PINK_STAINED_GLASS_PANE
+                          - BLACK_STAINED_GLASS_PANE
+                          - GRAY_STAINED_GLASS_PANE
+                          - LIGHT_GRAY_STAINED_GLASS_PANE
                       columns: {}
                       palettes:
                         cool_blue:

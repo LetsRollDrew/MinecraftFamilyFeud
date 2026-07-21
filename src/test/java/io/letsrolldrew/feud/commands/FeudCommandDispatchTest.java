@@ -205,6 +205,7 @@ final class FeudCommandDispatchTest {
         } catch (Exception ignored) {
         }
     }
+
     private static final class CapturingSender {
         private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
         private final List<String> messages = new ArrayList<>();

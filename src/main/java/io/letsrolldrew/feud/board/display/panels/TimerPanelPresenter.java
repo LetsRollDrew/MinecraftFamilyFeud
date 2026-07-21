@@ -241,8 +241,12 @@ public final class TimerPanelPresenter {
         DisplayKey key = logoKey(namespace, group);
         displayRegistry.remove(key);
 
-        Location logoLoc = centerLoc.clone().add(
-                layout.facing().forwardX() * LOGO_FORWARD_NUDGE, 0, layout.facing().forwardZ() * LOGO_FORWARD_NUDGE);
+        Location logoLoc = centerLoc
+                .clone()
+                .add(
+                        layout.facing().forwardX() * LOGO_FORWARD_NUDGE,
+                        0,
+                        layout.facing().forwardZ() * LOGO_FORWARD_NUDGE);
 
         double logoWidth = Math.max(0.01, panelWidth * LOGO_WIDTH_FACTOR);
         double logoHeight = Math.max(0.01, panelHeight * LOGO_HEIGHT_FACTOR);

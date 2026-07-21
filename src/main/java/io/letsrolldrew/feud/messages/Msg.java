@@ -64,6 +64,7 @@ public enum Msg {
     LIGHTING_ANIMATION_STARTED("Lighting animation started: {id}"),
     LIGHTING_JINGLE_TRIGGERED("Lighting jingle triggered: {id}"),
     LIGHTING_STOPPED("Lighting animation stopped"),
+    LIGHTING_RESTORED("Lighting restored to original scanned state"),
     LIGHTING_STATUS(
             "Lighting status: center={center} axis={axis} mode={mode} animation={animation} columns={columns} palettes={palettes} modes={modes} animations={animations} jingles={jingles}"),
     LIGHTING_COLUMNS_EMPTY("Lighting columns: none scanned"),
@@ -73,6 +74,8 @@ public enum Msg {
     LIGHTING_CENTER_NOT_BOUND("Lighting center is not bound"),
     LIGHTING_CENTER_STATUS(
             "Lighting center: {world} {x},{y},{z} axis={axis} rx={radiusX} rz={radiusZ} down={yDown} up={yUp} columns={columns}"),
+    LIGHTING_SCAN_BLOCKED(
+            "Lighting scan blocked: mode={mode} animation={animation}. Run /feud lighting stop then /feud lighting restore before scanning."),
     LIGHTING_SCAN_COMPLETE(
             "Lighting scan complete: columns={columns} axis={axis} rx={radiusX} rz={radiusZ} down={yDown} up={yUp}"),
 
@@ -180,7 +183,7 @@ public enum Msg {
             + "/feud holo list\n"
             + "/feud clear all - remove all display entities\n"
             + "/feud host book cleanup - cleanup remote\n"
-            + "/feud lighting center|scan|mode|animation|jingle|stop|status\n"
+            + "/feud lighting center|scan|mode|animation|jingle|restore|stop|status\n"
             + "/feud timer start|stop|reset|status"),
 
     BOARD_ENTRY_HELP("Board commands: map | display ..."),
@@ -206,7 +209,7 @@ public enum Msg {
     HOLO_ITEM_USAGE("Usage: /feud holo item spawn <id> [material] <customModelData> | move <id> | remove <id>"),
 
     FAST_MONEY_HELP("Fast Money: set|start|stop|status|next|bind|answer|board"),
-    LIGHTING_HELP("Lighting: center|scan|mode|animation|jingle|stop|status|column"),
+    LIGHTING_HELP("Lighting: center|scan|mode|animation|jingle|restore|stop|status|column"),
 
     BOARD_WAND_TOP_LEFT_SET("Top-left set, now click the bottom-right frame"),
     BOARD_WAND_SELECTION_INVALID("Selection invalid, ensure a 10x6 rectangle on the same wall (consistent facing)"),
@@ -245,6 +248,7 @@ public enum Msg {
     USAGE_LIGHTING_MODE("Usage: /feud lighting mode <id>"),
     USAGE_LIGHTING_ANIMATION("Usage: /feud lighting animation <id>"),
     USAGE_LIGHTING_JINGLE("Usage: /feud lighting jingle <id>"),
+    USAGE_LIGHTING_RESTORE("Usage: /feud lighting restore"),
     USAGE_LIGHTING_COLUMN("Usage: /feud lighting column list"),
     USAGE_LIGHTING_CENTER("Usage: /feud lighting center <bind|clear|status>"),
     USAGE_LIGHTING_SCAN("Usage: /feud lighting scan [x|z] [radiusX] [radiusZ] [down] [up]"),

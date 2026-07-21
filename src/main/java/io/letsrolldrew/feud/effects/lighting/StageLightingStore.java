@@ -19,19 +19,20 @@ public final class StageLightingStore {
     public StageLightingConfig load() {
         if (file == null) {
             return new StageLightingConfig(
-                    StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+                    StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
         }
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection root = config.getConfigurationSection("lighting");
         if (root == null) {
             return new StageLightingConfig(
-                    StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+                    StageLightingConfig.Arena.unbound(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
         }
 
         return new StageLightingConfig(
                 loadArena(root),
                 loadColumns(root),
+                loadZones(root),
                 loadPalettes(root),
                 loadModes(root),
                 loadAnimations(root),
@@ -46,6 +47,7 @@ public final class StageLightingStore {
         YamlConfiguration yaml = new YamlConfiguration();
         saveArena(yaml, config.arena());
         saveColumns(yaml, config.columns());
+        saveZones(yaml, config.zones());
         savePalettes(yaml, config.palettes());
         saveModes(yaml, config.modes());
         saveAnimations(yaml, config.animations());
@@ -134,6 +136,32 @@ public final class StageLightingStore {
             palettes.put(paletteId, new StageLightingConfig.Palette(paletteId, emitter, filter));
         }
         return palettes;
+    }
+
+    private static Map<String, List<String>> loadZones(ConfigurationSection root) {
+        Map<String, List<String>> zones = new LinkedHashMap<>();
+        ConfigurationSection section = root.getConfigurationSection("zones");
+        if (section == null) {
+            return zones;
+        }
+        for (String zoneId : section.getKeys(false)) {
+            List<String> columns = section.getStringList(zoneId);
+            if (columns == null) {
+                columns = List.of();
+            }
+            List<String> cleaned = new ArrayList<>();
+            for (String columnId : columns) {
+                if (columnId == null || columnId.isBlank()) {
+                    continue;
+                }
+                String trimmed = columnId.trim();
+                if (!cleaned.contains(trimmed)) {
+                    cleaned.add(trimmed);
+                }
+            }
+            zones.put(zoneId, cleaned);
+        }
+        return zones;
     }
 
     private static Map<String, StageLightingConfig.Mode> loadModes(ConfigurationSection root) {
@@ -273,6 +301,14 @@ public final class StageLightingStore {
             String paletteBase = base + "." + palette.id();
             yaml.set(paletteBase + ".emitter", palette.emitterSpec().isBlank() ? null : palette.emitterSpec());
             yaml.set(paletteBase + ".filter", palette.filterSpec().isBlank() ? null : palette.filterSpec());
+        }
+    }
+
+    private static void saveZones(YamlConfiguration yaml, Map<String, List<String>> zones) {
+        String base = "lighting.zones";
+        yaml.set(base, null);
+        for (Map.Entry<String, List<String>> entry : zones.entrySet()) {
+            yaml.set(base + "." + entry.getKey(), entry.getValue());
         }
     }
 

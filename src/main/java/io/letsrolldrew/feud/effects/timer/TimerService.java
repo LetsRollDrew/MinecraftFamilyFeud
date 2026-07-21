@@ -47,7 +47,7 @@ public final class TimerService {
     public void stop() {
         running = false;
         stopScheduledTick();
-        notifyObservers();
+        notifyStatusOnly();
     }
 
     public void reset() {
@@ -99,6 +99,10 @@ public final class TimerService {
         if (onTick != null) {
             onTick.accept(remainingSeconds);
         }
+        notifyStatusOnly();
+    }
+
+    private void notifyStatusOnly() {
         if (onStatus != null) {
             onStatus.accept(new TimerStatus(running, remainingSeconds));
         }

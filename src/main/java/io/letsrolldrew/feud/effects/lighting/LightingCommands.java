@@ -42,6 +42,7 @@ public final class LightingCommands {
             case "mode" -> handleMode(sender, args);
             case "animation" -> handleAnimation(sender, args);
             case "jingle" -> handleJingle(sender, args);
+            case "restore" -> handleRestore(sender);
             case "stop" -> handleStop(sender);
             case "status" -> handleStatus(sender);
             case "column" -> handleColumn(sender, args);
@@ -94,6 +95,14 @@ public final class LightingCommands {
     private void handleStop(CommandSender sender) {
         stageLightingService.stopAnimation();
         messages.success(sender, Msg.LIGHTING_STOPPED);
+    }
+
+    private void handleRestore(CommandSender sender) {
+        if (!stageLightingService.restoreOriginal()) {
+            messages.error(sender, Msg.LIGHTING_CENTER_NOT_BOUND);
+            return;
+        }
+        messages.success(sender, Msg.LIGHTING_RESTORED);
     }
 
     private void handleStatus(CommandSender sender) {
@@ -162,6 +171,21 @@ public final class LightingCommands {
     private void handleScan(CommandSender sender, String[] args) {
         if (!stageLightingService.hasBoundCenter()) {
             messages.error(sender, Msg.LIGHTING_CENTER_NOT_BOUND);
+            return;
+        }
+        StageLightingService.LightingStatus status = stageLightingService.status();
+        String activeAnimation = status.activeAnimationId() == null
+                ? ""
+                : status.activeAnimationId().trim();
+        String activeMode =
+                status.activeModeId() == null ? "" : status.activeModeId().trim();
+        boolean safeMode = activeMode.isBlank() || StageLightingPresetCatalog.MODE_DEFAULT.equalsIgnoreCase(activeMode);
+        if (!activeAnimation.isBlank() || !safeMode) {
+            messages.error(
+                    sender,
+                    Msg.LIGHTING_SCAN_BLOCKED,
+                    Placeholder.of("mode", activeMode.isBlank() ? "none" : activeMode),
+                    Placeholder.of("animation", activeAnimation.isBlank() ? "none" : activeAnimation));
             return;
         }
 

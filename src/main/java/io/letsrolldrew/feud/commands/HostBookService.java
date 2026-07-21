@@ -143,6 +143,7 @@ public final class HostBookService {
         hostRemoteService.giveOrReplace(player, fresh);
         messages.success(player, Msg.LIGHTING_REMOTE_GIVEN);
     }
+
     public void giveCleanupBook(Player player) {
         if (player == null) {
             return;

@@ -209,6 +209,7 @@ final class FeudCommandSpecificationFactoryTest {
         assertNotNull(child(lighting, "mode"));
         assertNotNull(child(lighting, "animation"));
         assertNotNull(child(lighting, "jingle"));
+        assertNotNull(child(lighting, "restore"));
         assertNotNull(child(lighting, "stop"));
         assertNotNull(child(lighting, "status"));
         CommandSpecificationNode column = child(lighting, "column");

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -106,14 +107,17 @@ public final class StageLightingService {
                 current.yDown(),
                 current.yUp(),
                 current.palette());
-        config = presetCatalog.apply(config.withArena(next).withColumns(Map.of()));
+        config =
+                presetCatalog.apply(config.withArena(next).withColumns(Map.of()).withZones(Map.of()));
         store.save(config);
         return true;
     }
 
     public void clearCenter() {
         stopAnimation();
-        config = presetCatalog.apply(config.withArena(StageLightingConfig.Arena.unbound()).withColumns(Map.of()));
+        config = presetCatalog.apply(config.withArena(StageLightingConfig.Arena.unbound())
+                .withColumns(Map.of())
+                .withZones(Map.of()));
         store.save(config);
     }
 
@@ -181,7 +185,12 @@ public final class StageLightingService {
                 yDown,
                 yUp,
                 current.palette());
-        config = presetCatalog.apply(config.withArena(nextArena).withColumns(columns));
+        Map<String, List<String>> nextZones = pruneZones(config.zones(), columns.keySet());
+        if (nextZones.isEmpty()) {
+            nextZones = inferFallbackZones(columns);
+        }
+        config = presetCatalog.apply(
+                config.withArena(nextArena).withColumns(columns).withZones(nextZones));
         store.save(config);
         return columns.size();
     }
@@ -196,6 +205,17 @@ public final class StageLightingService {
         activeModeId = mode.id();
         activeAnimationId = "";
         triggerJingle(mode.jingleId());
+        return true;
+    }
+
+    public boolean restoreOriginal() {
+        if (!config.arena().isBound()) {
+            return false;
+        }
+        stopAnimation();
+        applyColumnSpecs(Map.of("all", ORIGINAL_SPEC));
+        activeModeId = "";
+        activeAnimationId = "";
         return true;
     }
 
@@ -298,7 +318,8 @@ public final class StageLightingService {
     }
 
     private List<StageLightingConfig.Frame> buildPulseFrames(StageLightingConfig.Animation animation) {
-        if (animation.primaryPaletteId().isBlank() || animation.secondaryPaletteId().isBlank()) {
+        if (animation.primaryPaletteId().isBlank()
+                || animation.secondaryPaletteId().isBlank()) {
             return List.of();
         }
         return List.of(
@@ -307,21 +328,34 @@ public final class StageLightingService {
     }
 
     private List<StageLightingConfig.Frame> buildColumnAlternateFrames(StageLightingConfig.Animation animation) {
-        if (animation.primaryPaletteId().isBlank() || animation.secondaryPaletteId().isBlank()) {
+        if (animation.primaryPaletteId().isBlank()
+                || animation.secondaryPaletteId().isBlank()) {
             return List.of();
         }
+        List<StageLightingConfig.Column> columns =
+                new ArrayList<>(config.columns().values());
+        if (columns.isEmpty()) {
+            return List.of();
+        }
+
+        int groupSize = Math.max(1, animation.step());
         Map<String, String> first = new LinkedHashMap<>();
-        first.put("odd", animation.primaryPaletteId());
-        first.put("even", animation.secondaryPaletteId());
         Map<String, String> second = new LinkedHashMap<>();
-        second.put("odd", animation.secondaryPaletteId());
-        second.put("even", animation.primaryPaletteId());
+        for (int i = 0; i < columns.size(); i++) {
+            String columnId = columns.get(i).id();
+            boolean primaryBand = ((i / groupSize) % 2) == 0;
+            first.put(columnId, primaryBand ? animation.primaryPaletteId() : animation.secondaryPaletteId());
+            second.put(columnId, primaryBand ? animation.secondaryPaletteId() : animation.primaryPaletteId());
+        }
         return List.of(new StageLightingConfig.Frame(first), new StageLightingConfig.Frame(second));
     }
 
     private List<StageLightingConfig.Frame> buildSlidingWindowFrames(StageLightingConfig.Animation animation) {
-        List<StageLightingConfig.Column> columns = new ArrayList<>(config.columns().values());
-        if (columns.isEmpty() || animation.primaryPaletteId().isBlank() || animation.backgroundPaletteId().isBlank()) {
+        List<StageLightingConfig.Column> columns =
+                new ArrayList<>(config.columns().values());
+        if (columns.isEmpty()
+                || animation.primaryPaletteId().isBlank()
+                || animation.backgroundPaletteId().isBlank()) {
             return List.of();
         }
 
@@ -348,7 +382,8 @@ public final class StageLightingService {
         }
 
         Map<String, String> resolvedSpecs = resolveColumnSpecs(columnSpecs);
-        List<StageLightingConfig.Column> columns = new ArrayList<>(config.columns().values());
+        List<StageLightingConfig.Column> columns =
+                new ArrayList<>(config.columns().values());
         for (StageLightingConfig.Column column : columns) {
             String spec = resolvedSpecs.get(column.id());
             if (spec == null || spec.isBlank()) {
@@ -360,7 +395,8 @@ public final class StageLightingService {
 
     private Map<String, String> resolveColumnSpecs(Map<String, String> columnSpecs) {
         Map<String, String> resolvedSpecs = new LinkedHashMap<>();
-        List<StageLightingConfig.Column> columns = new ArrayList<>(config.columns().values());
+        List<StageLightingConfig.Column> columns =
+                new ArrayList<>(config.columns().values());
 
         String allSpec = columnSpecs.get("all");
         if (allSpec != null && !allSpec.isBlank()) {
@@ -385,7 +421,49 @@ public final class StageLightingService {
             if ("all".equalsIgnoreCase(key) || "odd".equalsIgnoreCase(key) || "even".equalsIgnoreCase(key)) {
                 continue;
             }
-            resolvedSpecs.put(key, entry.getValue());
+            String spec = entry.getValue();
+            if (spec == null || spec.isBlank() || key == null || key.isBlank()) {
+                continue;
+            }
+            if (config.columns().containsKey(key)) {
+                resolvedSpecs.put(key, spec);
+                continue;
+            }
+
+            String zoneKey = key.trim();
+            boolean zoneOdd = false;
+            boolean zoneEven = false;
+            int separator = zoneKey.lastIndexOf(':');
+            if (separator > 0 && separator < zoneKey.length() - 1) {
+                String selector = zoneKey.substring(separator + 1).trim().toLowerCase(Locale.ROOT);
+                if ("odd".equals(selector)) {
+                    zoneOdd = true;
+                    zoneKey = zoneKey.substring(0, separator).trim();
+                } else if ("even".equals(selector)) {
+                    zoneEven = true;
+                    zoneKey = zoneKey.substring(0, separator).trim();
+                }
+            }
+
+            List<String> zoneColumns = config.zones().get(zoneKey);
+            if (zoneColumns == null || zoneColumns.isEmpty()) {
+                continue;
+            }
+            for (int i = 0; i < zoneColumns.size(); i++) {
+                if (zoneOdd && (i % 2) != 0) {
+                    continue;
+                }
+                if (zoneEven && (i % 2) == 0) {
+                    continue;
+                }
+                String columnId = zoneColumns.get(i);
+                if (columnId == null || columnId.isBlank()) {
+                    continue;
+                }
+                if (config.columns().containsKey(columnId)) {
+                    resolvedSpecs.put(columnId, spec);
+                }
+            }
         }
         return resolvedSpecs;
     }
@@ -409,7 +487,8 @@ public final class StageLightingService {
             return;
         }
         for (StageLightingConfig.Cell cell : column.cells()) {
-            blockAt(world, cell).setBlockData(blockData.clone());
+            BlockData target = adaptFilterShape(cell, blockData);
+            blockAt(world, cell).setBlockData(target.clone());
         }
     }
 
@@ -435,8 +514,45 @@ public final class StageLightingService {
             if (target == null) {
                 continue;
             }
+            target = adaptFilterShape(cell, target);
             blockAt(world, cell).setBlockData(target.clone());
         }
+    }
+
+    private BlockData adaptFilterShape(StageLightingConfig.Cell cell, BlockData desired) {
+        if (cell == null || desired == null || cell.role() != StageLightingConfig.CellRole.FILTER) {
+            return desired;
+        }
+        String original = cell.originalSpec();
+        if (original == null || !original.toLowerCase(Locale.ROOT).contains("glass_pane")) {
+            return desired;
+        }
+        Material paneMaterial = paneVariant(desired.getMaterial());
+        if (paneMaterial == null || paneMaterial == desired.getMaterial()) {
+            return desired;
+        }
+        return paneMaterial.createBlockData();
+    }
+
+    private static Material paneVariant(Material material) {
+        if (material == null) {
+            return null;
+        }
+        String name = material.name();
+        if (name.endsWith("_STAINED_GLASS_PANE") || "GLASS_PANE".equals(name)) {
+            return material;
+        }
+        if ("GLASS".equals(name)) {
+            return Material.GLASS_PANE;
+        }
+        if (name.endsWith("_STAINED_GLASS")) {
+            try {
+                return Material.valueOf(name + "_PANE");
+            } catch (IllegalArgumentException ignored) {
+                return material;
+            }
+        }
+        return material;
     }
 
     private Block blockAt(World world, StageLightingConfig.Cell cell) {
@@ -496,7 +612,11 @@ public final class StageLightingService {
 
     private static StageLightingConfig.CellRole classifyRole(Material material) {
         String name = material.name();
-        if (name.endsWith("_STAINED_GLASS") || "GLASS".equals(name) || "TINTED_GLASS".equals(name)) {
+        if (name.endsWith("_STAINED_GLASS")
+                || name.endsWith("_STAINED_GLASS_PANE")
+                || "GLASS".equals(name)
+                || "GLASS_PANE".equals(name)
+                || "TINTED_GLASS".equals(name)) {
             return StageLightingConfig.CellRole.FILTER;
         }
         return StageLightingConfig.CellRole.EMITTER;
@@ -504,6 +624,154 @@ public final class StageLightingService {
 
     private static StageLightingConfig.Cell firstCell(Map.Entry<String, List<StageLightingConfig.Cell>> entry) {
         return entry.getValue().getFirst();
+    }
+
+    private static Map<String, List<String>> pruneZones(Map<String, List<String>> zones, Set<String> validColumns) {
+        if (zones == null || zones.isEmpty() || validColumns == null || validColumns.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, List<String>> pruned = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : zones.entrySet()) {
+            String zoneId = entry.getKey();
+            if (zoneId == null || zoneId.isBlank()) {
+                continue;
+            }
+            List<String> members = entry.getValue();
+            if (members == null || members.isEmpty()) {
+                continue;
+            }
+            LinkedHashSet<String> kept = new LinkedHashSet<>();
+            for (String columnId : members) {
+                if (columnId == null || columnId.isBlank()) {
+                    continue;
+                }
+                String trimmed = columnId.trim();
+                if (validColumns.contains(trimmed)) {
+                    kept.add(trimmed);
+                }
+            }
+            if (!kept.isEmpty()) {
+                pruned.put(zoneId.trim(), List.copyOf(kept));
+            }
+        }
+        return pruned.isEmpty() ? Map.of() : pruned;
+    }
+
+    private static Map<String, List<String>> inferFallbackZones(Map<String, StageLightingConfig.Column> columns) {
+        if (columns == null || columns.isEmpty()) {
+            return Map.of();
+        }
+
+        record ColumnMeta(
+                String id, int dx, int dz, int minDy, int maxDy, int emitterCount, int filterCount, int paneCount) {}
+
+        Map<String, ColumnMeta> byId = new LinkedHashMap<>();
+        Map<String, String> byCoord = new LinkedHashMap<>();
+        for (StageLightingConfig.Column column : columns.values()) {
+            if (column == null
+                    || column.id() == null
+                    || column.id().isBlank()
+                    || column.cells().isEmpty()) {
+                continue;
+            }
+            StageLightingConfig.Cell first = column.cells().getFirst();
+            int minDy = Integer.MAX_VALUE;
+            int maxDy = Integer.MIN_VALUE;
+            int emitter = 0;
+            int filter = 0;
+            int panes = 0;
+            for (StageLightingConfig.Cell cell : column.cells()) {
+                minDy = Math.min(minDy, cell.dy());
+                maxDy = Math.max(maxDy, cell.dy());
+                if (cell.role() == StageLightingConfig.CellRole.FILTER) {
+                    filter++;
+                } else {
+                    emitter++;
+                }
+                String original =
+                        cell.originalSpec() == null ? "" : cell.originalSpec().toLowerCase(Locale.ROOT);
+                if (original.contains("glass_pane")) {
+                    panes++;
+                }
+            }
+            ColumnMeta meta = new ColumnMeta(column.id(), first.dx(), first.dz(), minDy, maxDy, emitter, filter, panes);
+            byId.put(column.id(), meta);
+            byCoord.put(first.dx() + ":" + first.dz(), column.id());
+        }
+        if (byId.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ColumnMeta> stage = new ArrayList<>();
+        for (ColumnMeta meta : byId.values()) {
+            if (byCoord.containsKey((-meta.dx()) + ":" + meta.dz())) {
+                stage.add(meta);
+            }
+        }
+        if (stage.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, List<String>> zones = new LinkedHashMap<>();
+        zones.put("arch", new ArrayList<>());
+        zones.put("inside", new ArrayList<>());
+        zones.put("windows", new ArrayList<>());
+        zones.put("slits", new ArrayList<>());
+        zones.put("roof", new ArrayList<>());
+        zones.put("pillar", new ArrayList<>());
+        zones.put("back_wall", new ArrayList<>());
+        zones.put("board", new ArrayList<>());
+
+        for (ColumnMeta meta : stage) {
+            if (meta.dx() >= 10
+                    && meta.dx() <= 17
+                    && meta.dz() >= 2
+                    && meta.dz() <= 18
+                    && meta.emitterCount() > 0
+                    && meta.filterCount() == 0) {
+                zones.get("board").add(meta.id());
+                continue;
+            }
+            if (meta.dx() >= 12
+                    && meta.dx() <= 16
+                    && meta.dz() >= 2
+                    && meta.dz() <= 12
+                    && meta.filterCount() > 0
+                    && meta.paneCount() == 0) {
+                zones.get("back_wall").add(meta.id());
+                continue;
+            }
+            if (Math.abs(meta.dx()) >= 23) {
+                zones.get("pillar").add(meta.id());
+                continue;
+            }
+            if (Math.abs(meta.dx()) == 21 && meta.dz() >= -10 && meta.dz() <= -9) {
+                zones.get("slits").add(meta.id());
+                continue;
+            }
+            if (meta.dz() <= -8) {
+                zones.get("arch").add(meta.id());
+                continue;
+            }
+            if (meta.maxDy() >= 14 || (meta.dz() <= -3 && meta.emitterCount() > 0 && meta.filterCount() == 0)) {
+                zones.get("roof").add(meta.id());
+                continue;
+            }
+            if (meta.filterCount() >= 6) {
+                zones.get("windows").add(meta.id());
+                continue;
+            }
+            zones.get("inside").add(meta.id());
+        }
+
+        Map<String, List<String>> normalized = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : zones.entrySet()) {
+            LinkedHashSet<String> unique = new LinkedHashSet<>(entry.getValue());
+            if (!unique.isEmpty()) {
+                normalized.put(entry.getKey(), List.copyOf(unique));
+            }
+        }
+        return normalized;
     }
 
     public record LightingStatus(

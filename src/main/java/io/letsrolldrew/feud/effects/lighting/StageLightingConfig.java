@@ -9,6 +9,7 @@ import java.util.Objects;
 public record StageLightingConfig(
         Arena arena,
         Map<String, Column> columns,
+        Map<String, List<String>> zones,
         Map<String, Palette> palettes,
         Map<String, Mode> modes,
         Map<String, Animation> animations,
@@ -16,6 +17,7 @@ public record StageLightingConfig(
     public StageLightingConfig {
         arena = arena == null ? Arena.unbound() : arena;
         columns = columns == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(columns));
+        zones = normalizeZones(zones);
         palettes = palettes == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(palettes));
         modes = modes == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(modes));
         animations = animations == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(animations));
@@ -23,11 +25,15 @@ public record StageLightingConfig(
     }
 
     public StageLightingConfig withArena(Arena nextArena) {
-        return new StageLightingConfig(nextArena, columns, palettes, modes, animations, jingles);
+        return new StageLightingConfig(nextArena, columns, zones, palettes, modes, animations, jingles);
     }
 
     public StageLightingConfig withColumns(Map<String, Column> nextColumns) {
-        return new StageLightingConfig(arena, nextColumns, palettes, modes, animations, jingles);
+        return new StageLightingConfig(arena, nextColumns, zones, palettes, modes, animations, jingles);
+    }
+
+    public StageLightingConfig withZones(Map<String, List<String>> nextZones) {
+        return new StageLightingConfig(arena, columns, nextZones, palettes, modes, animations, jingles);
     }
 
     public static List<String> defaultPalette() {
@@ -43,7 +49,25 @@ public record StageLightingConfig(
                 "BLUE_STAINED_GLASS",
                 "RED_STAINED_GLASS",
                 "ORANGE_STAINED_GLASS",
-                "YELLOW_STAINED_GLASS");
+                "YELLOW_STAINED_GLASS",
+                "GREEN_STAINED_GLASS",
+                "PURPLE_STAINED_GLASS",
+                "PINK_STAINED_GLASS",
+                "BLACK_STAINED_GLASS",
+                "GRAY_STAINED_GLASS",
+                "LIGHT_GRAY_STAINED_GLASS",
+                "WHITE_STAINED_GLASS_PANE",
+                "LIGHT_BLUE_STAINED_GLASS_PANE",
+                "BLUE_STAINED_GLASS_PANE",
+                "RED_STAINED_GLASS_PANE",
+                "ORANGE_STAINED_GLASS_PANE",
+                "YELLOW_STAINED_GLASS_PANE",
+                "GREEN_STAINED_GLASS_PANE",
+                "PURPLE_STAINED_GLASS_PANE",
+                "PINK_STAINED_GLASS_PANE",
+                "BLACK_STAINED_GLASS_PANE",
+                "GRAY_STAINED_GLASS_PANE",
+                "LIGHT_GRAY_STAINED_GLASS_PANE");
     }
 
     public enum ScanAxis {
@@ -194,5 +218,35 @@ public record StageLightingConfig(
             id = Objects.requireNonNull(id, "id").trim();
             commands = commands == null ? List.of() : List.copyOf(commands);
         }
+    }
+
+    private static Map<String, List<String>> normalizeZones(Map<String, List<String>> rawZones) {
+        if (rawZones == null || rawZones.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, List<String>> normalized = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : rawZones.entrySet()) {
+            if (entry.getKey() == null || entry.getKey().isBlank()) {
+                continue;
+            }
+            String zoneId = entry.getKey().trim();
+            List<String> source = entry.getValue();
+            if (source == null || source.isEmpty()) {
+                normalized.put(zoneId, List.of());
+                continue;
+            }
+            List<String> columns = new java.util.ArrayList<>();
+            for (String columnId : source) {
+                if (columnId == null || columnId.isBlank()) {
+                    continue;
+                }
+                String trimmed = columnId.trim();
+                if (!columns.contains(trimmed)) {
+                    columns.add(trimmed);
+                }
+            }
+            normalized.put(zoneId, List.copyOf(columns));
+        }
+        return Collections.unmodifiableMap(normalized);
     }
 }

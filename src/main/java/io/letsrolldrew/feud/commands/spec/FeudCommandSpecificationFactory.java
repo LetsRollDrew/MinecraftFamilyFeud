@@ -324,10 +324,26 @@ public final class FeudCommandSpecificationFactory {
                         CommandSpecificationNode.builder(ArgType.LITERAL, "status")
                                 .build()))
                 .build();
-        CommandSpecificationNode scan = CommandSpecificationNode.builder(ArgType.LITERAL, "scan")
-                .child(CommandSpecificationNode.builder(ArgType.WORD, "axis")
-                        .noExec()
+        CommandSpecificationNode scanAxisAndBounds = CommandSpecificationNode.builder(ArgType.WORD, "axis")
+                .child(CommandSpecificationNode.builder(ArgType.INT, "radiusX")
+                        .child(CommandSpecificationNode.builder(ArgType.INT, "radiusZ")
+                                .child(CommandSpecificationNode.builder(ArgType.INT, "down")
+                                        .child(CommandSpecificationNode.builder(ArgType.INT, "up")
+                                                .build())
+                                        .build())
+                                .build())
                         .build())
+                .build();
+        CommandSpecificationNode scanBoundsOnly = CommandSpecificationNode.builder(ArgType.INT, "radiusX")
+                .child(CommandSpecificationNode.builder(ArgType.INT, "radiusZ")
+                        .child(CommandSpecificationNode.builder(ArgType.INT, "down")
+                                .child(CommandSpecificationNode.builder(ArgType.INT, "up")
+                                        .build())
+                                .build())
+                        .build())
+                .build();
+        CommandSpecificationNode scan = CommandSpecificationNode.builder(ArgType.LITERAL, "scan")
+                .children(List.of(scanAxisAndBounds, scanBoundsOnly))
                 .build();
         CommandSpecificationNode mode = CommandSpecificationNode.builder(ArgType.LITERAL, "mode")
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
@@ -338,6 +354,8 @@ public final class FeudCommandSpecificationFactory {
         CommandSpecificationNode jingle = CommandSpecificationNode.builder(ArgType.LITERAL, "jingle")
                 .child(CommandSpecificationNode.builder(ArgType.WORD, "id").build())
                 .build();
+        CommandSpecificationNode restore =
+                CommandSpecificationNode.builder(ArgType.LITERAL, "restore").build();
         CommandSpecificationNode stop =
                 CommandSpecificationNode.builder(ArgType.LITERAL, "stop").build();
         CommandSpecificationNode status =
@@ -349,7 +367,7 @@ public final class FeudCommandSpecificationFactory {
         return CommandSpecificationNode.builder(ArgType.LITERAL, "lighting")
                 .requirements(List.of(Requirements.anyOf(
                         Requirements.permission(hostPermission), Requirements.permission(adminPermission))))
-                .children(List.of(center, scan, mode, animation, jingle, stop, status, column))
+                .children(List.of(center, scan, mode, animation, jingle, restore, stop, status, column))
                 .build();
     }
 

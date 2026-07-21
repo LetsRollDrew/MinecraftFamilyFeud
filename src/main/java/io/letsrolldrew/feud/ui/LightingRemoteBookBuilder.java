@@ -1,5 +1,6 @@
 package io.letsrolldrew.feud.ui;
 
+import io.letsrolldrew.feud.effects.lighting.StageLightingPresetCatalog;
 import io.letsrolldrew.feud.effects.lighting.StageLightingService;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +41,7 @@ public final class LightingRemoteBookBuilder {
 
         List<Component> pages = new ArrayList<>();
         pages.add(statusPage(lightingService));
+        pages.add(quickTestPage());
         pages.addAll(listPages("Modes", lightingService.modeIds(), "/feud lighting mode "));
         pages.addAll(listPages("Animations", lightingService.animationIds(), "/feud lighting animation "));
         pages.addAll(listPages("Jingles", lightingService.jingleIds(), "/feud lighting jingle "));
@@ -81,6 +83,53 @@ public final class LightingRemoteBookBuilder {
                 .append(button("List Columns", "/feud lighting column list"))
                 .append(Component.newline())
                 .append(button("Stop Animation", "/feud lighting stop"))
+                .build();
+    }
+
+    private static Component quickTestPage() {
+        return Component.text()
+                .append(Component.text("Quick Test", NamedTextColor.GOLD))
+                .append(Component.newline())
+                .append(Component.text("Base Modes", NamedTextColor.DARK_GRAY))
+                .append(Component.newline())
+                .append(button("Default", "/feud lighting mode " + StageLightingPresetCatalog.MODE_DEFAULT))
+                .append(Component.newline())
+                .append(button("Intro Base", "/feud lighting mode " + StageLightingPresetCatalog.MODE_INTRO_BASE))
+                .append(Component.newline())
+                .append(button(
+                        "Fast Money Base", "/feud lighting mode " + StageLightingPresetCatalog.MODE_FAST_MONEY_BASE))
+                .append(Component.newline())
+                .append(button(
+                        "Round Win Base", "/feud lighting mode " + StageLightingPresetCatalog.MODE_ROUND_WIN_BASE))
+                .append(Component.newline())
+                .append(button("Game Won Base", "/feud lighting mode " + StageLightingPresetCatalog.MODE_GAME_WON_BASE))
+                .append(Component.newline())
+                .append(Component.newline())
+                .append(Component.text("Show Animations", NamedTextColor.DARK_GRAY))
+                .append(Component.newline())
+                .append(button(
+                        "Intro Cycle", "/feud lighting animation " + StageLightingPresetCatalog.ANIMATION_INTRO_CYCLE))
+                .append(Component.newline())
+                .append(button(
+                        "Fast Money Cycle",
+                        "/feud lighting animation " + StageLightingPresetCatalog.ANIMATION_FAST_MONEY_CYCLE))
+                .append(Component.newline())
+                .append(button(
+                        "Round Win Cycle",
+                        "/feud lighting animation " + StageLightingPresetCatalog.ANIMATION_ROUND_WIN_CYCLE))
+                .append(Component.newline())
+                .append(button(
+                        "Game Won Cycle",
+                        "/feud lighting animation " + StageLightingPresetCatalog.ANIMATION_GAME_WON_CYCLE))
+                .append(Component.newline())
+                .append(button(
+                        "Game Won Slits",
+                        "/feud lighting animation " + StageLightingPresetCatalog.ANIMATION_GAME_WON_SLITS))
+                .append(Component.newline())
+                .append(Component.newline())
+                .append(button("Stop", "/feud lighting stop"))
+                .append(Component.newline())
+                .append(button("Restore", "/feud lighting restore"))
                 .build();
     }
 

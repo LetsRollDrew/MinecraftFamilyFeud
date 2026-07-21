@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Development/MinecraftFamilyFeud -type f -name *light*)",
+      "Bash(find /c/Development/MinecraftFamilyFeud -type f \\\\\\(-name *animate* -o -name *sequence* -o -name *animation* \\\\\\))",
+      "Bash(grep -E \"\\\\.\\(java|yml|yaml|json\\)$\")",
+      "Bash(find /c/Development/MinecraftFamilyFeud -name *.java -path */src/* -exec grep -l zone {})",
+      "Bash(2)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}
